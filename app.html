@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wandzi Windzi — Skaner Inwentarza</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0c0b;--bg2:#141210;--bg3:#1c1915;--border:rgba(180,140,60,0.2);--border-h:rgba(180,140,60,0.5);--gold:#c9a84c;--gold-l:#e8c96a;--gold-d:rgba(201,168,76,0.15);--text:#e8dfc8;--text-d:#8a7d65;--text-m:#5a5045;--ok:rgba(90,138,74,0.15);--ok-t:#7abf65;--ok-b:rgba(90,138,74,0.3);--warn:rgba(138,106,42,0.15);--warn-t:#c9944c;--warn-b:rgba(138,106,42,0.3);--err:rgba(138,50,50,0.15);--err-t:#c97070;--err-b:rgba(138,50,50,0.3);--admin:rgba(180,100,60,0.12);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:17px;line-height:1.6;background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(180,140,60,0.06) 0%,transparent 60%);}
+.app{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+header{text-align:center;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+header p.sub{font-size:0.85rem;letter-spacing:0.15em;color:var(--text-d);margin-bottom:0.3rem;}
+h1{font-family:'Cinzel',serif;font-size:2rem;font-weight:600;color:var(--gold-l);letter-spacing:0.08em;}
+nav{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:2rem;flex-wrap:wrap;}
+.nav-tab{font-family:'Cinzel',serif;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:10px 20px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-d);transition:all 0.15s;}
+.nav-tab.active{border-bottom-color:var(--gold);color:var(--gold-l);}
+.nav-tab:hover:not(.active){color:var(--text);}
+.nav-tab.admin-tab{color:var(--warn-t);border-color:transparent;}
+.nav-tab.admin-tab.active{border-bottom-color:var(--warn-t);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+.section-label{font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.15em;color:var(--gold);text-transform:uppercase;margin-bottom:0.6rem;display:flex;align-items:center;gap:10px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;}
+.upload-zone{border:1px dashed var(--border-h);border-radius:4px;padding:2rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg3);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:var(--gold-d);}
+.upload-zone p{color:var(--text-d);font-size:0.95rem;}
+.previews{display:flex;flex-wrap:wrap;gap:10px;margin-top:1rem;}
+.preview-item{position:relative;display:inline-block;}
+.preview-item img{height:90px;border-radius:4px;border:1px solid var(--border);display:block;}
+.preview-item .rm{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;padding:0;font-size:11px;line-height:1;border:1px solid var(--border-h);background:var(--bg2);color:var(--text-d);cursor:pointer;font-family:sans-serif;}
+.field label{display:block;font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.12em;color:var(--gold);text-transform:uppercase;margin-bottom:0.4rem;}
+.field input,.field select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:1rem;padding:8px 12px;outline:none;transition:border-color 0.15s;}
+.field input:focus,.field select:focus{border-color:var(--gold);}
+.field input::placeholder{color:var(--text-m);}
+.field select option{background:var(--bg2);}
+.hint{font-size:0.82rem;color:var(--text-m);margin-top:0.4rem;font-style:italic;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:1rem;}
+button{font-family:'Cinzel',serif;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:9px 20px;border-radius:3px;border:1px solid var(--border-h);background:transparent;color:var(--text);cursor:pointer;transition:all 0.15s;}
+button:hover{background:var(--gold-d);border-color:var(--gold);color:var(--gold-l);}
+button:disabled{opacity:0.3;cursor:not-allowed;pointer-events:none;}
+button.primary{background:var(--gold-d);border-color:var(--gold);color:var(--gold-l);}
+button.primary:hover{background:rgba(201,168,76,0.3);}
+button.danger{border-color:var(--err-b);color:var(--err-t);}
+button.danger:hover{background:var(--err);}
+button.warn-btn{border-color:var(--warn-b);color:var(--warn-t);}
+button.warn-btn:hover{background:var(--warn);}
+button.sm{padding:4px 10px;font-size:0.62rem;}
+.status-bar{margin-top:0.8rem;font-size:0.9rem;color:var(--text-d);font-style:italic;min-height:1.4rem;display:flex;align-items:center;gap:8px;}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;display:none;animation:spin 0.7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.msg{border-radius:3px;padding:0.7rem 1rem;font-size:0.9rem;margin-top:0.8rem;display:none;}
+.msg.ok{background:var(--ok);border:1px solid var(--ok-b);color:var(--ok-t);}
+.msg.err{background:var(--err);border:1px solid var(--err-b);color:var(--err-t);}
+.results-section{margin-top:1.5rem;}
+.results-header{display:grid;grid-template-columns:1fr 80px 130px;gap:8px;padding:6px 12px;font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.1em;color:var(--text-m);text-transform:uppercase;border-bottom:1px solid var(--border);}
+.result-row{display:grid;grid-template-columns:1fr 80px 130px;gap:8px;padding:7px 12px;border-bottom:1px solid rgba(180,140,60,0.07);font-size:0.95rem;align-items:center;}
+.result-row:last-child{border-bottom:none;}
+.qty{text-align:right;color:var(--gold-l);font-weight:300;}
+.badge{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.06em;padding:2px 8px;border-radius:2px;text-transform:uppercase;display:inline-block;}
+.badge.ok{background:var(--ok);color:var(--ok-t);border:1px solid var(--ok-b);}
+.sub-name{font-size:0.8rem;color:var(--text-d);}
+.sheet-controls{display:flex;gap:12px;align-items:center;margin-bottom:1rem;flex-wrap:wrap;}
+.search-wrap{flex:1;min-width:200px;position:relative;}
+.search-wrap input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:0.95rem;padding:7px 12px 7px 32px;outline:none;}
+.search-wrap input:focus{border-color:var(--gold);}
+.search-wrap::before{content:'⌕';position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-m);font-size:16px;pointer-events:none;}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:4px;}
+table{width:100%;border-collapse:collapse;font-size:0.9rem;}
+thead th{font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);padding:8px 12px;text-align:left;background:var(--bg2);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+thead th:hover{color:var(--gold-l);}
+thead th.sorted{color:var(--gold-l);}
+.sort-arrow{margin-left:4px;opacity:0.5;font-size:0.7rem;}
+thead th.sorted .sort-arrow{opacity:1;}
+tbody tr{border-bottom:1px solid rgba(180,140,60,0.07);}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--bg3);}
+tbody td{padding:6px 12px;color:var(--text);}
+tbody td.num{text-align:right;color:var(--gold-l);font-weight:300;}
+.empty-row td{text-align:center;color:var(--text-m);font-style:italic;padding:2rem;}
+.char-list{display:flex;flex-direction:column;gap:8px;}
+.char-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;}
+.add-char-row{display:flex;gap:10px;margin-top:1rem;}
+.add-char-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:1rem;padding:8px 12px;outline:none;}
+.add-char-row input:focus{border-color:var(--gold);}
+.no-data{text-align:center;padding:2rem;color:var(--text-m);font-style:italic;}
+
+/* Admin */
+.lock-screen{text-align:center;padding:3rem 1rem;}
+.lock-screen h2{font-family:'Cinzel',serif;color:var(--warn-t);font-size:1.2rem;margin-bottom:1.5rem;letter-spacing:0.1em;}
+.lock-screen input{background:var(--bg3);border:1px solid var(--warn-b);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:1rem;padding:10px 16px;outline:none;width:260px;text-align:center;}
+.lock-screen input:focus{border-color:var(--warn-t);}
+.lock-screen .btn-row{justify-content:center;margin-top:1rem;}
+.admin-panel-label{font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.15em;color:var(--warn-t);text-transform:uppercase;margin-bottom:0.6rem;display:flex;align-items:center;gap:10px;}
+.admin-panel-label::after{content:'';flex:1;height:1px;background:var(--warn-b);}
+.admin-table-wrap{overflow-x:auto;border:1px solid var(--warn-b);border-radius:4px;}
+.admin-table-wrap table thead th{color:var(--warn-t);border-bottom-color:var(--warn-b);}
+td.editable{cursor:pointer;position:relative;}
+td.editable:hover{background:rgba(180,140,60,0.08);}
+td.editable:hover::after{content:'✎';position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:0.7rem;color:var(--text-m);}
+.inline-edit{width:70px;background:var(--bg3);border:1px solid var(--gold);border-radius:2px;color:var(--text);font-size:0.88rem;padding:2px 6px;text-align:right;outline:none;font-family:'Crimson Pro',serif;}
+.admin-char-section{margin-bottom:2rem;}
+.admin-char-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--bg3);border:1px solid var(--warn-b);border-radius:3px 3px 0 0;}
+.admin-char-name{font-family:'Cinzel',serif;font-size:0.9rem;color:var(--warn-t);letter-spacing:0.05em;}
+.admin-char-actions{display:flex;gap:8px;}
+.admin-items-table{border:1px solid var(--warn-b);border-top:none;border-radius:0 0 3px 3px;overflow:hidden;}
+.admin-items-table table{width:100%;}
+.admin-items-table thead th{background:rgba(138,80,40,0.15);color:var(--warn-t);font-size:0.6rem;}
+.admin-items-table tbody td{font-size:0.88rem;}
+.admin-items-table tbody tr:hover{background:rgba(138,80,40,0.06);}
+.rename-input{background:var(--bg3);border:1px solid var(--warn-b);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:0.95rem;padding:4px 10px;outline:none;width:180px;}
+.rename-input:focus{border-color:var(--warn-t);}
+footer{margin-top:3rem;text-align:center;font-size:0.8rem;color:var(--text-m);font-style:italic;border-top:1px solid var(--border);padding-top:1.5rem;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <p class="sub">Wandzi Windzi</p>
+    <h1>Skaner Inwentarza</h1>
+  </header>
+
+  <nav>
+    <div class="nav-tab active" onclick="switchTab('scan')">⟳ Skanuj</div>
+    <div class="nav-tab" onclick="switchTab('sheet')">⊞ Arkusz</div>
+    <div class="nav-tab" onclick="switchTab('chars')">⚔ Postacie</div>
+    <div class="nav-tab admin-tab" onclick="switchTab('admin')">⚙ Admin</div>
+  </nav>
+
+  <!-- SCAN -->
+  <div id="tab-scan" class="tab-content active">
+    <div class="section-label">Postać</div>
+    <div class="panel">
+      <div class="field">
+        <label>Wybierz postać</label>
+        <select id="char-select"><option value="">— wybierz —</option></select>
+      </div>
+    </div>
+    <div class="section-label">Zrzuty ekranu</div>
+    <div class="panel">
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept="image/*" multiple onchange="handleFiles(event)" style="display:none">
+        <p><strong>Kliknij, przeciągnij lub wklej</strong> zrzuty ekranu (Ctrl+V)</p>
+        <p style="font-size:0.85rem;margin-top:4px;">PNG, JPG, WebP · wiele plików naraz</p>
+      </div>
+      <div class="previews" id="previews"></div>
+    </div>
+    <div class="btn-row">
+      <button class="primary" id="scan-btn" onclick="runScan()" disabled>⟳ Skanuj inwentarz</button>
+      <button id="save-btn" onclick="saveResults()" disabled>✓ Zapisz do bazy</button>
+      <button id="csv-btn" onclick="copyCSV()" disabled>⎘ Kopiuj CSV</button>
+    </div>
+    <div class="status-bar"><div class="spinner" id="scan-spinner"></div><span id="scan-status"></span></div>
+    <div class="msg ok" id="scan-ok"></div>
+    <div class="msg err" id="scan-err"></div>
+    <div id="scan-results" style="display:none;" class="results-section">
+      <div class="section-label" style="margin-top:1.5rem;">Dopasowane</div>
+      <div class="panel" style="padding:0;">
+        <div class="results-header"><span>Przedmiot</span><span style="text-align:right;">Ilość</span><span>Dopasowano jako</span></div>
+        <div id="results-body"></div>
+      </div>
+      <div id="unknown-wrap" style="display:none;margin-top:1rem;">
+        <div class="section-label">Brak w bazie — pominięto</div>
+        <div class="panel" style="padding:0.75rem 1.25rem;">
+          <p class="hint" style="margin-bottom:0.75rem;">Nie znaleziono na liście. Nie zostaną zapisane.</p>
+          <div id="unknown-body"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHEET -->
+  <div id="tab-sheet" class="tab-content">
+    <div class="sheet-controls">
+      <div class="search-wrap"><input type="text" id="search-input" placeholder="Szukaj przedmiotu..." oninput="filterSheet()"></div>
+      <button onclick="loadSheet()">↺ Odśwież</button>
+      <button onclick="exportCSV()">↓ Eksportuj CSV</button>
+    </div>
+    <div class="status-bar"><div class="spinner" id="sheet-spinner"></div><span id="sheet-status"></span></div>
+    <div class="table-wrap">
+      <table id="sheet-table"><thead id="sheet-head"></thead><tbody id="sheet-body"></tbody></table>
+    </div>
+  </div>
+
+  <!-- CHARS -->
+  <div id="tab-chars" class="tab-content">
+    <div class="section-label">Postacie w gildii</div>
+    <div class="panel">
+      <div class="char-list" id="char-list"></div>
+      <div class="add-char-row">
+        <input type="text" id="new-char-input" placeholder="Nazwa nowej postaci..." onkeydown="if(event.key==='Enter')addCharacter()">
+        <button class="primary" onclick="addCharacter()">+ Dodaj</button>
+      </div>
+      <div class="msg ok" id="char-ok"></div>
+      <div class="msg err" id="char-err"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="tab-admin" class="tab-content">
+    <div id="admin-lock" class="lock-screen">
+      <h2>⚙ Panel Administratora</h2>
+      <p style="color:var(--text-d);font-size:0.95rem;margin-bottom:1.5rem;">Wprowadź hasło aby uzyskać dostęp</p>
+      <input type="password" id="admin-pwd-input" placeholder="Hasło..." onkeydown="if(event.key==='Enter')verifyAdmin()">
+      <div class="btn-row">
+        <button class="warn-btn primary" onclick="verifyAdmin()">Zaloguj</button>
+      </div>
+      <div class="msg err" id="admin-login-err" style="max-width:300px;margin:0.8rem auto 0;"></div>
+    </div>
+    <div id="admin-panel" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div class="admin-panel-label" style="margin-bottom:0;">Panel Administratora</div>
+          <p style="font-size:0.82rem;color:var(--text-m);font-style:italic;margin-top:4px;">Kliknij wartość aby edytować · zmiany zapisują się natychmiast</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="loadAdminData()">↺ Odśwież</button>
+          <button class="danger sm" onclick="adminLogout()">Wyloguj</button>
+        </div>
+      </div>
+      <div class="status-bar"><div class="spinner" id="admin-spinner"></div><span id="admin-status"></span></div>
+      <div class="msg ok" id="admin-ok"></div>
+      <div class="msg err" id="admin-err"></div>
+      <div id="admin-content"></div>
+    </div>
+  </div>
+
+  <footer>Dane przechowywane na wspólnym serwerze gildii.</footer>
+</div>
+
+<script>
+const PROXY = 'YOUR_RAILWAY_URL_HERE';
+const MASTER = ["Drewno dębowe","Drewno jesionowe","Drewno bukowe","Drewno klonowe","Drewno sosnowe","Śluzica jadalna","Wronka smaczna","Mięsnik górski","Drabant brunatny","Wiązówka księżycowa","Miodziak jadowity","Leśny książę","Świeciec opętak","Muchomor olbrzymi","Muchomor jadalny","Wróży kielich","Gryfie jajo","Pożywny banan","Zielone jabłko","Kawałek sera","Bochenek chleba","Dziki agrest","Suszone mięso","Opal","Oszlifowany opal","Ametyst","Kunsztowna forma do mozaiki","Złożona forma do mozaiki","Prosta forma do mozaiki","Sztabka brązu","Sztabka stali","Sztabka lazurostali","Sztabka elfiej stali","Sztabka cyny","Sztabka cynku","Sztabka miedzi","Sztabka mosiądzu","Sztabka żelaza","Bryłka adamantytu","Bryłka brązu","Bryłka złota","Bryłka srebra","Bryłka żelaza","Bryłka węgla","Bryłka miedzi","Bryłka cynku","Bryłka cyny","Bryłka mithrilu","Grudka gliny","Zwykły kamień","Oszlifowane smocze oko","Oszlifowany złotnik","Smocze oko","Gorzknik","Oszlifowany gorznik","Łzawnik","Oszlifowany łzawnik","Kryształ ogniskujący","Oszlifowany kryształ ogniskujący","Kryształ górski","Oszlifowany kryształ górski","Cytryn","Mgielnik","Ciernik","Szlachetnik","Krwawnik","Kawałek szkła","Zwykłe pióro","Zwykła skóra","Szlachetna skóra","Zwykła wyprawiona skóra","Szlachetna wyprawiona skóra","Zwykły ząb","Ząb drapieżnika","Pospolite pazury","Unikatowe pazury","Złocista muszla","Mała muszelka","Fragment futra","Szlachetne wyprawione futro","Ości tiruby","Kości zwierzęce","Zmurszała kość","Skrzypce kraba","Spetryfikowane szczypce kraba","Surowe udko","Kokon jedwabnika","Pospolity róg","Wełna","Rzemień","Szara perła","Biała perła","Papier","Butelka szklana","Butelka gliniana","Pasta diamentowa","Nicielnica atłasowa","Narzędzia formierskie","Olejokoktajl","Dusza wiedźmy","Wódka ordynaryjna","Mukhomork","Okowita","Płynny ogień","Czarny proch","Kolcolist","Czosnek polny","Pędy lnu","Pędy konopne","Bawełna","Ziele podróżnika","Siężygron","Bagienne ziele","Szalej","Mandragora","Pischa","Kocia miętka","Lawendzik","Aloesowiec","Nici bawełniane","Tkanina bawełniana","Wełniany filc","Nici konopne","Tkanina konopna","Szantung","Tkanina lniana","Atłas","Pusty bukłak","Pusta sakiewska","Prymitywny naszyjnik","Przeminęło z anomalią","Płócienny worek","Futrzany chwost","Pęknięta nordska tarcza","Amulet szczęścia","Stary róg","Moneta kultystów","Stary rytualny sztylet","Kościany talizman","Prosty młotek","Stary kilof","Dziwny krzemień","Złoto"];
+
+let images=[], extracted=[], sheetData=null, sortCol=0, sortAsc=true;
+let adminPwd = sessionStorage.getItem('admin_pwd') || '';
+
+// ── Tabs ─────────────────────────────────────────────
+function switchTab(name) {
+  ['scan','sheet','chars','admin'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===name);
+    document.querySelectorAll('.nav-tab')[['scan','sheet','chars','admin'].indexOf(t)].classList.toggle('active', t===name);
+  });
+  if (name==='sheet') loadSheet();
+  if (name==='chars') loadCharacters();
+  if (name==='admin') {
+    if (adminPwd) showAdminPanel();
+    else showAdminLock();
+  }
+}
+
+// ── Fuzzy ────────────────────────────────────────────
+function fuzzy(name) {
+  const n = name.toLowerCase().trim().replace(/[.…]+$/,'').trim();
+  for (const m of MASTER) if (m.toLowerCase()===n) return m;
+  for (const m of MASTER) if (m.toLowerCase().startsWith(n)) return m;
+  for (const m of MASTER) if (n.startsWith(m.toLowerCase())) return m;
+  if (n.length>=5) {
+    for (const m of MASTER) {
+      const ml=m.toLowerCase(), len=Math.min(n.length,ml.length);
+      if ([...n.slice(0,len)].filter((c,i)=>ml[i]===c).length/len>=0.85) return m;
+    }
+  }
+  for (const m of MASTER) {
+    const words=n.split(' ').filter(w=>w.length>2);
+    if (words.length && words.every(w=>m.toLowerCase().includes(w))) return m;
+  }
+  return null;
+}
+
+// ── Msgs ─────────────────────────────────────────────
+function setScanStatus(msg,loading){document.getElementById('scan-status').textContent=msg;document.getElementById('scan-spinner').style.display=loading?'block':'none';document.getElementById('scan-ok').style.display='none';document.getElementById('scan-err').style.display='none';}
+function scanOk(msg){const e=document.getElementById('scan-ok');e.textContent=msg;e.style.display='block';document.getElementById('scan-status').textContent='';document.getElementById('scan-spinner').style.display='none';}
+function scanErr(msg){const e=document.getElementById('scan-err');e.textContent=msg;e.style.display='block';document.getElementById('scan-status').textContent='';document.getElementById('scan-spinner').style.display='none';}
+function adminOk(msg){const e=document.getElementById('admin-ok');e.textContent=msg;e.style.display='block';document.getElementById('admin-err').style.display='none';document.getElementById('admin-status').textContent='';document.getElementById('admin-spinner').style.display='none';}
+function adminErr(msg){const e=document.getElementById('admin-err');e.textContent=msg;e.style.display='block';document.getElementById('admin-ok').style.display='none';document.getElementById('admin-status').textContent='';document.getElementById('admin-spinner').style.display='none';}
+function setAdminStatus(msg,loading){document.getElementById('admin-status').textContent=msg;document.getElementById('admin-spinner').style.display=loading?'block':'none';document.getElementById('admin-ok').style.display='none';document.getElementById('admin-err').style.display='none';}
+
+// ── Images ───────────────────────────────────────────
+function handleFiles(e){Array.from(e.target.files).forEach(addImage);}
+function addImage(file){
+  const mime=file.type||'image/png', reader=new FileReader();
+  reader.onload=ev=>{
+    const id=Date.now()+Math.random();
+    images.push({id,data:ev.target.result.split(',')[1],mime_type:mime,dataUrl:ev.target.result});
+    renderPreviews();
+    document.getElementById('scan-btn').disabled=false;
+    setScanStatus(images.length+' zrzut(ów) wczytanych.');
+  };
+  reader.readAsDataURL(file);
+}
+function removeImage(id){
+  images=images.filter(i=>i.id!==id); renderPreviews();
+  if(!images.length){document.getElementById('scan-btn').disabled=true;setScanStatus('');}
+  else setScanStatus(images.length+' zrzut(ów) wczytanych.');
+}
+function renderPreviews(){
+  const el=document.getElementById('previews'); el.innerHTML='';
+  images.forEach(img=>{
+    const w=document.createElement('div'); w.className='preview-item';
+    w.innerHTML=`<img src="${img.dataUrl}"><button class="rm" onclick="removeImage(${img.id})">✕</button>`;
+    el.appendChild(w);
+  });
+}
+document.addEventListener('paste',e=>{
+  Array.from(e.clipboardData.items).filter(i=>i.type.startsWith('image/')).forEach(i=>addImage(i.getAsFile()));
+});
+const zone=document.getElementById('upload-zone');
+zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')).forEach(addImage);});
+
+// ── Scan ─────────────────────────────────────────────
+async function runScan(){
+  if(!images.length) return;
+  document.getElementById('scan-btn').disabled=true;
+  setScanStatus('Skanowanie '+images.length+' zrzut(ów)...',true);
+  extracted=[];
+  try {
+    const res=await fetch(PROXY+'/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images:images.map(i=>({data:i.data,mime_type:i.mime_type}))})});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    extracted=data; renderScanResults();
+    document.getElementById('save-btn').disabled=false;
+    document.getElementById('csv-btn').disabled=false;
+  } catch(e){scanErr('Błąd: '+e.message);}
+  finally{document.getElementById('scan-btn').disabled=false;}
+}
+function renderScanResults(){
+  const body=document.getElementById('results-body'),unknownBody=document.getElementById('unknown-body');
+  body.innerHTML=''; unknownBody.innerHTML='';
+  const unmatched=[];
+  extracted.forEach(item=>{
+    const match=fuzzy(item.name);
+    if(!match){unmatched.push(item);return;}
+    const row=document.createElement('div'); row.className='result-row';
+    row.innerHTML=`<div><div>${item.name}</div>${match!==item.name?`<div class="sub-name">→ ${match}</div>`:''}</div><div class="qty">${item.quantity}</div><div><span class="badge ok">dopasowano</span></div>`;
+    body.appendChild(row);
+  });
+  document.getElementById('scan-results').style.display='block';
+  if(unmatched.length){
+    unmatched.forEach(item=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(180,140,60,0.07);font-size:0.92rem;';
+      row.innerHTML=`<span>${item.name}</span><span style="color:var(--gold-l);margin-left:1rem;">${item.quantity}</span>`;
+      unknownBody.appendChild(row);
+    });
+    document.getElementById('unknown-wrap').style.display='block';
+  } else document.getElementById('unknown-wrap').style.display='none';
+  const matched=extracted.length-unmatched.length;
+  setScanStatus(matched+' dopasowanych · '+unmatched.length+' pominięto.');
+}
+async function saveResults(){
+  const charName=document.getElementById('char-select').value;
+  if(!charName){scanErr('Wybierz postać przed zapisaniem.');return;}
+  const mapped=extracted.filter(i=>fuzzy(i.name)).map(i=>({name:fuzzy(i.name),quantity:i.quantity}));
+  if(!mapped.length){scanErr('Brak przedmiotów do zapisania.');return;}
+  document.getElementById('save-btn').disabled=true;
+  setScanStatus('Zapisywanie...',true);
+  try{
+    const res=await fetch(PROXY+'/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images:images.map(i=>({data:i.data,mime_type:i.mime_type})),character:charName,save:true})});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    scanOk('Zapisano '+mapped.length+' przedmiotów dla postaci „'+charName+'".');
+  } catch(e){scanErr('Błąd: '+e.message);}
+  finally{document.getElementById('save-btn').disabled=false;}
+}
+function copyCSV(){
+  const charName=document.getElementById('char-select').value||'Ilość';
+  let csv='Przedmiot,'+charName+'\n';
+  extracted.filter(i=>fuzzy(i.name)).forEach(i=>{csv+='"'+fuzzy(i.name)+'",'+i.quantity+'\n';});
+  navigator.clipboard.writeText(csv).then(()=>scanOk('CSV skopiowano do schowka.'));
+}
+
+// ── Sheet ────────────────────────────────────────────
+async function loadSheet(){
+  document.getElementById('sheet-spinner').style.display='block';
+  document.getElementById('sheet-status').textContent='Ładowanie...';
+  try{const res=await fetch(PROXY+'/inventory');sheetData=await res.json();renderSheet();document.getElementById('sheet-status').textContent='';}
+  catch(e){document.getElementById('sheet-status').textContent='Błąd: '+e.message;}
+  finally{document.getElementById('sheet-spinner').style.display='none';}
+}
+function renderSheet(){
+  if(!sheetData) return;
+  const {characters,items}=sheetData;
+  const query=document.getElementById('search-input').value.toLowerCase();
+  const filtered=query?items.filter(i=>i.name.toLowerCase().includes(query)):items;
+  const sorted=[...filtered].sort((a,b)=>{
+    if(sortCol===0) return sortAsc?a.name.localeCompare(b.name,'pl'):b.name.localeCompare(a.name,'pl');
+    const char=characters[sortCol-1];
+    const av=a.quantities[char.id]||0, bv=b.quantities[char.id]||0;
+    return sortAsc?av-bv:bv-av;
+  });
+  const head=document.getElementById('sheet-head'); head.innerHTML='';
+  const hr=document.createElement('tr');
+  ['Przedmiot',...characters.map(c=>c.name)].forEach((col,i)=>{
+    const th=document.createElement('th');
+    th.innerHTML=col+' <span class="sort-arrow">'+(sortCol===i?(sortAsc?'↑':'↓'):'↕')+'</span>';
+    if(sortCol===i) th.classList.add('sorted');
+    th.onclick=()=>{if(sortCol===i)sortAsc=!sortAsc;else{sortCol=i;sortAsc=true;}renderSheet();};
+    hr.appendChild(th);
+  });
+  head.appendChild(hr);
+  const body=document.getElementById('sheet-body'); body.innerHTML='';
+  if(!sorted.length){body.innerHTML='<tr class="empty-row"><td colspan="99">Brak wyników</td></tr>';return;}
+  sorted.forEach(item=>{
+    const tr=document.createElement('tr');
+    let html=`<td>${item.name}</td>`;
+    characters.forEach(c=>{const q=item.quantities[c.id];html+=`<td class="num">${q!=null&&q!==''?q:''}</td>`;});
+    tr.innerHTML=html; body.appendChild(tr);
+  });
+}
+function filterSheet(){renderSheet();}
+function exportCSV(){window.open(PROXY+'/export','_blank');}
+
+// ── Characters ───────────────────────────────────────
+async function loadCharacters(){
+  try{
+    const res=await fetch(PROXY+'/characters');
+    const chars=await res.json();
+    renderCharList(chars);
+    const sel=document.getElementById('char-select');
+    const prev=sel.value; sel.innerHTML='<option value="">— wybierz —</option>';
+    chars.forEach(c=>{const o=document.createElement('option');o.value=c.name;o.textContent=c.name;if(c.name===prev)o.selected=true;sel.appendChild(o);});
+  }catch(e){console.error(e);}
+}
+function renderCharList(chars){
+  const el=document.getElementById('char-list'); el.innerHTML='';
+  if(!chars.length){el.innerHTML='<p class="no-data">Brak postaci.</p>';return;}
+  chars.forEach(c=>{
+    const row=document.createElement('div'); row.className='char-row';
+    row.innerHTML=`<div class="char-name-text">${c.name}</div><button class="danger sm" onclick="deleteCharacter(${c.id},'${c.name}')">Usuń</button>`;
+    el.appendChild(row);
+  });
+}
+async function addCharacter(){
+  const input=document.getElementById('new-char-input'), name=input.value.trim();
+  if(!name) return;
+  document.getElementById('char-ok').style.display='none';document.getElementById('char-err').style.display='none';
+  try{
+    const res=await fetch(PROXY+'/characters',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    input.value='';
+    const ok=document.getElementById('char-ok'); ok.textContent='Dodano postać „'+name+'".'; ok.style.display='block';
+    loadCharacters();
+  }catch(e){const err=document.getElementById('char-err');err.textContent='Błąd: '+e.message;err.style.display='block';}
+}
+async function deleteCharacter(id,name){
+  if(!confirm('Usunąć postać „'+name+'" i wszystkie jej dane?')) return;
+  await fetch(PROXY+'/characters/'+id,{method:'DELETE'});
+  loadCharacters();
+}
+
+// ── Admin ─────────────────────────────────────────────
+function showAdminLock(){document.getElementById('admin-lock').style.display='block';document.getElementById('admin-panel').style.display='none';}
+function showAdminPanel(){document.getElementById('admin-lock').style.display='none';document.getElementById('admin-panel').style.display='block';loadAdminData();}
+function adminLogout(){adminPwd='';sessionStorage.removeItem('admin_pwd');showAdminLock();}
+
+async function verifyAdmin(){
+  const pwd=document.getElementById('admin-pwd-input').value;
+  const errEl=document.getElementById('admin-login-err');
+  errEl.style.display='none';
+  try{
+    const res=await fetch(PROXY+'/admin/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    adminPwd=pwd; sessionStorage.setItem('admin_pwd',pwd);
+    document.getElementById('admin-pwd-input').value='';
+    showAdminPanel();
+  }catch(e){errEl.textContent='Błędne hasło.';errEl.style.display='block';}
+}
+
+function adminHeaders(){return{'Content-Type':'application/json','X-Admin-Password':adminPwd};}
+
+async function loadAdminData(){
+  setAdminStatus('Ładowanie...',true);
+  try{
+    const res=await fetch(PROXY+'/inventory');
+    const data=await res.json();
+    renderAdminPanel(data);
+    setAdminStatus('');
+  }catch(e){adminErr('Błąd: '+e.message);}
+}
+
+function renderAdminPanel(data){
+  const {characters,items}=data;
+  const content=document.getElementById('admin-content');
+  content.innerHTML='';
+
+  characters.forEach(char=>{
+    const charItems=items.filter(i=>i.quantities[char.id]!=null);
+
+    const section=document.createElement('div');
+    section.className='admin-char-section';
+    section.innerHTML=`
+      <div class="admin-char-header">
+        <div id="char-display-${char.id}" style="display:flex;align-items:center;gap:10px;">
+          <span class="admin-char-name">${char.name}</span>
+          <button class="warn-btn sm" onclick="startRename(${char.id},'${char.name.replace(/'/g,"\\'")}')">Zmień nazwę</button>
+        </div>
+        <div id="char-rename-${char.id}" style="display:none;align-items:center;gap:8px;">
+          <input class="rename-input" id="rename-input-${char.id}" value="${char.name}" onkeydown="if(event.key==='Enter')saveRename(${char.id})">
+          <button class="warn-btn sm" onclick="saveRename(${char.id})">Zapisz</button>
+          <button class="sm" onclick="cancelRename(${char.id})">Anuluj</button>
+        </div>
+        <div class="admin-char-actions">
+          <span style="font-size:0.8rem;color:var(--text-m);font-style:italic;">${charItems.length} rekordów</span>
+          <button class="danger sm" onclick="clearCharacter(${char.id},'${char.name.replace(/'/g,"\\'")}')">Wyczyść wszystko</button>
+          <button class="danger sm" onclick="adminDeleteCharacter(${char.id},'${char.name.replace(/'/g,"\\'")}')">Usuń postać</button>
+        </div>
+      </div>`;
+
+    if(charItems.length){
+      const tableWrap=document.createElement('div');
+      tableWrap.className='admin-items-table';
+      let rows='';
+      charItems.sort((a,b)=>a.name.localeCompare(b.name,'pl')).forEach(item=>{
+        const qty=item.quantities[char.id];
+        rows+=`<tr>
+          <td>${item.name}</td>
+          <td class="num editable" id="cell-${char.id}-${btoa(encodeURIComponent(item.name))}" onclick="editCell(${char.id},'${item.name.replace(/'/g,"\\'")}',${qty},this)">${qty}</td>
+          <td style="width:60px;text-align:right;"><button class="danger sm" onclick="deleteEntry(${char.id},'${item.name.replace(/'/g,"\\'")}',this.closest('tr'))">✕</button></td>
+        </tr>`;
+      });
+      tableWrap.innerHTML=`<table><thead><tr><th style="width:100%">Przedmiot</th><th style="width:80px;text-align:right;">Ilość</th><th style="width:60px;"></th></tr></thead><tbody>${rows}</tbody></table>`;
+      section.appendChild(tableWrap);
+    } else {
+      const empty=document.createElement('div');
+      empty.style.cssText='padding:0.75rem 1rem;font-size:0.85rem;color:var(--text-m);font-style:italic;border:1px solid var(--warn-b);border-top:none;border-radius:0 0 3px 3px;';
+      empty.textContent='Brak danych dla tej postaci.';
+      section.appendChild(empty);
+    }
+    content.appendChild(section);
+  });
+
+  if(!characters.length){
+    content.innerHTML='<p class="no-data">Brak postaci w bazie.</p>';
+  }
+}
+
+function editCell(cid, itemName, currentVal, td){
+  if(td.querySelector('input')) return;
+  const orig=td.textContent;
+  td.innerHTML=`<input class="inline-edit" type="number" min="0" value="${currentVal}" onblur="saveCell(${cid},'${itemName.replace(/'/g,"\\'")}',this,${currentVal})" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=${currentVal};this.blur();}">`;
+  const inp=td.querySelector('input'); inp.focus(); inp.select();
+}
+
+async function saveCell(cid, itemName, input, origVal){
+  const newVal=parseInt(input.value);
+  if(isNaN(newVal)||newVal<0){input.parentElement.textContent=origVal;return;}
+  if(newVal===origVal){input.parentElement.textContent=origVal;return;}
+  const td=input.parentElement;
+  td.textContent='...';
+  try{
+    const res=await fetch(PROXY+'/admin/inventory/'+cid,{method:'PUT',headers:adminHeaders(),body:JSON.stringify({item_name:itemName,quantity:newVal})});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    td.textContent=newVal;
+    adminOk('Zaktualizowano: '+itemName+' → '+newVal);
+  }catch(e){td.textContent=origVal;adminErr('Błąd: '+e.message);}
+}
+
+async function deleteEntry(cid, itemName, tr){
+  if(!confirm('Usunąć „'+itemName+'"?')) return;
+  try{
+    const res=await fetch(PROXY+'/admin/inventory/'+cid+'/'+encodeURIComponent(itemName),{method:'DELETE',headers:adminHeaders()});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    tr.remove();
+    adminOk('Usunięto: '+itemName);
+  }catch(e){adminErr('Błąd: '+e.message);}
+}
+
+async function clearCharacter(cid, name){
+  if(!confirm('Wyczyścić WSZYSTKIE dane postaci „'+name+'"?')) return;
+  try{
+    await fetch(PROXY+'/admin/inventory/'+cid,{method:'DELETE',headers:adminHeaders()});
+    adminOk('Wyczyszczono inwentarz postaci „'+name+'".');
+    loadAdminData();
+  }catch(e){adminErr('Błąd: '+e.message);}
+}
+
+async function adminDeleteCharacter(cid, name){
+  if(!confirm('Usunąć postać „'+name+'" i wszystkie jej dane? Tej operacji nie można cofnąć.')) return;
+  try{
+    await fetch(PROXY+'/admin/characters/'+cid,{method:'DELETE',headers:adminHeaders()});
+    adminOk('Usunięto postać „'+name+'".');
+    loadAdminData(); loadCharacters();
+  }catch(e){adminErr('Błąd: '+e.message);}
+}
+
+function startRename(cid, name){
+  document.getElementById('char-display-'+cid).style.display='none';
+  const renameRow=document.getElementById('char-rename-'+cid);
+  renameRow.style.display='flex';
+  document.getElementById('rename-input-'+cid).focus();
+}
+function cancelRename(cid){
+  document.getElementById('char-display-'+cid).style.display='flex';
+  document.getElementById('char-rename-'+cid).style.display='none';
+}
+async function saveRename(cid){
+  const newName=document.getElementById('rename-input-'+cid).value.trim();
+  if(!newName) return;
+  try{
+    const res=await fetch(PROXY+'/admin/characters/'+cid,{method:'PUT',headers:adminHeaders(),body:JSON.stringify({name:newName})});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    adminOk('Zmieniono nazwę na „'+newName+'".');
+    loadAdminData(); loadCharacters();
+  }catch(e){adminErr('Błąd: '+e.message);}
+}
+
+// ── Init ─────────────────────────────────────────────
+loadCharacters();
+if(adminPwd) {}
+</script>
+</body>
+</html>
