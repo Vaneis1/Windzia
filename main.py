@@ -8,7 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://vaneis1.github.io", "http://localhost"])
 
 db_url = os.environ.get("DATABASE_URL", "sqlite:///inventory.db")
 if db_url.startswith("postgres://"):
