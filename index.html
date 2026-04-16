@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wandzi Windzi — Skaner Inwentarza</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ══ LOGIN SCREEN ══════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="emblem">⚔ ✦ ⚔</div>
+    <h2>Wandzi Windzi</h2>
+    <p class="tagline">Skaner Inwentarza Gildii</p>
+
+    <!-- Login form -->
+    <div id="login-form">
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="twoj@email.com"
+          onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <div class="login-field">
+        <label>Hasło</label>
+        <input type="password" id="login-pwd" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter') doLogin()">
+        <span class="forgot-link" onclick="showForgot()">Zapomniałem hasła</span>
+      </div>
+      <button class="primary" style="width:100%;margin-top:0.5rem;" onclick="doLogin()">
+        Zaloguj się
+      </button>
+      <div class="msg err" id="login-err"></div>
+      <div class="msg ok"  id="login-ok"></div>
+    </div>
+
+    <!-- Forgot password form -->
+    <div id="forgot-form" style="display:none;">
+      <div class="login-field">
+        <label>Twój email</label>
+        <input type="email" id="forgot-email" placeholder="twoj@email.com"
+          onkeydown="if(event.key==='Enter') doForgot()">
+      </div>
+      <button class="primary" style="width:100%;margin-top:0.5rem;" onclick="doForgot()">
+        Wyślij link resetujący
+      </button>
+      <div class="msg ok"  id="forgot-ok"></div>
+      <div class="msg err" id="forgot-err"></div>
+      <span class="forgot-link" style="margin-top:0.8rem;display:block;" onclick="showLogin()">
+        ← Wróć do logowania
+      </span>
+    </div>
+
+    <!-- Reset password form -->
+    <div id="reset-form" style="display:none;">
+      <div class="login-field">
+        <label>Nowe hasło</label>
+        <input type="password" id="reset-pwd" placeholder="min. 6 znaków"
+          onkeydown="if(event.key==='Enter') doReset()">
+      </div>
+      <button class="primary" style="width:100%;margin-top:0.5rem;" onclick="doReset()">
+        Ustaw nowe hasło
+      </button>
+      <div class="msg ok"  id="reset-ok"></div>
+      <div class="msg err" id="reset-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP SCREEN ════════════════════════════════════════════════════════════ -->
+<div id="app-screen" style="display:none;">
+<div class="app">
+
+  <header>
+    <div style="width:180px;"></div>
+    <div class="header-title">
+      <p>Wandzi Windzi</p>
+      <h1>Skaner Inwentarza</h1>
+    </div>
+    <div class="header-user">
+      <span>Zalogowano jako <strong id="user-display"></strong></span>
+      <button class="sm" onclick="doLogout()">Wyloguj</button>
+    </div>
+  </header>
+
+  <nav>
+    <div class="nav-tab active" onclick="switchTab('scan')">⟳ Skanuj</div>
+    <div class="nav-tab"        onclick="switchTab('sheet')">⊞ Arkusz</div>
+    <div class="nav-tab"        onclick="switchTab('chars')">⚔ Postacie</div>
+    <div class="nav-tab admin-t" id="admin-nav-tab" style="display:none;"
+      onclick="switchTab('admin')">⚙ Admin</div>
+  </nav>
+
+  <!-- ── SCAN ──────────────────────────────────────────────────────────── -->
+  <div id="tab-scan" class="tab-content active">
+
+    <div class="section-label">Postać</div>
+    <div class="panel">
+      <div class="field">
+        <label>Wybierz postać</label>
+        <select id="char-select"><option value="">— wybierz —</option></select>
+      </div>
+    </div>
+
+    <div class="section-label">Zrzuty ekranu</div>
+    <div class="panel">
+      <div class="upload-zone" id="upload-zone"
+        onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept="image/*" multiple
+          style="display:none"
+          onchange="Array.from(this.files).forEach(f => Scan.addImage(f)); this.value='';">
+        <p><strong>Kliknij, przeciągnij lub wklej</strong> zrzuty ekranu (Ctrl+V)</p>
+        <p style="font-size:0.82rem;margin-top:3px;">PNG, JPG, WebP · wiele plików naraz</p>
+      </div>
+      <div class="previews" id="previews"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="primary" id="scan-btn" onclick="Scan.run()" disabled>⟳ Skanuj inwentarz</button>
+      <button id="save-btn" onclick="Scan.save()" disabled>✓ Zapisz do bazy</button>
+      <button id="csv-btn"  onclick="Scan.copyCSV()" disabled>⎘ Kopiuj CSV</button>
+    </div>
+    <div class="status-bar">
+      <div class="spinner" id="scan-spinner"></div>
+      <span id="scan-status"></span>
+    </div>
+    <div class="msg ok"  id="scan-ok"></div>
+    <div class="msg err" id="scan-err"></div>
+
+    <div id="scan-results" style="display:none; margin-top:1.2rem;">
+      <div class="section-label">Dopasowane</div>
+      <div class="panel" style="padding:0;">
+        <div class="results-hdr">
+          <span>Przedmiot</span>
+          <span style="text-align:right;">Ilość</span>
+          <span>Kategoria</span>
+        </div>
+        <div id="results-body"></div>
+      </div>
+      <div id="unknown-wrap" style="display:none; margin-top:0.8rem;">
+        <div class="section-label">Nierozpoznane — pominięto</div>
+        <div class="panel" style="padding:0.7rem 1.2rem;">
+          <p class="hint" style="margin-bottom:0.6rem;">
+            Nie znaleziono w bazie surowców. Admin może dodać aliasy.
+          </p>
+          <div id="unknown-body"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SHEET ─────────────────────────────────────────────────────────── -->
+  <div id="tab-sheet" class="tab-content">
+    <div class="sheet-controls">
+      <div class="search-wrap">
+        <input type="text" id="search-input" placeholder="Szukaj przedmiotu..."
+          oninput="Sheet.render()">
+      </div>
+      <button onclick="Sheet.load()">↺ Odśwież</button>
+      <button onclick="Sheet.exportCSV()">↓ CSV</button>
+    </div>
+    <div class="cat-filter" id="cat-filter"></div>
+    <div class="status-bar">
+      <div class="spinner" id="sheet-spinner"></div>
+      <span id="sheet-status"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead id="sheet-head"></thead>
+        <tbody id="sheet-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── CHARACTERS ────────────────────────────────────────────────────── -->
+  <div id="tab-chars" class="tab-content">
+    <div class="section-label">Moje postacie</div>
+    <div class="panel">
+      <div class="char-grid" id="char-grid"></div>
+      <div class="add-row">
+        <input type="text" id="new-char-input" placeholder="Nazwa nowej postaci..."
+          onkeydown="if(event.key==='Enter') Characters.add()">
+        <button class="primary" onclick="Characters.add()">+ Dodaj</button>
+      </div>
+      <div class="msg ok"  id="char-ok"></div>
+      <div class="msg err" id="char-err"></div>
+    </div>
+  </div>
+
+  <!-- ── ADMIN ──────────────────────────────────────────────────────────── -->
+  <div id="tab-admin" class="tab-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:1.2rem;flex-wrap:wrap;gap:8px;">
+      <div class="admin-label" style="margin:0;flex:1;">Panel Administratora</div>
+      <button class="sm" onclick="Admin.load()">↺ Odśwież</button>
+    </div>
+    <div class="msg ok"  id="admin-ok"></div>
+    <div class="msg err" id="admin-err"></div>
+
+    <div class="admin-tabs">
+      <div class="admin-tab active" onclick="Admin.switchTab('owners')">Użytkownicy</div>
+      <div class="admin-tab"        onclick="Admin.switchTab('items')">Surowce</div>
+      <div class="admin-tab"        onclick="Admin.switchTab('inventory')">Inwentarz</div>
+    </div>
+
+    <!-- Owners -->
+    <div id="atab-owners" class="admin-content active">
+      <div id="owners-list"></div>
+      <div class="admin-label" style="margin-top:1.2rem;">Dodaj użytkownika</div>
+      <div class="panel">
+        <div class="row2">
+          <div class="field">
+            <label>Nazwa użytkownika</label>
+            <input type="text" id="new-owner-username" placeholder="np. Wandzia">
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="new-owner-email" placeholder="email@...">
+          </div>
+        </div>
+        <div class="row2" style="margin-top:0.8rem;">
+          <div class="field">
+            <label>Hasło</label>
+            <input type="password" id="new-owner-pwd" placeholder="min. 6 znaków">
+          </div>
+          <div class="field">
+            <label>Rola</label>
+            <select id="new-owner-role">
+              <option value="owner">Owner</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="warn-btn primary" onclick="Admin.createOwner()">+ Utwórz konto</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items -->
+    <div id="atab-items" class="admin-content">
+      <div class="sheet-controls" style="margin-bottom:0.8rem;">
+        <div class="search-wrap">
+          <input type="text" id="item-search" placeholder="Szukaj surowca..."
+            oninput="Admin._renderItems()">
+        </div>
+        <select id="item-cat-filter" onchange="Admin._renderItems()"
+          style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;
+            color:var(--text);font-family:'Crimson Pro',serif;font-size:0.92rem;
+            padding:7px 11px;outline:none;">
+          <option value="">Wszystkie kategorie</option>
+        </select>
+      </div>
+      <div id="items-list"
+        style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;">
+      </div>
+      <div class="admin-label" style="margin-top:1.2rem;">Dodaj surowiec</div>
+      <div class="panel">
+        <div class="row2">
+          <div class="field">
+            <label>Nazwa</label>
+            <input type="text" id="new-item-name" placeholder="np. Bryłka platyny">
+          </div>
+          <div class="field">
+            <label>Kategoria</label>
+            <input type="text" id="new-item-cat" placeholder="np. KOPALINY">
+          </div>
+        </div>
+        <div class="field" style="margin-top:0.8rem;">
+          <label>Aliasy (oddzielone przecinkami)</label>
+          <input type="text" id="new-item-aliases" placeholder="np. Brylka platyny, Bryłka plat...">
+        </div>
+        <div class="btn-row">
+          <button class="warn-btn primary" onclick="Admin.createItem()">+ Dodaj surowiec</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory -->
+    <div id="atab-inventory" class="admin-content">
+      <div class="field" style="margin-bottom:1rem;max-width:300px;">
+        <label>Wybierz postać</label>
+        <select id="admin-char-select" onchange="Admin.loadInventory()">
+          <option value="">— wybierz —</option>
+        </select>
+      </div>
+      <div id="admin-inv-wrap"></div>
+    </div>
+  </div>
+
+</div><!-- /.app -->
+<footer>Dane przechowywane na wspólnym serwerze gildii · Wandzi Windzi</footer>
+</div><!-- /#app-screen -->
+
+<!-- ══ SCRIPTS — load order matters ══════════════════════════════════════════ -->
+<script src="js/config.js"></script>
+<script src="js/state.js"></script>
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/scan.js"></script>
+<script src="js/sheet.js"></script>
+<script src="js/characters.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
