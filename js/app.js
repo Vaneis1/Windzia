@@ -25,7 +25,7 @@ const App = {
  
     if (name === 'sheet') Sheet.load();
     if (name === 'chars') Characters.load();
-    if (name === 'admin') Admin.load();
+    if (name === 'admin') { Admin.load(); Admin.loadProfile(); }
   },
 };
  
