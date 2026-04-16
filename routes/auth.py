@@ -1,135 +1,117 @@
-import os
-import secrets
-from datetime import datetime, timedelta
+// auth.js — Login, logout, password reset.
+const Auth = {
+  // ── View switching ───────────────────────────────────────────────────────
+  showLogin() {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app-screen').style.display = 'none';
+    this._showForm('login-form');
+  },
  
-import httpx
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token, jwt_required
+  showApp() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'block';
+    document.getElementById('user-display').textContent =
+      (State.currentUser.display_name || State.currentUser.username) +
+      (State.currentUser.role === 'admin' ? ' (' + (State.currentUser.display_role || State.currentUser.role) + ')' : '');
+    if (State.currentUser.role === 'admin') {
+      UI.show('admin-nav-tab');
+    }
+  },
  
-from models import db, Owner
-from utils import hash_password, check_password, get_current_owner, require_auth
+  _showForm(id) {
+    ['login-form', 'forgot-form', 'reset-form'].forEach(f => {
+      const el = document.getElementById(f);
+      if (el) el.style.display = f === id ? 'block' : 'none';
+    });
+  },
  
-auth_bp = Blueprint("auth", __name__)
+  showForgot() { this._showForm('forgot-form'); },
+  showLoginForm() { this._showForm('login-form'); },
  
+  showResetForm(token) {
+    const form = document.getElementById('reset-form');
+    if (form) { form.dataset.token = token; form.style.display = 'block'; }
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('forgot-form').style.display = 'none';
+  },
  
-@auth_bp.route("/login", methods=["POST"])
-def login():
-    body = request.get_json(silent=True) or {}
-    email = body.get("email", "").lower().strip()
-    password = body.get("password", "")
+  // ── Actions ──────────────────────────────────────────────────────────────
+  async login() {
+    const email = document.getElementById('login-email').value.trim();
+    const pwd = document.getElementById('login-pwd').value;
+    UI.clearMsg('login-ok', 'login-err');
+    try {
+      const data = await API.post('/auth/login', { email, password: pwd });
+      if (data.error) throw new Error(data.error);
+      State.setToken(data.token);
+      State.setUser({ id: data.id, username: data.username, display_name: data.display_name || data.username, role: data.role, display_role: data.display_role || data.role });
+      this.showApp();
+      App.onLogin();
+    } catch (e) {
+      UI.err('login-ok', 'login-err', e.message);
+    }
+  },
  
-    if not email or not password:
-        return jsonify({"error": "Email i hasło są wymagane"}), 400
+  logout() {
+    State.clearSession();
+    this.showLogin();
+  },
  
-    owner = Owner.query.filter_by(email=email).first()
-    if not owner or not check_password(password, owner.password_hash):
-        return jsonify({"error": "Nieprawidłowy email lub hasło"}), 401
+  async forgotPassword() {
+    const email = document.getElementById('forgot-email').value.trim();
+    UI.clearMsg('forgot-ok', 'forgot-err');
+    try {
+      await API.post('/auth/forgot-password', { email });
+      UI.ok('forgot-ok', 'forgot-err', 'Link wysłany! Sprawdź swoją skrzynkę email.');
+    } catch (e) {
+      UI.err('forgot-ok', 'forgot-err', e.message);
+    }
+  },
  
-    token = create_access_token(identity=str(owner.id))
-    return jsonify({
-        "token": token,
-        "role": owner.role,
-        "display_role": owner.display_role or owner.role,
-        "username": owner.username,
-        "display_name": owner.display_name or owner.username,
-        "id": owner.id,
-    })
+  async resetPassword() {
+    const form = document.getElementById('reset-form');
+    const token = form?.dataset.token || '';
+    const pwd = document.getElementById('reset-pwd').value;
+    UI.clearMsg('reset-ok', 'reset-err');
+    try {
+      const data = await API.post('/auth/reset-password', { token, password: pwd });
+      if (data.error) throw new Error(data.error);
+      UI.ok('reset-ok', 'reset-err', 'Hasło zmienione! Możesz się teraz zalogować.');
+      setTimeout(() => {
+        window.history.replaceState({}, '', window.location.pathname);
+        this._showForm('login-form');
+      }, 2000);
+    } catch (e) {
+      UI.err('reset-ok', 'reset-err', e.message);
+    }
+  },
  
+  // ── Init ─────────────────────────────────────────────────────────────────
+  async init() {
+    const params = new URLSearchParams(window.location.search);
+    const resetToken = params.get('reset');
  
-@auth_bp.route("/me", methods=["GET"])
-@require_auth
-def me():
-    owner = get_current_owner()
-    return jsonify({
-        "id": owner.id,
-        "username": owner.username,
-        "display_name": owner.display_name or owner.username,
-        "email": owner.email,
-        "role": owner.role,
-        "display_role": owner.display_role or owner.role,
-    })
+    if (resetToken) {
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('app-screen').style.display = 'none';
+      this.showResetForm(resetToken);
+      return false; // don't continue to app
+    }
  
+    if (State.token) {
+      try {
+        const data = await API.get('/auth/me');
+        if (data.id) {
+          State.setUser({ ...data, display_name: data.display_name || data.username, display_role: data.display_role || data.role });
+          this.showApp();
+          return true;
+        }
+      } catch (e) {
+        // Token invalid — fall through to login
+      }
+    }
  
-@auth_bp.route("/forgot-password", methods=["POST"])
-def forgot_password():
-    body = request.get_json(silent=True) or {}
-    email = body.get("email", "").lower().strip()
- 
-    # Always return ok — don't reveal whether email exists
-    owner = Owner.query.filter_by(email=email).first()
-    if not owner:
-        return jsonify({"ok": True})
- 
-    token = secrets.token_urlsafe(32)
-    owner.reset_token = token
-    owner.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
-    db.session.commit()
- 
-    frontend_url = os.environ.get("FRONTEND_URL", "https://vaneis1.github.io/Windzia")
-    reset_url = f"{frontend_url}?reset={token}"
-    resend_key = os.environ.get("RESEND_API_KEY", "")
- 
-    if resend_key:
-        try:
-            httpx.post(
-                "https://api.resend.com/emails",
-                headers={
-                    "Authorization": f"Bearer {resend_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "from": "Wandzi Windzi <noreply@resend.dev>",
-                    "to": [email],
-                    "subject": "Reset hasła — Wandzi Windzi",
-                    "html": (
-                        f"<p>Kliknij poniższy link aby zresetować hasło "
-                        f"(ważny 1 godzinę):</p>"
-                        f"<p><a href='{reset_url}'>{reset_url}</a></p>"
-                    ),
-                },
-                timeout=10,
-            )
-        except Exception:
-            pass  # Email failure should not block the response
- 
-    return jsonify({"ok": True})
- 
- 
-@auth_bp.route("/reset-password", methods=["POST"])
-def reset_password():
-    body = request.get_json(silent=True) or {}
-    token = body.get("token", "")
-    new_password = body.get("password", "")
- 
-    if len(new_password) < 6:
-        return jsonify({"error": "Hasło musi mieć minimum 6 znaków"}), 400
- 
-    owner = Owner.query.filter_by(reset_token=token).first()
-    if not owner or not owner.reset_token_expires:
-        return jsonify({"error": "Token jest nieprawidłowy"}), 400
-    if owner.reset_token_expires < datetime.utcnow():
-        return jsonify({"error": "Token wygasł — wygeneruj nowy"}), 400
- 
-    owner.password_hash = hash_password(new_password)
-    owner.reset_token = None
-    owner.reset_token_expires = None
-    db.session.commit()
-    return jsonify({"ok": True})
- 
- 
-@auth_bp.route("/profile", methods=["PUT"])
-@require_auth
-def update_profile():
-    owner = get_current_owner()
-    body = request.get_json(silent=True) or {}
-    if "display_name" in body:
-        v = body["display_name"].strip()
-        owner.display_name = v if v else None
-    if "display_role" in body:
-        v = body["display_role"].strip()
-        owner.display_role = v if v else None
-    db.session.commit()
-    return jsonify({
-        "display_name": owner.display_name or owner.username,
-        "display_role": owner.display_role or owner.role,
-    })
+    this.showLogin();
+    return false;
+  },
+};
