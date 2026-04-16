@@ -98,8 +98,12 @@ const Scan = {
       State.scanUnmatched = data.unmatched || [];
       this._renderResults();
       UI.enable('save-btn', 'csv-btn');
+      UI.setStatus('scan-status', 'scan-spinner',
+        State.scanMatched.length + ' dopasowanych · ' +
+        State.scanUnmatched.length + ' pominięto.');
     } catch (e) {
       UI.err('scan-ok', 'scan-err', 'Błąd: ' + e.message);
+      UI.setStatus('scan-status', 'scan-spinner', '');
     } finally {
       UI.enable('scan-btn');
     }
@@ -122,13 +126,25 @@ const Scan = {
         save: true,
       });
       if (data.error) throw new Error(data.error);
+      UI.setStatus('scan-status', 'scan-spinner', '');
       UI.ok('scan-ok', 'scan-err',
         'Zapisano ' + State.scanMatched.length + ' przedmiotów.');
     } catch (e) {
       UI.err('scan-ok', 'scan-err', 'Błąd: ' + e.message);
+      UI.setStatus('scan-status', 'scan-spinner', '');
     } finally {
       UI.enable('save-btn');
     }
+  },
+ 
+  // Rescan with current images — use after adding new items to DB
+  async rescan() {
+    if (!State.images.length) {
+      UI.err('scan-ok', 'scan-err', 'Brak zrzutów do ponownego skanowania.');
+      return;
+    }
+    UI.hide('scan-results');
+    await this.run();
   },
  
   copyCSV() {
@@ -178,13 +194,10 @@ const Scan = {
         unknownBody.appendChild(row);
       });
       UI.show('unknown-wrap');
+      UI.show('rescan-wrap');
     } else {
       UI.hide('unknown-wrap');
+      UI.hide('rescan-wrap');
     }
- 
-    const matched = State.scanMatched.length;
-    const unmatched = State.scanUnmatched.length;
-    UI.setStatus('scan-status', 'scan-spinner',
-      matched + ' dopasowanych · ' + unmatched + ' pominięto.');
   },
 };
