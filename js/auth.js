@@ -11,8 +11,8 @@ const Auth = {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'block';
     document.getElementById('user-display').textContent =
-      State.currentUser.username +
-      (State.currentUser.role === 'admin' ? ' (admin)' : '');
+      (State.currentUser.display_name || State.currentUser.username) +
+      (State.currentUser.role === 'admin' ? ' (' + (State.currentUser.display_role || State.currentUser.role) + ')' : '');
     if (State.currentUser.role === 'admin') {
       UI.show('admin-nav-tab');
     }
@@ -44,7 +44,7 @@ const Auth = {
       const data = await API.post('/auth/login', { email, password: pwd });
       if (data.error) throw new Error(data.error);
       State.setToken(data.token);
-      State.setUser({ id: data.id, username: data.username, role: data.role });
+      State.setUser({ id: data.id, username: data.username, display_name: data.display_name || data.username, role: data.role, display_role: data.display_role || data.role });
       this.showApp();
       App.onLogin();
     } catch (e) {
@@ -102,7 +102,7 @@ const Auth = {
       try {
         const data = await API.get('/auth/me');
         if (data.id) {
-          State.setUser(data);
+          State.setUser({ ...data, display_name: data.display_name || data.username, display_role: data.display_role || data.role });
           this.showApp();
           return true;
         }
