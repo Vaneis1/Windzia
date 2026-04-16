@@ -14,8 +14,7 @@ from flask_jwt_extended import (
 )
 
 app = Flask(__name__)
-CORS(app, origins=["https://vaneis1.github.io", "http://localhost", "http://127.0.0.1"])
-
+CORS(app)
 # ── Config ────────────────────────────────────────────
 db_url = os.environ.get("DATABASE_URL", "sqlite:///inventory.db")
 if db_url.startswith("postgres://"):
