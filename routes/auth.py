@@ -29,7 +29,9 @@ def login():
     return jsonify({
         "token": token,
         "role": owner.role,
+        "display_role": owner.display_role or owner.role,
         "username": owner.username,
+        "display_name": owner.display_name or owner.username,
         "id": owner.id,
     })
  
@@ -41,8 +43,10 @@ def me():
     return jsonify({
         "id": owner.id,
         "username": owner.username,
+        "display_name": owner.display_name or owner.username,
         "email": owner.email,
         "role": owner.role,
+        "display_role": owner.display_role or owner.role,
     })
  
  
@@ -111,3 +115,21 @@ def reset_password():
     owner.reset_token_expires = None
     db.session.commit()
     return jsonify({"ok": True})
+ 
+ 
+@auth_bp.route("/profile", methods=["PUT"])
+@require_auth
+def update_profile():
+    owner = get_current_owner()
+    body = request.get_json(silent=True) or {}
+    if "display_name" in body:
+        v = body["display_name"].strip()
+        owner.display_name = v if v else None
+    if "display_role" in body:
+        v = body["display_role"].strip()
+        owner.display_role = v if v else None
+    db.session.commit()
+    return jsonify({
+        "display_name": owner.display_name or owner.username,
+        "display_role": owner.display_role or owner.role,
+    })
