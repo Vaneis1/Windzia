@@ -1,0 +1,77 @@
+// characters.js — Character CRUD and select population.
+const Characters = {
+  async load() {
+    try {
+      const chars = await API.get('/characters');
+      if (!Array.isArray(chars)) return;
+      this._renderGrid(chars);
+      this._populateSelects(chars);
+    } catch (e) {
+      console.error('loadCharacters:', e.message);
+    }
+  },
+
+  _renderGrid(chars) {
+    const el = document.getElementById('char-grid');
+    if (!el) return;
+    el.innerHTML = '';
+    if (!chars.length) {
+      el.innerHTML =
+        '<p style="color:var(--text-m);font-style:italic;padding:0.5rem;">' +
+        'Brak postaci. Dodaj pierwszą poniżej.</p>';
+      return;
+    }
+    chars.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'char-card';
+      card.innerHTML = `
+        <div class="char-info">
+          <div class="char-name">${c.name}</div>
+          <div class="char-owner">${c.owner_username || ''}</div>
+        </div>
+        <button class="danger sm"
+          onclick="Characters.delete(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
+          Usuń
+        </button>`;
+      el.appendChild(card);
+    });
+  },
+
+  _populateSelects(chars) {
+    const isAdmin = State.currentUser?.role === 'admin';
+    const labelFn = c => c.name + (isAdmin && c.owner_username ? ` (${c.owner_username})` : '');
+    const valueFn = c => c.id;
+
+    ['char-select', 'admin-char-select'].forEach(id => {
+      const prev = document.getElementById(id)?.value;
+      UI.populateSelect(id, chars, labelFn, valueFn, prev);
+    });
+  },
+
+  async add() {
+    const input = document.getElementById('new-char-input');
+    const name = input?.value.trim();
+    if (!name) return;
+    UI.clearMsg('char-ok', 'char-err');
+    try {
+      const data = await API.post('/characters', { name });
+      if (data.error) throw new Error(data.error);
+      if (input) input.value = '';
+      UI.ok('char-ok', 'char-err', `Dodano „${name}".`);
+      await this.load();
+    } catch (e) {
+      UI.err('char-ok', 'char-err', 'Błąd: ' + e.message);
+    }
+  },
+
+  async delete(id, name) {
+    if (!confirm(`Usunąć postać „${name}" i wszystkie jej dane?`)) return;
+    try {
+      const data = await API.delete('/characters/' + id);
+      if (data.error) throw new Error(data.error);
+      await this.load();
+    } catch (e) {
+      UI.err('char-ok', 'char-err', 'Błąd: ' + e.message);
+    }
+  },
+};
