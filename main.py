@@ -191,7 +191,7 @@ def login():
     owner = Owner.query.filter_by(email=body.get("email","").lower().strip()).first()
     if not owner or not check_password(body.get("password",""), owner.password_hash):
         return jsonify({"error": "Nieprawidłowy email lub hasło"}), 401
-token = create_access_token(identity=str(owner.id))
+    token = create_access_token(identity=str(owner.id))
     return jsonify({"token": token, "role": owner.role, "username": owner.username, "id": owner.id})
 
 @app.route("/auth/me", methods=["GET"])
