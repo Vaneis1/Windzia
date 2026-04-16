@@ -1,4 +1,4 @@
-// admin.js — Admin panel: owners, items, inventory editing.
+// admin.js — Admin panel: owners, items, inventory editing, profile settings.
 const Admin = {
   activeTab: 'owners',
  
@@ -10,26 +10,24 @@ const Admin = {
  
   switchTab(name) {
     this.activeTab = name;
-    ['owners', 'items', 'inventory'].forEach(t => {
+    ['owners', 'items', 'inventory', 'profile'].forEach(t => {
       document.getElementById('atab-' + t)?.classList.toggle('active', t === name);
-      document.querySelectorAll('.admin-tab').forEach((el, i) => {
-        el.classList.toggle('active', ['owners', 'items', 'inventory'][i] === name);
-      });
+    });
+    document.querySelectorAll('.admin-tab').forEach((el, i) => {
+      el.classList.toggle('active', ['owners', 'items', 'inventory', 'profile'][i] === name);
     });
   },
  
   _ok(msg) {
     const el = document.getElementById('admin-ok');
     if (!el) return;
-    el.textContent = msg;
-    el.style.display = 'block';
+    el.textContent = msg; el.style.display = 'block';
     setTimeout(() => { el.style.display = 'none'; }, 3000);
   },
   _err(msg) {
     const el = document.getElementById('admin-err');
     if (!el) return;
-    el.textContent = msg;
-    el.style.display = 'block';
+    el.textContent = msg; el.style.display = 'block';
   },
  
   // ── Owners ───────────────────────────────────────────────────────────────
@@ -38,9 +36,7 @@ const Admin = {
       const owners = await API.get('/admin/owners');
       if (!Array.isArray(owners)) throw new Error(owners?.error || 'Błąd serwera');
       this._renderOwners(owners);
-    } catch (e) {
-      this._err('Błąd ładowania użytkowników: ' + e.message);
-    }
+    } catch (e) { this._err('Błąd ładowania użytkowników: ' + e.message); }
   },
  
   _renderOwners(owners) {
@@ -53,20 +49,20 @@ const Admin = {
       row.innerHTML = `
         <div class="owner-info">
           <div class="owner-name">
-            ${o.username}
+            ${o.display_name || o.username}
             <span style="font-size:0.72rem;color:var(--warn-t);margin-left:6px;">
-              ${o.role}
+              ${o.display_role || o.role}
             </span>
           </div>
           <div class="owner-meta">${o.email} · ${o.character_count} postaci</div>
         </div>
         <div class="owner-actions">
           <button class="sm warn-btn"
-            onclick="Admin.resetPassword(${o.id}, '${o.username.replace(/'/g, "\\'")}')">
+            onclick="Admin.resetPassword(${o.id}, '${(o.display_name||o.username).replace(/'/g,"\\'")}')">
             Reset hasła
           </button>
           <button class="danger sm"
-            onclick="Admin.deleteOwner(${o.id}, '${o.username.replace(/'/g, "\\'")}')">
+            onclick="Admin.deleteOwner(${o.id}, '${(o.display_name||o.username).replace(/'/g,"\\'")}')">
             Usuń
           </button>
         </div>`;
@@ -119,15 +115,30 @@ const Admin = {
       State.allItemsAdmin = items;
  
       const cats = [...new Set(items.map(i => i.category))].sort();
-      const sel = document.getElementById('item-cat-filter');
-      if (sel) {
-        sel.innerHTML = '<option value="">Wszystkie kategorie</option>';
+ 
+      // Populate filter select
+      const filterSel = document.getElementById('item-cat-filter');
+      if (filterSel) {
+        filterSel.innerHTML = '<option value="">Wszystkie kategorie</option>';
         cats.forEach(c => {
           const o = document.createElement('option');
           o.value = c; o.textContent = c;
-          sel.appendChild(o);
+          filterSel.appendChild(o);
         });
       }
+ 
+      // Populate new item category select
+      const catSel = document.getElementById('new-item-cat-select');
+      if (catSel) {
+        catSel.innerHTML = '<option value="">— wybierz kategorię —</option>';
+        cats.forEach(c => {
+          const o = document.createElement('option');
+          o.value = c; o.textContent = c;
+          catSel.appendChild(o);
+        });
+        catSel.innerHTML += '<option value="__new__">+ Dodaj nową kategorię</option>';
+      }
+ 
       this._renderItems();
     } catch (e) { this._err('Błąd ładowania surowców: ' + e.message); }
   },
@@ -162,17 +173,32 @@ const Admin = {
         </div>
         <div class="item-actions">
           <button class="sm warn-btn"
-            onclick="Admin.editAliases(${item.id}, '${item.name.replace(/'/g, "\\'")}',
-              '${(item.aliases || []).join(',').replace(/'/g, "\\'")}')">
+            onclick="Admin.editAliases(${item.id}, '${item.name.replace(/'/g,"\\'")}',
+              '${(item.aliases||[]).join(',').replace(/'/g,"\\'")}')">
             Aliasy
           </button>
           <button class="danger sm"
-            onclick="Admin.deleteItem(${item.id}, '${item.name.replace(/'/g, "\\'")}')">
+            onclick="Admin.deleteItem(${item.id}, '${item.name.replace(/'/g,"\\'")}')">
             Usuń
           </button>
         </div>`;
       el.appendChild(row);
     });
+  },
+ 
+  onCatSelectChange() {
+    const sel = document.getElementById('new-item-cat-select');
+    const customWrap = document.getElementById('new-item-cat-custom-wrap');
+    if (!sel || !customWrap) return;
+    customWrap.style.display = sel.value === '__new__' ? 'block' : 'none';
+  },
+ 
+  _getSelectedCategory() {
+    const sel = document.getElementById('new-item-cat-select');
+    if (sel?.value === '__new__') {
+      return (document.getElementById('new-item-cat-custom')?.value || '').trim().toUpperCase();
+    }
+    return sel?.value || '';
   },
  
   async editAliases(id, name, currentAliases) {
@@ -189,7 +215,7 @@ const Admin = {
  
   async createItem() {
     const name = document.getElementById('new-item-name')?.value.trim();
-    const category = document.getElementById('new-item-cat')?.value.trim().toUpperCase();
+    const category = this._getSelectedCategory();
     const aliasStr = document.getElementById('new-item-aliases')?.value || '';
     const aliases = aliasStr.split(',').map(a => a.trim()).filter(Boolean);
     if (!name || !category) { this._err('Podaj nazwę i kategorię.'); return; }
@@ -199,6 +225,9 @@ const Admin = {
       this._ok(`Dodano „${name}".`);
       document.getElementById('new-item-name').value = '';
       document.getElementById('new-item-aliases').value = '';
+      if (document.getElementById('new-item-cat-custom')) {
+        document.getElementById('new-item-cat-custom').value = '';
+      }
       await this.loadItems();
     } catch (e) { this._err('Błąd: ' + e.message); }
   },
@@ -225,7 +254,7 @@ const Admin = {
       if (data.error) throw new Error(data.error);
       const chars = data.characters || [];
       const items = data.items || [];
-      const charItems = items.filter(i => i.quantities[String(cid)] > 0);
+      const charItems = items.filter(i => (i.quantities[String(cid)] || 0) > 0);
  
       if (!charItems.length) {
         wrap.innerHTML = '<p style="color:var(--text-m);font-style:italic;padding:0.5rem;">Brak danych.</p>';
@@ -235,14 +264,12 @@ const Admin = {
       let html = `<div style="border:1px solid var(--warn-b);border-radius:4px;overflow:hidden;">
         <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
         <thead><tr>
-          <th style="background:rgba(133,80,160,0.15);color:var(--warn-t);
-            font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.08em;
-            text-transform:uppercase;padding:7px 10px;text-align:left;
-            border-bottom:1px solid var(--warn-b);">Przedmiot</th>
-          <th style="background:rgba(133,80,160,0.15);color:var(--warn-t);
-            font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.08em;
-            text-transform:uppercase;padding:7px 10px;text-align:right;
-            border-bottom:1px solid var(--warn-b);width:90px;">Ilość</th>
+          <th style="background:rgba(133,80,160,0.15);color:var(--warn-t);font-family:'Cinzel',serif;
+            font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;padding:7px 10px;
+            text-align:left;border-bottom:1px solid var(--warn-b);">Przedmiot</th>
+          <th style="background:rgba(133,80,160,0.15);color:var(--warn-t);font-family:'Cinzel',serif;
+            font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;padding:7px 10px;
+            text-align:right;border-bottom:1px solid var(--warn-b);width:90px;">Ilość</th>
           <th style="background:rgba(133,80,160,0.15);padding:7px 10px;
             border-bottom:1px solid var(--warn-b);width:60px;"></th>
         </tr></thead><tbody>`;
@@ -283,8 +310,7 @@ const Admin = {
     try {
       const data = await API.put(`/admin/inventory/${cid}/${itemId}`, { quantity: newVal });
       if (data.error) throw new Error(data.error);
-      td.textContent = newVal;
-      this._ok('Zaktualizowano.');
+      td.textContent = newVal; this._ok('Zaktualizowano.');
     } catch (e) { td.textContent = origVal; this._err('Błąd: ' + e.message); }
   },
  
@@ -293,8 +319,34 @@ const Admin = {
     try {
       const data = await API.delete(`/admin/inventory/${cid}/${itemId}`);
       if (data.error) throw new Error(data.error);
-      tr.remove();
-      this._ok('Usunięto.');
+      tr.remove(); this._ok('Usunięto.');
+    } catch (e) { this._err('Błąd: ' + e.message); }
+  },
+ 
+  // ── Profile settings ─────────────────────────────────────────────────────
+  loadProfile() {
+    const u = State.currentUser;
+    if (!u) return;
+    const dn = document.getElementById('profile-display-name');
+    const dr = document.getElementById('profile-display-role');
+    if (dn) dn.value = u.display_name || '';
+    if (dr) dr.value = u.display_role || '';
+  },
+ 
+  async saveProfile() {
+    const display_name = document.getElementById('profile-display-name')?.value.trim() || '';
+    const display_role = document.getElementById('profile-display-role')?.value.trim() || '';
+    try {
+      const data = await API.put('/auth/profile', { display_name, display_role });
+      if (data.error) throw new Error(data.error);
+      // Update local state
+      State.currentUser.display_name = data.display_name;
+      State.currentUser.display_role = data.display_role;
+      // Update header display
+      const ud = document.getElementById('user-display');
+      if (ud) ud.textContent = data.display_name +
+        (State.currentUser.role === 'admin' ? ` (${data.display_role})` : '');
+      this._ok('Profil zaktualizowany.');
     } catch (e) { this._err('Błąd: ' + e.message); }
   },
 };
