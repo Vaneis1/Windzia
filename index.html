@@ -8,14 +8,14 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
+ 
 <!-- ══ LOGIN SCREEN ══════════════════════════════════════════════════════════ -->
 <div id="login-screen">
   <div class="login-box">
     <div class="emblem">⚔ ✦ ⚔</div>
     <h2>Wandzi Windzi</h2>
     <p class="tagline">Skaner Inwentarza Gildii</p>
-
+ 
     <!-- Login form -->
     <div id="login-form">
       <div class="login-field">
@@ -35,7 +35,7 @@
       <div class="msg err" id="login-err"></div>
       <div class="msg ok"  id="login-ok"></div>
     </div>
-
+ 
     <!-- Forgot password form -->
     <div id="forgot-form" style="display:none;">
       <div class="login-field">
@@ -52,7 +52,7 @@
         ← Wróć do logowania
       </span>
     </div>
-
+ 
     <!-- Reset password form -->
     <div id="reset-form" style="display:none;">
       <div class="login-field">
@@ -68,11 +68,11 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- ══ APP SCREEN ════════════════════════════════════════════════════════════ -->
 <div id="app-screen" style="display:none;">
 <div class="app">
-
+ 
   <header>
     <div style="width:180px;"></div>
     <div class="header-title">
@@ -84,7 +84,7 @@
       <button class="sm" onclick="doLogout()">Wyloguj</button>
     </div>
   </header>
-
+ 
   <nav>
     <div class="nav-tab active" onclick="switchTab('scan')">⟳ Skanuj</div>
     <div class="nav-tab"        onclick="switchTab('sheet')">⊞ Arkusz</div>
@@ -92,10 +92,10 @@
     <div class="nav-tab admin-t" id="admin-nav-tab" style="display:none;"
       onclick="switchTab('admin')">⚙ Admin</div>
   </nav>
-
+ 
   <!-- ── SCAN ──────────────────────────────────────────────────────────── -->
   <div id="tab-scan" class="tab-content active">
-
+ 
     <div class="section-label">Postać</div>
     <div class="panel">
       <div class="field">
@@ -103,7 +103,7 @@
         <select id="char-select"><option value="">— wybierz —</option></select>
       </div>
     </div>
-
+ 
     <div class="section-label">Zrzuty ekranu</div>
     <div class="panel">
       <div class="upload-zone" id="upload-zone"
@@ -116,7 +116,7 @@
       </div>
       <div class="previews" id="previews"></div>
     </div>
-
+ 
     <div class="btn-row">
       <button class="primary" id="scan-btn" onclick="Scan.run()" disabled>⟳ Skanuj inwentarz</button>
       <button id="save-btn" onclick="Scan.save()" disabled>✓ Zapisz do bazy</button>
@@ -128,7 +128,7 @@
     </div>
     <div class="msg ok"  id="scan-ok"></div>
     <div class="msg err" id="scan-err"></div>
-
+ 
     <div id="scan-results" style="display:none; margin-top:1.2rem;">
       <div class="section-label">Dopasowane</div>
       <div class="panel" style="padding:0;">
@@ -148,9 +148,12 @@
           <div id="unknown-body"></div>
         </div>
       </div>
+      <div id="rescan-wrap" style="display:none;margin-top:0.8rem;">
+        <button class="warn-btn" onclick="Scan.rescan()">↺ Skanuj ponownie po dodaniu surowców</button>
+      </div>
     </div>
   </div>
-
+ 
   <!-- ── SHEET ─────────────────────────────────────────────────────────── -->
   <div id="tab-sheet" class="tab-content">
     <div class="sheet-controls">
@@ -173,7 +176,7 @@
       </table>
     </div>
   </div>
-
+ 
   <!-- ── CHARACTERS ────────────────────────────────────────────────────── -->
   <div id="tab-chars" class="tab-content">
     <div class="section-label">Moje postacie</div>
@@ -188,7 +191,7 @@
       <div class="msg err" id="char-err"></div>
     </div>
   </div>
-
+ 
   <!-- ── ADMIN ──────────────────────────────────────────────────────────── -->
   <div id="tab-admin" class="tab-content">
     <div style="display:flex;align-items:center;justify-content:space-between;
@@ -198,13 +201,14 @@
     </div>
     <div class="msg ok"  id="admin-ok"></div>
     <div class="msg err" id="admin-err"></div>
-
+ 
     <div class="admin-tabs">
       <div class="admin-tab active" onclick="Admin.switchTab('owners')">Użytkownicy</div>
       <div class="admin-tab"        onclick="Admin.switchTab('items')">Surowce</div>
       <div class="admin-tab"        onclick="Admin.switchTab('inventory')">Inwentarz</div>
+      <div class="admin-tab"        onclick="Admin.switchTab('profile'); Admin.loadProfile()">Mój profil</div>
     </div>
-
+ 
     <!-- Owners -->
     <div id="atab-owners" class="admin-content active">
       <div id="owners-list"></div>
@@ -238,7 +242,7 @@
         </div>
       </div>
     </div>
-
+ 
     <!-- Items -->
     <div id="atab-items" class="admin-content">
       <div class="sheet-controls" style="margin-bottom:0.8rem;">
@@ -265,7 +269,12 @@
           </div>
           <div class="field">
             <label>Kategoria</label>
-            <input type="text" id="new-item-cat" placeholder="np. KOPALINY">
+            <select id="new-item-cat-select" onchange="Admin.onCatSelectChange()">
+              <option value="">— wybierz kategorię —</option>
+            </select>
+            <div id="new-item-cat-custom-wrap" style="display:none;margin-top:6px;">
+              <input type="text" id="new-item-cat-custom" placeholder="Nazwa nowej kategorii (np. BROŃ)">
+            </div>
           </div>
         </div>
         <div class="field" style="margin-top:0.8rem;">
@@ -277,7 +286,7 @@
         </div>
       </div>
     </div>
-
+ 
     <!-- Inventory -->
     <div id="atab-inventory" class="admin-content">
       <div class="field" style="margin-bottom:1rem;max-width:300px;">
@@ -288,12 +297,35 @@
       </div>
       <div id="admin-inv-wrap"></div>
     </div>
+ 
+    <!-- Profile -->
+    <div id="atab-profile" class="admin-content">
+      <div class="admin-label">Wyświetlane informacje</div>
+      <div class="panel">
+        <div class="row2">
+          <div class="field">
+            <label>Wyświetlana nazwa</label>
+            <input type="text" id="profile-display-name" placeholder="Pozostaw puste = nazwa loginu">
+            <p class="hint">Widoczna w nagłówku aplikacji</p>
+          </div>
+          <div class="field">
+            <label>Wyświetlana rola</label>
+            <input type="text" id="profile-display-role" placeholder="np. Mistrz Gildii">
+            <p class="hint">Widoczna przy nazwie w nagłówku</p>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="primary warn-btn" onclick="Admin.saveProfile()">Zapisz</button>
+        </div>
+      </div>
+    </div>
+ 
   </div>
-
+ 
 </div><!-- /.app -->
 <footer>Dane przechowywane na wspólnym serwerze gildii · Wandzi Windzi</footer>
 </div><!-- /#app-screen -->
-
+ 
 <!-- ══ SCRIPTS — load order matters ══════════════════════════════════════════ -->
 <script src="js/config.js"></script>
 <script src="js/state.js"></script>
@@ -305,6 +337,6 @@
 <script src="js/characters.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/app.js"></script>
-
+ 
 </body>
 </html>
