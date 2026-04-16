@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wandzi Windzi — Skaner Inwentarza</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0c0b;--bg2:#141210;--bg3:#1c1915;--border:rgba(180,140,60,0.2);--border-h:rgba(180,140,60,0.5);--gold:#c9a84c;--gold-l:#e8c96a;--gold-d:rgba(201,168,76,0.15);--text:#e8dfc8;--text-d:#8a7d65;--text-m:#5a5045;--ok:rgba(90,138,74,0.15);--ok-t:#7abf65;--ok-b:rgba(90,138,74,0.3);--err:rgba(138,50,50,0.15);--err-t:#c97070;--err-b:rgba(138,50,50,0.3);--warn:rgba(138,106,42,0.15);--warn-t:#c9944c;--warn-b:rgba(138,106,42,0.3);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:17px;line-height:1.6;min-height:100vh;background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(180,140,60,0.06) 0%,transparent 60%);}
+.app{max-width:1200px;margin:0 auto;padding:1.5rem 1.5rem 4rem;}
+
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;padding-bottom:1.2rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
+.header-title{text-align:center;flex:1;}
+.header-title p{font-size:0.8rem;letter-spacing:0.15em;color:var(--text-d);margin-bottom:0.15rem;}
+.header-title h1{font-family:'Cinzel',serif;font-size:1.7rem;font-weight:600;color:var(--gold-l);letter-spacing:0.08em;}
+.header-user{display:flex;align-items:center;gap:10px;font-size:0.85rem;color:var(--text-d);}
+.header-user strong{color:var(--gold);font-weight:400;}
+
+/* Login */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:80vh;}
+.login-box{width:100%;max-width:380px;text-align:center;}
+.login-box h2{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold-l);margin-bottom:0.4rem;letter-spacing:0.08em;}
+.login-box p{color:var(--text-d);font-size:0.9rem;margin-bottom:2rem;font-style:italic;}
+.login-field{margin-bottom:1rem;text-align:left;}
+.login-field label{display:block;font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.12em;color:var(--gold);text-transform:uppercase;margin-bottom:0.4rem;}
+.login-field input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:1rem;padding:10px 14px;outline:none;transition:border-color 0.15s;}
+.login-field input:focus{border-color:var(--gold);}
+.login-field input::placeholder{color:var(--text-m);}
+.forgot-link{font-size:0.82rem;color:var(--text-m);cursor:pointer;text-decoration:underline;display:block;text-align:right;margin-top:4px;}
+.forgot-link:hover{color:var(--gold);}
+
+/* Nav */
+nav{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap;}
+.nav-tab{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;padding:9px 18px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-d);transition:all 0.15s;white-space:nowrap;}
+.nav-tab.active{border-bottom-color:var(--gold);color:var(--gold-l);}
+.nav-tab:hover:not(.active){color:var(--text);}
+.nav-tab.admin-t{color:var(--warn-t);}
+.nav-tab.admin-t.active{border-bottom-color:var(--warn-t);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* Shared */
+.section-label{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.15em;color:var(--gold);text-transform:uppercase;margin-bottom:0.6rem;display:flex;align-items:center;gap:10px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:1.1rem 1.4rem;margin-bottom:1.2rem;}
+.field label{display:block;font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.12em;color:var(--gold);text-transform:uppercase;margin-bottom:0.4rem;}
+.field input,.field select,.field textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:0.95rem;padding:7px 11px;outline:none;transition:border-color 0.15s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold);}
+.field input::placeholder{color:var(--text-m);}
+.field select option{background:var(--bg2);}
+.hint{font-size:0.8rem;color:var(--text-m);margin-top:3px;font-style:italic;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:500px){.row2{grid-template-columns:1fr;}}
+
+button{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;padding:8px 18px;border-radius:3px;border:1px solid var(--border-h);background:transparent;color:var(--text);cursor:pointer;transition:all 0.15s;}
+button:hover{background:var(--gold-d);border-color:var(--gold);color:var(--gold-l);}
+button:disabled{opacity:0.3;cursor:not-allowed;pointer-events:none;}
+button.primary{background:var(--gold-d);border-color:var(--gold);color:var(--gold-l);}
+button.primary:hover{background:rgba(201,168,76,0.3);}
+button.danger{border-color:var(--err-b);color:var(--err-t);}
+button.danger:hover{background:var(--err);}
+button.warn-btn{border-color:var(--warn-b);color:var(--warn-t);}
+button.warn-btn:hover{background:var(--warn);}
+button.sm{padding:4px 10px;font-size:0.62rem;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:0.8rem;}
+
+.status-bar{margin-top:0.7rem;font-size:0.88rem;color:var(--text-d);font-style:italic;min-height:1.3rem;display:flex;align-items:center;gap:8px;}
+.spinner{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;display:none;animation:spin 0.7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.msg{border-radius:3px;padding:0.6rem 1rem;font-size:0.88rem;margin-top:0.7rem;display:none;}
+.msg.ok{background:var(--ok);border:1px solid var(--ok-b);color:var(--ok-t);}
+.msg.err{background:var(--err);border:1px solid var(--err-b);color:var(--err-t);}
+
+/* Upload */
+.upload-zone{border:1px dashed var(--border-h);border-radius:4px;padding:1.8rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg3);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:var(--gold-d);}
+.upload-zone p{color:var(--text-d);font-size:0.92rem;}
+.previews{display:flex;flex-wrap:wrap;gap:8px;margin-top:0.8rem;}
+.preview-item{position:relative;}
+.preview-item img{height:80px;border-radius:3px;border:1px solid var(--border);display:block;}
+.preview-item .rm{position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;padding:0;font-size:10px;line-height:1;border:1px solid var(--border-h);background:var(--bg2);color:var(--text-d);cursor:pointer;font-family:sans-serif;}
+
+/* Scan results */
+.results-hdr{display:grid;grid-template-columns:1fr 70px 110px;gap:6px;padding:5px 10px;font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.08em;color:var(--text-m);text-transform:uppercase;border-bottom:1px solid var(--border);}
+.result-row{display:grid;grid-template-columns:1fr 70px 110px;gap:6px;padding:6px 10px;border-bottom:1px solid rgba(180,140,60,0.07);font-size:0.9rem;align-items:center;}
+.result-row:last-child{border-bottom:none;}
+.qty{text-align:right;color:var(--gold-l);font-weight:300;}
+.badge{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.06em;padding:2px 7px;border-radius:2px;text-transform:uppercase;display:inline-block;}
+.badge.ok{background:var(--ok);color:var(--ok-t);border:1px solid var(--ok-b);}
+.sub-name{font-size:0.78rem;color:var(--text-d);}
+
+/* Sheet */
+.sheet-controls{display:flex;gap:10px;align-items:center;margin-bottom:1rem;flex-wrap:wrap;}
+.search-wrap{flex:1;min-width:180px;position:relative;}
+.search-wrap input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:0.92rem;padding:7px 11px 7px 30px;outline:none;}
+.search-wrap input:focus{border-color:var(--gold);}
+.search-wrap::before{content:'⌕';position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-m);font-size:15px;pointer-events:none;}
+.cat-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:0.8rem;}
+.cat-btn{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:2px;border:1px solid var(--border);background:transparent;color:var(--text-d);cursor:pointer;transition:all 0.12s;}
+.cat-btn:hover{border-color:var(--gold);color:var(--gold);}
+.cat-btn.active{background:var(--gold-d);border-color:var(--gold);color:var(--gold-l);}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:4px;}
+table{width:100%;border-collapse:collapse;font-size:0.88rem;}
+thead th{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.07em;text-transform:uppercase;color:var(--gold);padding:7px 10px;text-align:left;background:var(--bg2);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+thead th:hover{color:var(--gold-l);}
+thead th.sorted{color:var(--gold-l);}
+.sort-arr{margin-left:3px;opacity:0.5;font-size:0.65rem;}
+thead th.sorted .sort-arr{opacity:1;}
+tbody tr{border-bottom:1px solid rgba(180,140,60,0.07);}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--bg3);}
+tbody td{padding:5px 10px;color:var(--text);}
+tbody td.num{text-align:right;color:var(--gold-l);font-weight:300;}
+tbody td.cat-cell{font-size:0.75rem;color:var(--text-m);}
+.empty-row td{text-align:center;color:var(--text-m);font-style:italic;padding:2rem;}
+
+/* Characters */
+.char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:1rem;}
+.char-card{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;}
+.char-info .char-name{font-size:1rem;font-weight:400;}
+.char-info .char-owner{font-size:0.78rem;color:var(--text-m);font-style:italic;}
+.add-row{display:flex;gap:8px;margin-top:0.5rem;}
+.add-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:0.95rem;padding:7px 11px;outline:none;}
+.add-row input:focus{border-color:var(--gold);}
+
+/* Admin */
+.lock-screen{text-align:center;padding:3rem 1rem;}
+.lock-screen h2{font-family:'Cinzel',serif;color:var(--warn-t);font-size:1.1rem;margin-bottom:1.2rem;letter-spacing:0.1em;}
+.lock-screen input{background:var(--bg3);border:1px solid var(--warn-b);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:1rem;padding:9px 14px;outline:none;width:240px;text-align:center;}
+.lock-screen input:focus{border-color:var(--warn-t);}
+.admin-label{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.15em;color:var(--warn-t);text-transform:uppercase;margin-bottom:0.6rem;display:flex;align-items:center;gap:10px;}
+.admin-label::after{content:'';flex:1;height:1px;background:var(--warn-b);}
+.admin-tabs{display:flex;gap:0;border-bottom:1px solid var(--warn-b);margin-bottom:1.2rem;}
+.admin-tab{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;padding:7px 14px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-m);transition:all 0.15s;}
+.admin-tab.active{border-bottom-color:var(--warn-t);color:var(--warn-t);}
+.admin-content{display:none;}
+.admin-content.active{display:block;}
+.owner-row,.item-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;margin-bottom:6px;gap:8px;flex-wrap:wrap;}
+.owner-info,.item-info{flex:1;}
+.owner-name{font-size:0.95rem;}
+.owner-meta,.item-cat{font-size:0.78rem;color:var(--text-m);font-style:italic;}
+.owner-actions,.item-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.inline-edit{width:65px;background:var(--bg3);border:1px solid var(--gold);border-radius:2px;color:var(--text);font-size:0.85rem;padding:2px 5px;text-align:right;outline:none;font-family:'Crimson Pro',serif;}
+td.editable{cursor:pointer;position:relative;}
+td.editable:hover{background:rgba(180,140,60,0.08);}
+td.editable:hover::after{content:'✎';position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:0.65rem;color:var(--text-m);}
+
+footer{margin-top:3rem;text-align:center;font-size:0.78rem;color:var(--text-m);font-style:italic;border-top:1px solid var(--border);padding-top:1.2rem;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div style="font-size:1.4rem;letter-spacing:6px;opacity:0.4;margin-bottom:1rem;">⚔ ✦ ⚔</div>
+    <h2>Wandzi Windzi</h2>
+    <p>Skaner Inwentarza Gildii</p>
+    <div id="login-form">
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="twoj@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="login-field">
+        <label>Hasło</label>
+        <input type="password" id="login-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <span class="forgot-link" onclick="showForgot()">Zapomniałem hasła</span>
+      </div>
+      <button class="primary" style="width:100%;margin-top:0.5rem;" onclick="doLogin()">Zaloguj się</button>
+      <div class="msg err" id="login-err"></div>
+    </div>
+    <div id="forgot-form" style="display:none;">
+      <div class="login-field">
+        <label>Twój email</label>
+        <input type="email" id="forgot-email" placeholder="twoj@email.com" onkeydown="if(event.key==='Enter')doForgot()">
+      </div>
+      <button class="primary" style="width:100%;margin-top:0.5rem;" onclick="doForgot()">Wyślij link resetujący</button>
+      <div class="msg ok" id="forgot-ok"></div>
+      <div class="msg err" id="forgot-err"></div>
+      <span class="forgot-link" style="margin-top:0.8rem;display:block;" onclick="showLogin()">← Wróć do logowania</span>
+    </div>
+    <div id="reset-form" style="display:none;">
+      <div class="login-field">
+        <label>Nowe hasło</label>
+        <input type="password" id="reset-pwd" placeholder="min. 6 znaków" onkeydown="if(event.key==='Enter')doReset()">
+      </div>
+      <button class="primary" style="width:100%;margin-top:0.5rem;" onclick="doReset()">Ustaw nowe hasło</button>
+      <div class="msg ok" id="reset-ok"></div>
+      <div class="msg err" id="reset-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen" style="display:none;">
+<div class="app">
+  <header>
+    <div style="width:180px;"></div>
+    <div class="header-title">
+      <p>Wandzi Windzi</p>
+      <h1>Skaner Inwentarza</h1>
+    </div>
+    <div class="header-user">
+      <span>Zalogowano jako <strong id="user-display"></strong></span>
+      <button class="sm" onclick="doLogout()">Wyloguj</button>
+    </div>
+  </header>
+
+  <nav id="main-nav">
+    <div class="nav-tab active" onclick="switchTab('scan')">⟳ Skanuj</div>
+    <div class="nav-tab" onclick="switchTab('sheet')">⊞ Arkusz</div>
+    <div class="nav-tab" onclick="switchTab('chars')">⚔ Postacie</div>
+    <div class="nav-tab admin-t" id="admin-nav-tab" style="display:none;" onclick="switchTab('admin')">⚙ Admin</div>
+  </nav>
+
+  <!-- SCAN -->
+  <div id="tab-scan" class="tab-content active">
+    <div class="section-label">Postać</div>
+    <div class="panel">
+      <div class="field">
+        <label>Wybierz postać</label>
+        <select id="char-select"><option value="">— wybierz —</option></select>
+      </div>
+    </div>
+    <div class="section-label">Zrzuty ekranu</div>
+    <div class="panel">
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept="image/*" multiple onchange="handleFiles(event)" style="display:none">
+        <p><strong>Kliknij, przeciągnij lub wklej</strong> zrzuty ekranu (Ctrl+V)</p>
+        <p style="font-size:0.82rem;margin-top:3px;">PNG, JPG, WebP · wiele plików naraz</p>
+      </div>
+      <div class="previews" id="previews"></div>
+    </div>
+    <div class="btn-row">
+      <button class="primary" id="scan-btn" onclick="runScan()" disabled>⟳ Skanuj inwentarz</button>
+      <button id="save-btn" onclick="saveResults()" disabled>✓ Zapisz do bazy</button>
+      <button id="csv-btn" onclick="copyCSV()" disabled>⎘ Kopiuj CSV</button>
+    </div>
+    <div class="status-bar"><div class="spinner" id="scan-spinner"></div><span id="scan-status"></span></div>
+    <div class="msg ok" id="scan-ok"></div>
+    <div class="msg err" id="scan-err"></div>
+    <div id="scan-results" style="display:none;margin-top:1.2rem;">
+      <div class="section-label">Dopasowane</div>
+      <div class="panel" style="padding:0;">
+        <div class="results-hdr"><span>Przedmiot</span><span style="text-align:right;">Ilość</span><span>Kategoria</span></div>
+        <div id="results-body"></div>
+      </div>
+      <div id="unknown-wrap" style="display:none;margin-top:0.8rem;">
+        <div class="section-label">Nierozpoznane — pominięto</div>
+        <div class="panel" style="padding:0.7rem 1.2rem;">
+          <p class="hint" style="margin-bottom:0.6rem;">Nie znaleziono w bazie surowców. Admin może dodać aliasy.</p>
+          <div id="unknown-body"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHEET -->
+  <div id="tab-sheet" class="tab-content">
+    <div class="sheet-controls">
+      <div class="search-wrap"><input type="text" id="search-input" placeholder="Szukaj przedmiotu..." oninput="renderSheet()"></div>
+      <button onclick="loadSheet()">↺ Odśwież</button>
+      <button onclick="exportCSV()">↓ CSV</button>
+    </div>
+    <div class="cat-filter" id="cat-filter"></div>
+    <div class="status-bar"><div class="spinner" id="sheet-spinner"></div><span id="sheet-status"></span></div>
+    <div class="table-wrap">
+      <table><thead id="sheet-head"></thead><tbody id="sheet-body"></tbody></table>
+    </div>
+  </div>
+
+  <!-- CHARS -->
+  <div id="tab-chars" class="tab-content">
+    <div class="section-label">Moje postacie</div>
+    <div class="panel">
+      <div class="char-grid" id="char-grid"></div>
+      <div class="add-row">
+        <input type="text" id="new-char-input" placeholder="Nazwa nowej postaci..." onkeydown="if(event.key==='Enter')addCharacter()">
+        <button class="primary" onclick="addCharacter()">+ Dodaj</button>
+      </div>
+      <div class="msg ok" id="char-ok"></div>
+      <div class="msg err" id="char-err"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="tab-admin" class="tab-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:8px;">
+      <div class="admin-label" style="margin:0;flex:1;">Panel Administratora</div>
+      <button class="sm" onclick="loadAdminData()">↺ Odśwież</button>
+    </div>
+    <div class="msg ok" id="admin-ok"></div>
+    <div class="msg err" id="admin-err"></div>
+    <div class="admin-tabs">
+      <div class="admin-tab active" onclick="switchAdminTab('owners')">Użytkownicy</div>
+      <div class="admin-tab" onclick="switchAdminTab('items')">Surowce</div>
+      <div class="admin-tab" onclick="switchAdminTab('inventory')">Inwentarz</div>
+    </div>
+
+    <!-- Owners -->
+    <div id="atab-owners" class="admin-content active">
+      <div id="owners-list"></div>
+      <div class="admin-label" style="margin-top:1.2rem;">Dodaj użytkownika</div>
+      <div class="panel">
+        <div class="row2">
+          <div class="field"><label>Nazwa użytkownika</label><input type="text" id="new-owner-username" placeholder="np. Wandzia"></div>
+          <div class="field"><label>Email</label><input type="email" id="new-owner-email" placeholder="email@..."></div>
+        </div>
+        <div class="row2" style="margin-top:0.8rem;">
+          <div class="field"><label>Hasło</label><input type="password" id="new-owner-pwd" placeholder="min. 6 znaków"></div>
+          <div class="field"><label>Rola</label>
+            <select id="new-owner-role"><option value="owner">Owner</option><option value="admin">Admin</option></select>
+          </div>
+        </div>
+        <div class="btn-row"><button class="primary warn-btn" onclick="createOwner()">+ Utwórz konto</button></div>
+      </div>
+    </div>
+
+    <!-- Items -->
+    <div id="atab-items" class="admin-content">
+      <div class="sheet-controls" style="margin-bottom:0.8rem;">
+        <div class="search-wrap"><input type="text" id="item-search" placeholder="Szukaj surowca..." oninput="renderItemsAdmin()"></div>
+        <select id="item-cat-filter" onchange="renderItemsAdmin()" style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:0.92rem;padding:7px 11px;outline:none;">
+          <option value="">Wszystkie kategorie</option>
+        </select>
+      </div>
+      <div id="items-list" style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;"></div>
+      <div class="admin-label" style="margin-top:1.2rem;">Dodaj surowiec</div>
+      <div class="panel">
+        <div class="row2">
+          <div class="field"><label>Nazwa</label><input type="text" id="new-item-name" placeholder="np. Bryłka platyny"></div>
+          <div class="field"><label>Kategoria</label><input type="text" id="new-item-cat" placeholder="np. KOPALINY"></div>
+        </div>
+        <div class="field" style="margin-top:0.8rem;"><label>Aliasy (oddzielone przecinkami)</label><input type="text" id="new-item-aliases" placeholder="np. Brylka platyny, Bryłka plat..."></div>
+        <div class="btn-row"><button class="primary warn-btn" onclick="createItem()">+ Dodaj surowiec</button></div>
+      </div>
+    </div>
+
+    <!-- Inventory -->
+    <div id="atab-inventory" class="admin-content">
+      <div class="field" style="margin-bottom:1rem;max-width:300px;">
+        <label>Wybierz postać</label>
+        <select id="admin-char-select" onchange="loadAdminInventory()"><option value="">— wybierz —</option></select>
+      </div>
+      <div id="admin-inv-wrap"></div>
+    </div>
+  </div>
+
+</div>
+<footer>Dane przechowywane na wspólnym serwerze gildii · Wandzi Windzi</footer>
+</div>
+
+<script>
+const PROXY = 'https://windzia-production.up.railway.app';
+
+// ── State ─────────────────────────────────────────────
+let token = localStorage.getItem('ww_token') || '';
+let currentUser = null;
+let images = [];
+let scanMatched = [], scanUnmatched = [];
+let sheetData = null;
+let sortCol = 0, sortAsc = true;
+let activeCategory = '';
+let allItemsAdmin = [];
+
+// ── API helper ────────────────────────────────────────
+async function api(path, opts={}) {
+  const headers = {'Content-Type':'application/json', ...(token ? {'Authorization':'Bearer '+token} : {})};
+  const res = await fetch(PROXY + path, {headers, ...opts,
+    body: opts.body ? (typeof opts.body === 'string' ? opts.body : JSON.stringify(opts.body)) : undefined});
+  if (res.status === 401) { doLogout(); throw new Error('Sesja wygasła'); }
+  return res.json();
+}
+
+// ── Init ──────────────────────────────────────────────
+async function init() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const resetToken = urlParams.get('reset');
+  if (resetToken) { showResetForm(resetToken); return; }
+  if (token) {
+    try {
+      const data = await api('/auth/me');
+      if (data.id) { currentUser = data; showApp(); return; }
+    } catch(e) {}
+  }
+  showLogin();
+}
+
+// ── Login/Auth ────────────────────────────────────────
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-form').style.display = 'block';
+  document.getElementById('forgot-form').style.display = 'none';
+  document.getElementById('reset-form').style.display = 'none';
+}
+function showForgot() {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('forgot-form').style.display = 'block';
+}
+function showLogin2() { showLogin(); }
+function showLogin_back() {
+  document.getElementById('forgot-form').style.display = 'none';
+  document.getElementById('login-form').style.display = 'block';
+}
+function showResetForm(t) {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('forgot-form').style.display = 'none';
+  document.getElementById('reset-form').style.display = 'block';
+  document.getElementById('reset-form').dataset.token = t;
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pwd = document.getElementById('login-pwd').value;
+  const errEl = document.getElementById('login-err');
+  errEl.style.display = 'none';
+  try {
+    const data = await api('/auth/login', {method:'POST', body:{email, password:pwd}});
+    if (data.error) throw new Error(data.error);
+    token = data.token;
+    localStorage.setItem('ww_token', token);
+    currentUser = {id: data.id, username: data.username, role: data.role};
+    showApp();
+  } catch(e) { errEl.textContent = e.message; errEl.style.display = 'block'; }
+}
+
+async function doForgot() {
+  const email = document.getElementById('forgot-email').value.trim();
+  const ok = document.getElementById('forgot-ok');
+  const err = document.getElementById('forgot-err');
+  ok.style.display = 'none'; err.style.display = 'none';
+  try {
+    await api('/auth/forgot-password', {method:'POST', body:{email}});
+    ok.textContent = 'Link wysłany! Sprawdź swoją skrzynkę email.';
+    ok.style.display = 'block';
+  } catch(e) { err.textContent = e.message; err.style.display = 'block'; }
+}
+
+async function doReset() {
+  const pwd = document.getElementById('reset-pwd').value;
+  const t = document.getElementById('reset-form').dataset.token;
+  const ok = document.getElementById('reset-ok');
+  const err = document.getElementById('reset-err');
+  ok.style.display = 'none'; err.style.display = 'none';
+  try {
+    const data = await api('/auth/reset-password', {method:'POST', body:{token:t, password:pwd}});
+    if (data.error) throw new Error(data.error);
+    ok.textContent = 'Hasło zmienione! Możesz się teraz zalogować.';
+    ok.style.display = 'block';
+    setTimeout(() => { window.history.replaceState({}, '', window.location.pathname); showLogin(); }, 2000);
+  } catch(e) { err.textContent = e.message; err.style.display = 'block'; }
+}
+
+function doLogout() {
+  token = ''; localStorage.removeItem('ww_token'); currentUser = null;
+  showLogin();
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  document.getElementById('user-display').textContent = currentUser.username +
+    (currentUser.role === 'admin' ? ' (admin)' : '');
+  if (currentUser.role === 'admin') document.getElementById('admin-nav-tab').style.display = 'block';
+  loadCharacters();
+  loadSheet();
+}
+
+// ── Tabs ──────────────────────────────────────────────
+function switchTab(name) {
+  ['scan','sheet','chars','admin'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===name);
+  });
+  document.querySelectorAll('.nav-tab').forEach((el,i) => {
+    el.classList.toggle('active', ['scan','sheet','chars','admin'][i]===name);
+  });
+  if (name==='sheet') loadSheet();
+  if (name==='chars') loadCharacters();
+  if (name==='admin') loadAdminData();
+}
+
+function switchAdminTab(name) {
+  ['owners','items','inventory'].forEach(t => {
+    document.getElementById('atab-'+t).classList.toggle('active', t===name);
+    document.querySelectorAll('.admin-tab').forEach((el,i) => {
+      el.classList.toggle('active', ['owners','items','inventory'][i]===name);
+    });
+  });
+}
+
+// ── Messages ──────────────────────────────────────────
+function setScanStatus(msg,loading){
+  document.getElementById('scan-status').textContent=msg;
+  document.getElementById('scan-spinner').style.display=loading?'block':'none';
+  document.getElementById('scan-ok').style.display='none';
+  document.getElementById('scan-err').style.display='none';
+}
+function scanOk(msg){const e=document.getElementById('scan-ok');e.textContent=msg;e.style.display='block';document.getElementById('scan-status').textContent='';document.getElementById('scan-spinner').style.display='none';}
+function scanErr(msg){const e=document.getElementById('scan-err');e.textContent=msg;e.style.display='block';document.getElementById('scan-status').textContent='';document.getElementById('scan-spinner').style.display='none';}
+function adminOk(msg){const e=document.getElementById('admin-ok');e.textContent=msg;e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
+function adminErr(msg){const e=document.getElementById('admin-err');e.textContent=msg;e.style.display='block';}
+
+// ── Images ────────────────────────────────────────────
+function handleFiles(e){Array.from(e.target.files).forEach(addImage);}
+function addImage(file){
+  const mime=file.type||'image/png', reader=new FileReader();
+  reader.onload=ev=>{
+    const id=Date.now()+Math.random();
+    images.push({id,data:ev.target.result.split(',')[1],mime_type:mime,dataUrl:ev.target.result});
+    renderPreviews();
+    document.getElementById('scan-btn').disabled=false;
+    setScanStatus(images.length+' zrzut(ów) wczytanych.');
+  };
+  reader.readAsDataURL(file);
+}
+function removeImage(id){
+  images=images.filter(i=>i.id!==id); renderPreviews();
+  if(!images.length){document.getElementById('scan-btn').disabled=true;setScanStatus('');}
+  else setScanStatus(images.length+' zrzut(ów) wczytanych.');
+}
+function renderPreviews(){
+  const el=document.getElementById('previews'); el.innerHTML='';
+  images.forEach(img=>{
+    const w=document.createElement('div'); w.className='preview-item';
+    w.innerHTML=`<img src="${img.dataUrl}"><button class="rm" onclick="removeImage(${img.id})">✕</button>`;
+    el.appendChild(w);
+  });
+}
+document.addEventListener('paste',e=>{
+  if(document.getElementById('app-screen').style.display==='none') return;
+  Array.from(e.clipboardData.items).filter(i=>i.type.startsWith('image/')).forEach(i=>addImage(i.getAsFile()));
+});
+const zone=document.getElementById('upload-zone');
+zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('drag');Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')).forEach(addImage);});
+
+// ── Scan ──────────────────────────────────────────────
+async function runScan(){
+  if(!images.length) return;
+  const charId = document.getElementById('char-select').value;
+  if(!charId){scanErr('Wybierz postać przed skanowaniem.');return;}
+  document.getElementById('scan-btn').disabled=true;
+  setScanStatus('Skanowanie '+images.length+' zrzut(ów)...',true);
+  scanMatched=[]; scanUnmatched=[];
+  try{
+    const data=await api('/scan',{method:'POST',body:{
+      images:images.map(i=>({data:i.data,mime_type:i.mime_type})),
+      character_id:parseInt(charId)
+    }});
+    if(data.error) throw new Error(data.error);
+    scanMatched=data.matched||[];
+    scanUnmatched=data.unmatched||[];
+    renderScanResults();
+    document.getElementById('save-btn').disabled=false;
+    document.getElementById('csv-btn').disabled=false;
+  }catch(e){scanErr('Błąd: '+e.message);}
+  finally{document.getElementById('scan-btn').disabled=false;}
+}
+
+function renderScanResults(){
+  const body=document.getElementById('results-body');
+  const unknownBody=document.getElementById('unknown-body');
+  body.innerHTML=''; unknownBody.innerHTML='';
+  scanMatched.forEach(item=>{
+    const row=document.createElement('div'); row.className='result-row';
+    row.innerHTML=`<div><div>${item.name}</div>${item.raw_name!==item.name?`<div class="sub-name">→ z: ${item.raw_name}</div>`:''}</div><div class="qty">${item.quantity}</div><div class="cat-cell">${item.category}</div>`;
+    body.appendChild(row);
+  });
+  document.getElementById('scan-results').style.display='block';
+  const matched=scanMatched.length, unmatched=scanUnmatched.length;
+  if(unmatched){
+    scanUnmatched.forEach(item=>{
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(180,140,60,0.07);font-size:0.9rem;';
+      row.innerHTML=`<span>${item.raw_name}</span><span style="color:var(--gold-l);margin-left:1rem;">${item.quantity}</span>`;
+      unknownBody.appendChild(row);
+    });
+    document.getElementById('unknown-wrap').style.display='block';
+  } else document.getElementById('unknown-wrap').style.display='none';
+  setScanStatus(matched+' dopasowanych · '+unmatched+' pominięto.');
+}
+
+async function saveResults(){
+  const charId=document.getElementById('char-select').value;
+  if(!charId||!scanMatched.length){scanErr('Brak danych do zapisania.');return;}
+  document.getElementById('save-btn').disabled=true;
+  setScanStatus('Zapisywanie...',true);
+  try{
+    const data=await api('/scan',{method:'POST',body:{
+      images:images.map(i=>({data:i.data,mime_type:i.mime_type})),
+      character_id:parseInt(charId), save:true
+    }});
+    if(data.error) throw new Error(data.error);
+    scanOk('Zapisano '+scanMatched.length+' przedmiotów.');
+  }catch(e){scanErr('Błąd: '+e.message);}
+  finally{document.getElementById('save-btn').disabled=false;}
+}
+
+function copyCSV(){
+  let csv='Przedmiot,Kategoria,Ilość\n';
+  scanMatched.forEach(i=>{csv+=`"${i.name}","${i.category}",${i.quantity}\n`;});
+  navigator.clipboard.writeText(csv).then(()=>scanOk('CSV skopiowano.'));
+}
+
+// ── Characters ────────────────────────────────────────
+async function loadCharacters(){
+  try{
+    const chars=await api('/characters');
+    if(!Array.isArray(chars)){console.error('Bad response:',chars);return;}
+    renderCharGrid(chars);
+    const sel=document.getElementById('char-select');
+    const adminSel=document.getElementById('admin-char-select');
+    const prev=sel.value;
+    sel.innerHTML='<option value="">— wybierz —</option>';
+    adminSel.innerHTML='<option value="">— wybierz —</option>';
+    chars.forEach(c=>{
+      [sel,adminSel].forEach(s=>{
+        const o=document.createElement('option');
+        o.value=c.id;
+        o.textContent=c.name+(currentUser&&currentUser.role==='admin'&&c.owner_username?' ('+c.owner_username+')':'');
+        if(String(c.id)===prev) o.selected=true;
+        s.appendChild(o);
+      });
+    });
+  }catch(e){console.error('loadCharacters error:',e);}
+}
+
+function renderCharGrid(chars){
+  const el=document.getElementById('char-grid'); el.innerHTML='';
+  if(!chars.length){el.innerHTML='<p style="color:var(--text-m);font-style:italic;padding:0.5rem;">Brak postaci. Dodaj pierwszą poniżej.</p>';return;}
+  chars.forEach(c=>{
+    const card=document.createElement('div'); card.className='char-card';
+    card.innerHTML=`<div class="char-info"><div class="char-name">${c.name}</div><div class="char-owner">${c.owner_username}</div></div>
+      <button class="danger sm" onclick="deleteCharacter(${c.id},'${c.name.replace(/'/g,"\\'")}')">Usuń</button>`;
+    el.appendChild(card);
+  });
+}
+
+async function addCharacter(){
+  const input=document.getElementById('new-char-input'), name=input.value.trim();
+  if(!name) return;
+  const ok=document.getElementById('char-ok'), err=document.getElementById('char-err');
+  ok.style.display='none'; err.style.display='none';
+  try{
+    const data=await api('/characters',{method:'POST',body:{name}});
+    if(data.error) throw new Error(data.error);
+    input.value=''; ok.textContent='Dodano „'+name+'".'; ok.style.display='block';
+    loadCharacters();
+  }catch(e){err.textContent='Błąd: '+e.message; err.style.display='block';}
+}
+
+async function deleteCharacter(id,name){
+  if(!confirm('Usunąć „'+name+'"?')) return;
+  await api('/characters/'+id,{method:'DELETE'});
+  loadCharacters();
+}
+
+// ── Sheet ─────────────────────────────────────────────
+async function loadSheet(){
+  document.getElementById('sheet-spinner').style.display='block';
+  document.getElementById('sheet-status').textContent='Ładowanie...';
+  try{
+    const cat = activeCategory ? '?category='+encodeURIComponent(activeCategory) : '';
+    sheetData=await api('/inventory'+cat);
+    renderCatFilter(sheetData.categories||[]);
+    renderSheet();
+    document.getElementById('sheet-status').textContent='';
+  }catch(e){document.getElementById('sheet-status').textContent='Błąd: '+e.message;}
+  finally{document.getElementById('sheet-spinner').style.display='none';}
+}
+
+function renderCatFilter(cats){
+  const el=document.getElementById('cat-filter'); el.innerHTML='';
+  const allBtn=document.createElement('button');
+  allBtn.className='cat-btn'+(activeCategory===''?' active':'');
+  allBtn.textContent='Wszystkie';
+  allBtn.onclick=()=>{activeCategory='';loadSheet();};
+  el.appendChild(allBtn);
+  cats.forEach(cat=>{
+    const btn=document.createElement('button');
+    btn.className='cat-btn'+(activeCategory===cat?' active':'');
+    btn.textContent=cat;
+    btn.onclick=()=>{activeCategory=cat;loadSheet();};
+    el.appendChild(btn);
+  });
+}
+
+function renderSheet(){
+  if(!sheetData) return;
+  const {characters,items}=sheetData;
+  const query=document.getElementById('search-input').value.toLowerCase();
+  const filtered=query?items.filter(i=>i.name.toLowerCase().includes(query)):items;
+  const sorted=[...filtered].sort((a,b)=>{
+    if(sortCol===0) return sortAsc?a.name.localeCompare(b.name,'pl'):b.name.localeCompare(a.name,'pl');
+    if(sortCol===1) return sortAsc?a.category.localeCompare(b.category,'pl'):b.category.localeCompare(a.category,'pl');
+    const char=characters[sortCol-2];
+    const av=a.quantities[String(char.id)]||0, bv=b.quantities[String(char.id)]||0;
+    return sortAsc?av-bv:bv-av;
+  });
+
+  const head=document.getElementById('sheet-head'); head.innerHTML='';
+  const hr=document.createElement('tr');
+  ['Przedmiot','Kategoria',...characters.map(c=>c.name)].forEach((col,i)=>{
+    const th=document.createElement('th');
+    th.innerHTML=col+' <span class="sort-arr">'+(sortCol===i?(sortAsc?'↑':'↓'):'↕')+'</span>';
+    if(sortCol===i) th.classList.add('sorted');
+    th.onclick=()=>{if(sortCol===i)sortAsc=!sortAsc;else{sortCol=i;sortAsc=true;}renderSheet();};
+    hr.appendChild(th);
+  });
+  head.appendChild(hr);
+
+  const body=document.getElementById('sheet-body'); body.innerHTML='';
+  if(!sorted.length){body.innerHTML='<tr class="empty-row"><td colspan="99">Brak wyników</td></tr>';return;}
+  sorted.forEach(item=>{
+    const tr=document.createElement('tr');
+    let html=`<td>${item.name}</td><td class="cat-cell">${item.category}</td>`;
+    characters.forEach(c=>{
+      const q=item.quantities[String(c.id)];
+      html+=`<td class="num">${q||''}</td>`;
+    });
+    tr.innerHTML=html; body.appendChild(tr);
+  });
+}
+
+function exportCSV(){
+  const cat=activeCategory?'?category='+encodeURIComponent(activeCategory):'';
+  window.open(PROXY+'/export'+cat+'&token='+token,'_blank');
+}
+
+// ── Admin ─────────────────────────────────────────────
+async function loadAdminData(){
+  if(currentUser?.role!=='admin') return;
+  loadOwners(); loadItemsAdmin(); loadCharacters();
+}
+
+async function loadOwners(){
+  try{
+    const owners=await api('/admin/owners');
+    renderOwners(owners);
+  }catch(e){adminErr('Błąd ładowania użytkowników: '+e.message);}
+}
+
+function renderOwners(owners){
+  const el=document.getElementById('owners-list'); el.innerHTML='';
+  owners.forEach(o=>{
+    const row=document.createElement('div'); row.className='owner-row';
+    row.innerHTML=`
+      <div class="owner-info">
+        <div class="owner-name">${o.username} <span style="font-size:0.75rem;color:var(--warn-t);margin-left:6px;">${o.role}</span></div>
+        <div class="owner-meta">${o.email} · ${o.character_count} postaci</div>
+      </div>
+      <div class="owner-actions">
+        <button class="sm warn-btn" onclick="resetOwnerPwd(${o.id},'${o.username.replace(/'/g,"\\'")}')">Reset hasła</button>
+        <button class="danger sm" onclick="deleteOwner(${o.id},'${o.username.replace(/'/g,"\\'")}')">Usuń</button>
+      </div>`;
+    el.appendChild(row);
+  });
+}
+
+async function createOwner(){
+  const username=document.getElementById('new-owner-username').value.trim();
+  const email=document.getElementById('new-owner-email').value.trim();
+  const password=document.getElementById('new-owner-pwd').value;
+  const role=document.getElementById('new-owner-role').value;
+  if(!username||!email||!password){adminErr('Wypełnij wszystkie pola.');return;}
+  try{
+    const data=await api('/admin/owners',{method:'POST',body:{username,email,password,role}});
+    if(data.error) throw new Error(data.error);
+    adminOk('Konto „'+username+'" utworzone.');
+    document.getElementById('new-owner-username').value='';
+    document.getElementById('new-owner-email').value='';
+    document.getElementById('new-owner-pwd').value='';
+    loadOwners();
+  }catch(e){adminErr('Błąd: '+e.message);}
+}
+
+async function resetOwnerPwd(id,name){
+  const pwd=prompt('Nowe hasło dla „'+name+'" (min. 6 znaków):');
+  if(!pwd||pwd.length<6){alert('Hasło za krótkie.');return;}
+  try{
+    const data=await api('/admin/owners/'+id+'/reset-password',{method:'PUT',body:{password:pwd}});
+    if(data.error) throw new Error(data.error);
+    adminOk('Hasło zmienione dla „'+name+'".');
+  }catch(e){adminErr('Błąd: '+e.message);}
+}
+
+async function deleteOwner(id,name){
+  if(!confirm('Usunąć użytkownika „'+name+'" i wszystkie jego dane?')) return;
+  await api('/admin/owners/'+id,{method:'DELETE'});
+  adminOk('Usunięto „'+name+'".');
+  loadOwners();
+}
+
+// Items admin
+async function loadItemsAdmin(){
+  try{
+    allItemsAdmin=await api('/items');
+    const cats=[...new Set(allItemsAdmin.map(i=>i.category))].sort();
+    const sel=document.getElementById('item-cat-filter');
+    sel.innerHTML='<option value="">Wszystkie kategorie</option>';
+    cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+    renderItemsAdmin();
+  }catch(e){adminErr('Błąd ładowania surowców: '+e.message);}
+}
+
+function renderItemsAdmin(){
+  const query=document.getElementById('item-search').value.toLowerCase();
+  const cat=document.getElementById('item-cat-filter').value;
+  let items=allItemsAdmin;
+  if(query) items=items.filter(i=>i.name.toLowerCase().includes(query)||(i.aliases||[]).some(a=>a.toLowerCase().includes(query)));
+  if(cat) items=items.filter(i=>i.category===cat);
+  const el=document.getElementById('items-list'); el.innerHTML='';
+  if(!items.length){el.innerHTML='<p style="padding:1rem;color:var(--text-m);font-style:italic;">Brak wyników.</p>';return;}
+  items.forEach(item=>{
+    const row=document.createElement('div'); row.className='item-row';
+    const aliasStr=(item.aliases||[]).join(', ')||'brak';
+    row.innerHTML=`
+      <div class="item-info">
+        <div>${item.name}</div>
+        <div class="item-cat">${item.category} · aliasy: ${aliasStr}</div>
+      </div>
+      <div class="item-actions">
+        <button class="sm warn-btn" onclick="editItemAliases(${item.id},'${item.name.replace(/'/g,"\\'")}','${(item.aliases||[]).join(',').replace(/'/g,"\\'")}')">Aliasy</button>
+        <button class="danger sm" onclick="deleteItem(${item.id},'${item.name.replace(/'/g,"\\'")}')">Usuń</button>
+      </div>`;
+    el.appendChild(row);
+  });
+}
+
+async function editItemAliases(id,name,currentAliases){
+  const input=prompt('Aliasy dla „'+name+'" (oddzielone przecinkami):', currentAliases);
+  if(input===null) return;
+  const aliases=input.split(',').map(a=>a.trim()).filter(Boolean);
+  try{
+    const data=await api('/items/'+id,{method:'PUT',body:{aliases}});
+    if(data.error) throw new Error(data.error);
+    adminOk('Zaktualizowano aliasy dla „'+name+'".');
+    loadItemsAdmin();
+  }catch(e){adminErr('Błąd: '+e.message);}
+}
+
+async function createItem(){
+  const name=document.getElementById('new-item-name').value.trim();
+  const category=document.getElementById('new-item-cat').value.trim().toUpperCase();
+  const aliasStr=document.getElementById('new-item-aliases').value;
+  const aliases=aliasStr.split(',').map(a=>a.trim()).filter(Boolean);
+  if(!name||!category){adminErr('Podaj nazwę i kategorię.');return;}
+  try{
+    const data=await api('/items',{method:'POST',body:{name,category,aliases}});
+    if(data.error) throw new Error(data.error);
+    adminOk('Dodano surowiec „'+name+'".');
+    document.getElementById('new-item-name').value='';
+    document.getElementById('new-item-aliases').value='';
+    loadItemsAdmin();
+  }catch(e){adminErr('Błąd: '+e.message);}
+}
+
+async function deleteItem(id,name){
+  if(!confirm('Usunąć surowiec „'+name+'"?')) return;
+  await api('/items/'+id,{method:'DELETE'});
+  adminOk('Usunięto „'+name+'".');
+  loadItemsAdmin();
+}
+
+// Admin inventory
+async function loadAdminInventory(){
+  const cid=document.getElementById('admin-char-select').value;
+  if(!cid){document.getElementById('admin-inv-wrap').innerHTML='';return;}
+  try{
+    const data=await api('/inventory');
+    const chars=data.characters, items=data.items;
+    const char=chars.find(c=>String(c.id)===String(cid));
+    if(!char){return;}
+    const charItems=items.filter(i=>i.quantities[String(cid)]>0);
+    const wrap=document.getElementById('admin-inv-wrap');
+    if(!charItems.length){wrap.innerHTML='<p style="color:var(--text-m);font-style:italic;padding:0.5rem;">Brak danych.</p>';return;}
+    let html='<div style="border:1px solid var(--warn-b);border-radius:4px;overflow:hidden;"><table style="width:100%;"><thead><tr><th style="background:rgba(138,80,40,0.15);color:var(--warn-t);font-family:Cinzel,serif;font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;padding:7px 10px;text-align:left;border-bottom:1px solid var(--warn-b);">Przedmiot</th><th style="background:rgba(138,80,40,0.15);color:var(--warn-t);font-family:Cinzel,serif;font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;padding:7px 10px;text-align:right;border-bottom:1px solid var(--warn-b);">Ilość</th><th style="background:rgba(138,80,40,0.15);padding:7px 10px;border-bottom:1px solid var(--warn-b);width:60px;"></th></tr></thead><tbody>';
+    charItems.sort((a,b)=>a.name.localeCompare(b.name,'pl')).forEach(item=>{
+      const qty=item.quantities[String(cid)];
+      html+=`<tr style="border-bottom:1px solid rgba(180,140,60,0.07);">
+        <td style="padding:5px 10px;font-size:0.88rem;">${item.name}</td>
+        <td class="num editable" onclick="editAdminCell(${cid},${item.id},${qty},this)" style="padding:5px 10px;text-align:right;color:var(--gold-l);font-weight:300;cursor:pointer;position:relative;">${qty}</td>
+        <td style="padding:5px 10px;text-align:right;"><button class="danger sm" onclick="deleteAdminEntry(${cid},${item.id},this.closest('tr'))">✕</button></td>
+      </tr>`;
+    });
+    html+='</tbody></table></div>';
+    wrap.innerHTML=html;
+  }catch(e){adminErr('Błąd: '+e.message);}
+}
+
+function editAdminCell(cid,itemId,origVal,td){
+  if(td.querySelector('input')) return;
+  td.innerHTML=`<input class="inline-edit" type="number" min="0" value="${origVal}" onblur="saveAdminCell(${cid},${itemId},this,${origVal})" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=${origVal};this.blur();}">`;
+  td.querySelector('input').focus(); td.querySelector('input').select();
+}
+
+async function saveAdminCell(cid,itemId,input,origVal){
+  const newVal=parseInt(input.value);
+  const td=input.parentElement;
+  if(isNaN(newVal)||newVal===origVal){td.textContent=origVal;return;}
+  td.textContent='...';
+  try{
+    const data=await api('/admin/inventory/'+cid+'/'+itemId,{method:'PUT',body:{quantity:newVal}});
+    if(data.error) throw new Error(data.error);
+    td.textContent=newVal; adminOk('Zaktualizowano.');
+  }catch(e){td.textContent=origVal; adminErr('Błąd: '+e.message);}
+}
+
+async function deleteAdminEntry(cid,itemId,tr){
+  if(!confirm('Usunąć ten wpis?')) return;
+  await api('/admin/inventory/'+cid+'/'+itemId,{method:'DELETE'});
+  tr.remove(); adminOk('Usunięto.');
+}
+
+// ── Start ─────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
