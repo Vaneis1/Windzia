@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil — Wandzi Windzi</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="https://i.ibb.co/cPNxs5v/logosfera.png">
+<style>
+:root{--bg:#0F0314;--bg2:#1a0828;--bg3:#221035;--border:rgba(133,214,242,0.18);--gold:#00CCCC;--gold-l:#6BB8D4;--gold-d:rgba(0,204,204,0.1);--text:#dff4fc;--text-d:#7aafc8;--text-m:#3d6a80;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:17px;line-height:1.6;min-height:100vh;background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,204,204,0.06) 0%,transparent 60%);}
+.profile-wrap{max-width:900px;margin:0 auto;padding:2rem 1.5rem 4rem;}
+.profile-header{display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+.profile-avatar{width:72px;height:72px;border-radius:50%;border:2px solid var(--gold);object-fit:cover;flex-shrink:0;}
+.profile-avatar-placeholder{width:72px;height:72px;border-radius:50%;border:2px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:1.5rem;color:var(--text-m);flex-shrink:0;}
+.profile-meta{}
+.profile-name{font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold-l);letter-spacing:0.08em;}
+.profile-owner{font-size:0.85rem;color:var(--text-d);margin-top:2px;}
+.back-link{display:inline-block;margin-bottom:1rem;font-size:0.82rem;color:var(--text-m);text-decoration:none;}
+.back-link:hover{color:var(--gold-l);}
+.private-msg{text-align:center;padding:4rem;color:var(--text-m);font-style:italic;}
+.loading-msg{text-align:center;padding:4rem;color:var(--text-m);}
+.profile-container{transition:box-shadow 0.15s;}
+</style>
+</head>
+<body>
+<div class="profile-wrap">
+  <a href="index.html" class="back-link">← Powrót do aplikacji</a>
+  <div id="profile-root"><div class="loading-msg">Ładowanie profilu...</div></div>
+</div>
+<script src="js/blocks.js"></script>
+<script>
+window.PROXY = 'https://windzia-production.up.railway.app';
+ 
+async function loadProfile() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  const root = document.getElementById('profile-root');
+ 
+  if (!id) { root.innerHTML = '<div class="private-msg">Brak ID profilu.</div>'; return; }
+ 
+  try {
+    const res = await fetch(window.PROXY + '/characters/' + id + '/profile');
+    const data = await res.json();
+ 
+    if (data.error) { root.innerHTML = '<div class="private-msg">' + data.error + '</div>'; return; }
+ 
+    // Check if public (allow if token matches owner)
+    const token = localStorage.getItem('ww_token') || '';
+    let isOwner = false;
+    if (token) {
+      try {
+        const me = await fetch(window.PROXY + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+        const meData = await me.json();
+        if (!meData.error) isOwner = true;
+      } catch(e) {}
+    }
+ 
+    if (!data.profile_public && !isOwner) {
+      root.innerHTML = '<div class="private-msg">Ten profil jest prywatny.</div>';
+      return;
+    }
+ 
+    document.title = data.name + ' — Wandzi Windzi';
+ 
+    const avatarHtml = data.avatar_url
+      ? `<img class="profile-avatar" src="${data.avatar_url}" alt="${data.name}">`
+      : `<div class="profile-avatar-placeholder">${data.name[0]?.toUpperCase() || '?'}</div>`;
+ 
+    const editBtn = isOwner
+      ? `<a href="editor.html?id=${id}" style="margin-left:auto;font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:3px;border:1px solid rgba(133,214,242,0.3);color:#7aafc8;text-decoration:none;">✎ Edytuj</a>`
+      : '';
+ 
+    root.innerHTML = `
+      <div class="profile-header">
+        ${avatarHtml}
+        <div class="profile-meta">
+          <div class="profile-name">${data.name}</div>
+          <div class="profile-owner">${data.owner_display || data.owner_username}</div>
+        </div>
+        ${editBtn}
+      </div>
+      <div id="profile-blocks">${Renderer.render(data.profile_blocks || [], false)}</div>`;
+ 
+  } catch(e) {
+    root.innerHTML = '<div class="private-msg">Błąd ładowania: ' + e.message + '</div>';
+  }
+}
+ 
+loadProfile();
+</script>
+</body>
+</html>
