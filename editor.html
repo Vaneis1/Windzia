@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kreator Profilu — Wandzi Windzi</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="https://i.ibb.co/cPNxs5v/logosfera.png">
+<style>
+:root{--bg:#0F0314;--bg2:#1a0828;--bg3:#221035;--border:rgba(133,214,242,0.18);--border-h:rgba(0,204,204,0.45);--gold:#00CCCC;--gold-l:#6BB8D4;--gold-d:rgba(0,204,204,0.1);--text:#dff4fc;--text-d:#7aafc8;--text-m:#3d6a80;--err:rgba(200,60,80,0.15);--err-t:#e06080;--err-b:rgba(200,60,80,0.3);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:15px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+ 
+/* Top bar */
+.topbar{display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;flex-wrap:wrap;}
+.topbar a{color:var(--text-d);text-decoration:none;font-size:0.85rem;}
+.topbar a:hover{color:var(--gold-l);}
+.char-title{font-family:'Cinzel',serif;font-size:1rem;color:var(--gold-l);flex:1;}
+.topbar button{font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:3px;border:1px solid var(--border-h);background:transparent;color:var(--text);cursor:pointer;transition:all 0.15s;}
+.topbar button:hover{background:var(--gold-d);border-color:var(--gold);color:var(--gold-l);}
+.topbar button.primary{background:var(--gold-d);border-color:var(--gold);color:var(--gold-l);}
+.pub-toggle{display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--text-d);}
+.pub-toggle input{cursor:pointer;}
+ 
+/* Layout */
+.editor-layout{display:flex;flex:1;overflow:hidden;}
+ 
+/* Left palette */
+.palette{width:120px;flex-shrink:0;border-right:1px solid var(--border);background:var(--bg2);padding:8px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
+.palette-title{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-m);text-align:center;padding:4px 0;border-bottom:1px solid var(--border);margin-bottom:4px;}
+.pal-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-d);cursor:pointer;font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;width:100%;}
+.pal-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-d);}
+.pal-icon{font-size:1.2rem;}
+.pal-add-root{margin-top:auto;padding:8px 4px;border:1px dashed var(--border-h);border-radius:3px;color:var(--text-m);cursor:pointer;font-size:0.82rem;text-align:center;transition:all 0.12s;}
+.pal-add-root:hover{border-color:var(--gold);color:var(--gold);}
+ 
+/* Canvas */
+.canvas-wrap{flex:1;overflow-y:auto;padding:24px;background:var(--bg);display:flex;justify-content:center;}
+.canvas-inner{width:100%;max-width:860px;}
+#canvas{min-height:300px;}
+.canvas-empty{padding:3rem;text-align:center;color:var(--text-m);font-style:italic;border:2px dashed var(--border);border-radius:8px;}
+ 
+/* Editor block controls */
+.eb{position:relative;outline:1px dashed rgba(133,214,242,0.2);outline-offset:2px;transition:outline 0.12s;}
+.eb:hover{outline-color:rgba(133,214,242,0.5);}
+.eb-sel{outline:2px solid var(--gold)!important;outline-offset:2px;}
+.eb-bar{display:none;position:absolute;top:-24px;left:0;z-index:10;background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:2px 4px;gap:2px;align-items:center;white-space:nowrap;}
+.eb:hover .eb-bar,.eb-sel .eb-bar{display:flex;}
+.eb-type{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);padding:0 4px;}
+.eb-btn{background:transparent;border:none;color:var(--text-d);cursor:pointer;font-size:0.75rem;padding:1px 4px;border-radius:2px;}
+.eb-btn:hover{background:var(--gold-d);color:var(--gold-l);}
+.eb-del:hover{background:var(--err);color:var(--err-t);}
+.eb-add-child{margin-top:8px;padding:6px;border:1px dashed rgba(133,214,242,0.3);border-radius:3px;text-align:center;cursor:pointer;font-size:0.78rem;color:var(--text-m);transition:all 0.12s;}
+.eb-add-child:hover{border-color:var(--gold);color:var(--gold);}
+.slider-add{border:1px dashed var(--border-h)!important;}
+ 
+/* Right props panel */
+.props-panel{width:260px;flex-shrink:0;border-left:1px solid var(--border);background:var(--bg2);overflow-y:auto;padding:12px;}
+.props-hint{color:var(--text-m);font-style:italic;font-size:0.85rem;padding:1rem 0;}
+.props-header{margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.props-type{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);}
+.prop-row{margin-bottom:10px;}
+.prop-row label{display:block;font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:3px;}
+.prop-row input[type=text],.prop-row input[type=number],.prop-row select,.prop-row textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:0.88rem;padding:5px 8px;outline:none;}
+.prop-row input:focus,.prop-row select:focus,.prop-row textarea:focus{border-color:var(--gold);}
+.prop-row select option{background:var(--bg2);}
+.prop-row textarea{resize:vertical;min-height:80px;}
+ 
+button.danger,.btn-del{font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:3px;border:1px solid var(--err-b);background:transparent;color:var(--err-t);cursor:pointer;}
+button.danger:hover,.btn-del:hover{background:var(--err);}
+button.primary.sm,.btn-add-in{font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:3px;border:1px solid var(--gold);background:var(--gold-d);color:var(--gold-l);cursor:pointer;}
+button.primary.sm:hover,.btn-add-in:hover{background:rgba(0,204,204,0.2);}
+.sm{padding:5px 10px;font-size:0.62rem;}
+ 
+/* Type picker modal */
+.type-picker-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;}
+.type-picker-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1.5rem;max-width:480px;width:90%;}
+.type-picker-title{font-family:'Cinzel',serif;font-size:0.9rem;color:var(--gold-l);margin-bottom:1rem;letter-spacing:0.08em;}
+.type-picker-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.type-pick-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--text-d);cursor:pointer;font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;}
+.type-pick-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-d);}
+.type-pick-icon{font-size:1.4rem;}
+.type-picker-cancel{margin-top:1rem;width:100%;padding:8px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-m);cursor:pointer;font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;}
+.type-picker-cancel:hover{border-color:var(--err-b);color:var(--err-t);}
+.type-picker-sub{font-size:0.78rem;color:var(--text-m);margin-bottom:0.8rem;}
+</style>
+</head>
+<body>
+ 
+<div class="topbar">
+  <a href="index.html">← Powrót</a>
+  <div class="char-title" id="char-name-display">Ładowanie...</div>
+  <a id="profile-link" href="profile.html" target="_blank" style="font-size:0.78rem;padding:5px 10px;border:1px solid var(--border);border-radius:3px;">👁 Podgląd</a>
+  <div class="pub-toggle">
+    <input type="checkbox" id="toggle-public">
+    <label for="toggle-public">Publiczny</label>
+  </div>
+  <button class="primary" id="save-btn" onclick="Editor.save()">Zapisz</button>
+</div>
+ 
+<div class="editor-layout">
+ 
+  <!-- Palette -->
+  <div class="palette">
+    <div class="palette-title">Bloki</div>
+    <div class="pal-add-root" onclick="Editor.addBlock(null)" title="Dodaj blok do głównego obszaru">+ Dodaj blok</div>
+  </div>
+ 
+  <!-- Canvas -->
+  <div class="canvas-wrap" onclick="Editor.deselect()">
+    <div class="canvas-inner">
+      <div id="canvas"></div>
+    </div>
+  </div>
+ 
+  <!-- Properties -->
+  <div class="props-panel" id="props-panel">
+    <p class="props-hint">Kliknij blok aby edytować jego właściwości</p>
+  </div>
+ 
+</div>
+ 
+<!-- Type picker modal -->
+<div class="type-picker-overlay" id="type-picker" onclick="if(event.target===this)this.style.display='none'">
+  <div class="type-picker-box">
+    <div class="type-picker-title">Wybierz typ bloku</div>
+    <div class="type-picker-sub" id="type-picker-target"></div>
+    <div class="type-picker-grid" id="type-picker-grid"></div>
+    <button class="type-picker-cancel" onclick="document.getElementById('type-picker').style.display='none'">Anuluj</button>
+  </div>
+</div>
+ 
+<script>
+// Inline PROXY config so editor.html can find the backend
+window.PROXY = 'https://windzia-production.up.railway.app';
+</script>
+<script src="js/blocks.js"></script>
+<script src="js/editor.js"></script>
+<script>
+// Build palette and type picker
+(function(){
+  const grid = document.getElementById('type-picker-grid');
+  Object.entries(BlockDefs).forEach(([type, def]) => {
+    const btn = document.createElement('button');
+    btn.className = 'type-pick-btn';
+    btn.innerHTML = `<span class="type-pick-icon">${def.icon}</span>${def.label}`;
+    btn.onclick = () => Editor.addBlockOfType(type);
+    grid.appendChild(btn);
+  });
+})();
+ 
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); Editor.save(); }
+  if (e.key === 'Escape') Editor.deselect();
+  if ((e.key === 'Delete' || e.key === 'Backspace') && Editor.selectedId &&
+    !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+    e.preventDefault(); Editor.remove(Editor.selectedId);
+  }
+});
+ 
+document.addEventListener('DOMContentLoaded', () => Editor.init());
+</script>
+</body>
+</html>
