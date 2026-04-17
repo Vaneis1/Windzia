@@ -94,6 +94,33 @@ const Editor = {
   },
  
   // ── Rich text ─────────────────────────────────────────────────────────────
+  _savedRange: null,
+  _saveSelection(){
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) this._savedRange = sel.getRangeAt(0).cloneRange();
+  },
+  _applyColor(cmd, value){
+    const el = this.selectedId
+      ? document.querySelector(`.richtext-editable[data-bid="${this.selectedId}"]`)
+      : null;
+    if (!el) return;
+    el.focus();
+    // Restore saved selection if current selection is empty
+    const sel = window.getSelection();
+    if (this._savedRange && (!sel || sel.isCollapsed)) {
+      sel.removeAllRanges();
+      sel.addRange(this._savedRange);
+    }
+    if (!sel || sel.isCollapsed) return; // nothing selected
+    if (value === 'inherit' || value === 'transparent') {
+      // Wrap in span and remove color via style
+      document.execCommand('removeFormat');
+    } else {
+      document.execCommand(cmd, false, value);
+    }
+    const html = el.innerHTML;
+    this._richtextBlur(this.selectedId, html);
+  },
   _richtextInput(id,html){
     // Update state without re-rendering (preserves cursor)
     this.blocks=updateBlockProps(this.blocks,id,{content:html});
