@@ -166,8 +166,10 @@ const Renderer = {
           <button class="rt-btn" onmousedown="event.preventDefault();document.execCommand('underline')" title="Podkreślenie"><u>U</u></button>
           <button class="rt-btn" onmousedown="event.preventDefault();document.execCommand('strikeThrough')" title="Przekreślenie"><s>S</s></button>
           <span class="rt-sep"></span>
-          <label class="rt-btn" title="Kolor tekstu">A <input type="color" value="#ffffff" onmousedown="event.stopPropagation()" onchange="document.execCommand('foreColor',false,this.value)"></label>
-          <label class="rt-btn" title="Tło tekstu">▓ <input type="color" value="#ffff00" onmousedown="event.stopPropagation()" onchange="document.execCommand('hiliteColor',false,this.value)"></label>
+          <label class="rt-btn" title="Kolor tekstu">A <input type="color" value="#ffffff" onmousedown="Editor._saveSelection()" onchange="Editor._applyColor('foreColor',this.value)"></label>
+          <button class="rt-btn" title="Usuń kolor tekstu" onmousedown="event.preventDefault();Editor._applyColor('foreColor','inherit')">A✕</button>
+          <label class="rt-btn" title="Tło tekstu">▓ <input type="color" value="#ffff00" onmousedown="Editor._saveSelection()" onchange="Editor._applyColor('hiliteColor',this.value)"></label>
+          <button class="rt-btn" title="Usuń tło tekstu" onmousedown="event.preventDefault();Editor._applyColor('hiliteColor','transparent')">▓✕</button>
           <span class="rt-sep"></span>
           <button class="rt-btn" onmousedown="event.preventDefault();document.execCommand('justifyLeft')" title="Do lewej">⬤L</button>
           <button class="rt-btn" onmousedown="event.preventDefault();document.execCommand('justifyCenter')" title="Środek">⬤C</button>
