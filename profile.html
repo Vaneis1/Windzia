@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="https://i.ibb.co/cPNxs5v/logosfera.png">
 <style>
-:root{--bg:#0e1117;--bg2:#141920;--bg3:#1c2330;--border:rgba(120,160,200,0.15);--gold:#7ba7c4;--gold-l:#a8c8e0;--gold-d:rgba(120,160,200,0.08);--text:#d8e4ee;--text-d:#7a9bb5;--text-m:#3d5468;}
+:root{--bg:#0F0314;--bg2:#1a0828;--bg3:#221035;--border:rgba(133,214,242,0.18);--gold:#00CCCC;--gold-l:#6BB8D4;--gold-d:rgba(0,204,204,0.1);--text:#dff4fc;--text-d:#7aafc8;--text-m:#3d6a80;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:17px;line-height:1.6;min-height:100vh;background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,204,204,0.06) 0%,transparent 60%);}
 .profile-wrap{max-width:900px;margin:0 auto;padding:2rem 1.5rem 4rem;}
@@ -46,7 +46,6 @@ async function loadProfile() {
  
     if (data.error) { root.innerHTML = '<div class="private-msg">' + data.error + '</div>'; return; }
  
-    // Check if public (allow if token matches owner)
     const token = localStorage.getItem('ww_token') || '';
     let isOwner = false;
     if (token) {
@@ -62,6 +61,29 @@ async function loadProfile() {
       return;
     }
  
+    // Handle both old (array) and new (object with blocks+settings) format
+    const pb = data.profile_blocks;
+    let blocks = [], settings = {};
+    if (pb && !Array.isArray(pb) && pb.blocks) {
+      blocks = pb.blocks || [];
+      settings = pb.settings || {};
+    } else {
+      blocks = pb || [];
+    }
+ 
+    // Apply page settings
+    if (settings.bg_color || settings.bg_image) {
+      document.body.style.background = settings.bg_color || '#0e1117';
+      if (settings.bg_image) {
+        document.body.style.backgroundImage = `url('${settings.bg_image}')`;
+        document.body.style.backgroundSize = settings.bg_size || 'cover';
+        document.body.style.backgroundPosition = settings.bg_position || 'center';
+        document.body.style.backgroundAttachment = 'fixed';
+      }
+    }
+    const wrap = document.querySelector('.profile-wrap');
+    if (wrap && settings.max_width) wrap.style.maxWidth = settings.max_width;
+ 
     document.title = data.name + ' — Wandzi Windzi';
  
     const avatarHtml = data.avatar_url
@@ -69,7 +91,7 @@ async function loadProfile() {
       : `<div class="profile-avatar-placeholder">${data.name[0]?.toUpperCase() || '?'}</div>`;
  
     const editBtn = isOwner
-      ? `<a href="editor.html?id=${id}" style="margin-left:auto;font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:3px;border:1px solid rgba(133,214,242,0.3);color:#7aafc8;text-decoration:none;">✎ Edytuj</a>`
+      ? `<a href="editor.html?id=${id}" style="margin-left:auto;font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:3px;border:1px solid rgba(120,160,200,0.3);color:#7a9bb5;text-decoration:none;">✎ Edytuj</a>`
       : '';
  
     root.innerHTML = `
@@ -81,7 +103,7 @@ async function loadProfile() {
         </div>
         ${editBtn}
       </div>
-      <div id="profile-blocks">${Renderer.render(data.profile_blocks || [], false)}</div>`;
+      <div id="profile-blocks">${Renderer.render(blocks, false)}</div>`;
  
   } catch(e) {
     root.innerHTML = '<div class="private-msg">Błąd ładowania: ' + e.message + '</div>';
