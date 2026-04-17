@@ -29,10 +29,13 @@ const Characters = {
           <div class="char-name">${c.name}</div>
           <div class="char-owner">${c.owner_username || ''}</div>
         </div>
-        <button class="danger sm"
-          onclick="Characters.delete(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
-          Usuń
-        </button>`;
+        <div style="display:flex;gap:6px;">
+          <a href="editor.html?id=${c.id}" style="font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:3px;border:1px solid rgba(133,214,242,0.3);color:#7aafc8;text-decoration:none;">✎ Profil</a
+          <button class="danger sm"
+            onclick="Characters.delete(${c.id}, '${c.name.replace(/'/g, "\\'")}')">
+            Usuń
+          </button>
+        </div>`;
       el.appendChild(card);
     });
   },
