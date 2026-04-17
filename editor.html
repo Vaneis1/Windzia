@@ -7,103 +7,216 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="https://i.ibb.co/cPNxs5v/logosfera.png">
 <style>
-:root{--bg:#0e1117;--bg2:#141920;--bg3:#1c2330;--border:rgba(120,160,200,0.15);--border-h:rgba(120,160,200,0.35);--gold:#7ba7c4;--gold-l:#a8c8e0;--gold-d:rgba(120,160,200,0.08);--text:#d8e4ee;--text-d:#7a9bb5;--text-m:#3d5468;--err:rgba(180,60,70,0.15);--err-t:#c97080;--err-b:rgba(180,60,70,0.3);}
+:root{
+  --bg:#0e1117;--bg2:#141920;--bg3:#1c2330;--bg4:#222d3a;
+  --border:rgba(120,160,200,0.15);--border-h:rgba(120,160,200,0.35);
+  --accent:#7ba7c4;--accent-l:#a8c8e0;--accent-d:rgba(120,160,200,0.08);
+  --text:#d8e4ee;--text-d:#7a9bb5;--text-m:#3d5468;
+  --ok-t:#5bbfa0;--err-t:#c97080;--err-bg:rgba(180,60,70,0.15);
+  --sidebar:200px;--props:270px;
+}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:15px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
  
-/* Top bar */
-.topbar{display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;flex-wrap:wrap;}
-.topbar a{color:var(--text-d);text-decoration:none;font-size:0.85rem;}
-.topbar a:hover{color:var(--gold-l);}
-.char-title{font-family:'Cinzel',serif;font-size:1rem;color:var(--gold-l);flex:1;}
-.topbar button{font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:3px;border:1px solid var(--border-h);background:transparent;color:var(--text);cursor:pointer;transition:all 0.15s;}
-.topbar button:hover{background:var(--gold-d);border-color:var(--gold);color:var(--gold-l);}
-.topbar button.primary{background:var(--gold-d);border-color:var(--gold);color:var(--gold-l);}
-.pub-toggle{display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--text-d);}
-.pub-toggle input{cursor:pointer;}
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
+.topbar{
+  display:flex;align-items:center;gap:8px;padding:0 12px;
+  height:44px;border-bottom:1px solid var(--border);
+  background:var(--bg2);flex-shrink:0;
+}
+.topbar-back{color:var(--text-d);text-decoration:none;font-size:0.82rem;padding:4px 8px;border-radius:3px;border:1px solid transparent;transition:all 0.12s;}
+.topbar-back:hover{border-color:var(--border-h);color:var(--text);}
+.topbar-divider{width:1px;height:22px;background:var(--border);margin:0 4px;}
+.char-title{font-family:'Cinzel',serif;font-size:0.88rem;color:var(--accent-l);flex:1;padding:0 8px;}
+.pub-toggle{display:flex;align-items:center;gap:5px;font-size:0.8rem;color:var(--text-d);cursor:pointer;}
+.pub-toggle input{cursor:pointer;accent-color:var(--accent);}
+.tb-btn{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.07em;text-transform:uppercase;padding:5px 12px;border-radius:3px;border:1px solid var(--border-h);background:transparent;color:var(--text-d);cursor:pointer;transition:all 0.12s;white-space:nowrap;}
+.tb-btn:hover{background:var(--accent-d);border-color:var(--accent);color:var(--accent-l);}
+.tb-btn:disabled{opacity:0.3;cursor:default;pointer-events:none;}
+.tb-btn.primary{background:var(--accent-d);border-color:var(--accent);color:var(--accent-l);}
+.tb-btn.primary:hover{background:rgba(120,160,200,0.18);}
+.tb-btn.dirty{background:rgba(120,160,200,0.2);border-color:var(--accent);color:var(--accent-l);}
+.tb-btn.dirty::before{content:'● ';font-size:0.5rem;vertical-align:middle;}
+.tb-btn.preview-btn{color:var(--text-d);font-size:0.78rem;text-decoration:none;display:flex;align-items:center;gap:4px;}
  
-/* Layout */
+/* ── Layout ──────────────────────────────────────────────────────────────── */
 .editor-layout{display:flex;flex:1;overflow:hidden;}
  
-/* Left palette */
-.palette{width:120px;flex-shrink:0;border-right:1px solid var(--border);background:var(--bg2);padding:8px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
-.palette-title{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-m);text-align:center;padding:4px 0;border-bottom:1px solid var(--border);margin-bottom:4px;}
-.pal-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-d);cursor:pointer;font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;width:100%;}
-.pal-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-d);}
-.pal-icon{font-size:1.2rem;}
-.pal-add-root{margin-top:auto;padding:8px 4px;border:1px dashed var(--border-h);border-radius:3px;color:var(--text-m);cursor:pointer;font-size:0.82rem;text-align:center;transition:all 0.12s;}
-.pal-add-root:hover{border-color:var(--gold);color:var(--gold);}
+/* ── Sidebar (block palette) ─────────────────────────────────────────────── */
+.sidebar{
+  width:var(--sidebar);flex-shrink:0;
+  border-right:1px solid var(--border);
+  background:var(--bg2);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.sidebar-header{
+  padding:10px 12px 8px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.sidebar-title{font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-m);}
+.add-root-btn{
+  font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;
+  padding:4px 8px;border-radius:3px;border:1px solid var(--border-h);
+  background:var(--accent-d);color:var(--accent-l);cursor:pointer;transition:all 0.12s;
+}
+.add-root-btn:hover{background:rgba(120,160,200,0.18);border-color:var(--accent);}
+.sidebar-scroll{flex:1;overflow-y:auto;padding:8px;}
+.block-group-label{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-m);padding:8px 4px 4px;border-bottom:1px solid var(--border);margin-bottom:4px;}
+.block-group-label:first-child{padding-top:2px;}
+.pal-block{
+  display:flex;align-items:center;gap:8px;padding:7px 8px;
+  border:1px solid transparent;border-radius:4px;
+  cursor:pointer;transition:all 0.12s;margin-bottom:2px;
+}
+.pal-block:hover{background:var(--bg3);border-color:var(--border);}
+.pal-block:active{background:var(--accent-d);border-color:var(--accent);}
+.pal-icon{font-size:1rem;width:22px;text-align:center;flex-shrink:0;color:var(--text-d);}
+.pal-info{flex:1;min-width:0;}
+.pal-label{font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--text);}
+.pal-desc{font-size:0.7rem;color:var(--text-m);margin-top:1px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
  
-/* Canvas */
-.canvas-wrap{flex:1;overflow-y:auto;padding:24px;background:var(--bg);display:flex;justify-content:center;}
+/* ── Canvas ──────────────────────────────────────────────────────────────── */
+.canvas-wrap{flex:1;overflow-y:auto;padding:24px;background:var(--bg);display:flex;justify-content:center;position:relative;}
 .canvas-inner{width:100%;max-width:860px;}
-#canvas{min-height:300px;}
-.canvas-empty{padding:3rem;text-align:center;color:var(--text-m);font-style:italic;border:2px dashed var(--border);border-radius:8px;}
+#canvas{min-height:400px;}
+.canvas-empty{padding:4rem 2rem;text-align:center;color:var(--text-m);border:2px dashed rgba(120,160,200,0.15);border-radius:8px;font-style:italic;}
+.canvas-empty strong{color:var(--accent-l);font-style:normal;}
  
-/* Editor block controls */
-.eb{position:relative;outline:1px dashed rgba(133,214,242,0.2);outline-offset:2px;transition:outline 0.12s;}
-.eb:hover{outline-color:rgba(133,214,242,0.5);}
-.eb-sel{outline:2px solid var(--gold)!important;outline-offset:2px;}
-.eb-bar{display:none;position:absolute;top:-24px;left:0;z-index:10;background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:2px 4px;gap:2px;align-items:center;white-space:nowrap;}
+/* ── Editor block overlays ───────────────────────────────────────────────── */
+.eb{position:relative;outline:1px dashed transparent;outline-offset:2px;transition:outline-color 0.1s;cursor:pointer;}
+.eb:hover{outline-color:rgba(120,160,200,0.3);}
+.eb-sel{outline:2px solid var(--accent)!important;outline-offset:2px;}
+.eb-bar{
+  display:none;position:absolute;top:0;right:0;z-index:20;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:0 0 0 4px;padding:2px 4px;gap:2px;align-items:center;
+}
 .eb:hover .eb-bar,.eb-sel .eb-bar{display:flex;}
-.eb-type{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);padding:0 4px;}
-.eb-btn{background:transparent;border:none;color:var(--text-d);cursor:pointer;font-size:0.75rem;padding:1px 4px;border-radius:2px;}
-.eb-btn:hover{background:var(--gold-d);color:var(--gold-l);}
-.eb-del:hover{background:var(--err);color:var(--err-t);}
-.eb-add-child{margin-top:8px;padding:6px;border:1px dashed rgba(133,214,242,0.3);border-radius:3px;text-align:center;cursor:pointer;font-size:0.78rem;color:var(--text-m);transition:all 0.12s;}
-.eb-add-child:hover{border-color:var(--gold);color:var(--gold);}
-.slider-add{border:1px dashed var(--border-h)!important;}
+.eb-type{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);padding:0 5px;}
+.eb-btn{background:transparent;border:none;color:var(--text-d);cursor:pointer;font-size:0.72rem;padding:2px 5px;border-radius:2px;line-height:1;}
+.eb-btn:hover{background:var(--accent-d);color:var(--accent-l);}
+.eb-del:hover{background:var(--err-bg)!important;color:var(--err-t)!important;}
+.eb-add-child{
+  margin-top:8px;padding:7px;border:1px dashed rgba(120,160,200,0.2);
+  border-radius:4px;text-align:center;cursor:pointer;
+  font-size:0.78rem;color:var(--text-m);transition:all 0.12s;
+}
+.eb-add-child:hover{border-color:var(--accent);color:var(--accent-l);background:var(--accent-d);}
  
-/* Right props panel */
-.props-panel{width:260px;flex-shrink:0;border-left:1px solid var(--border);background:var(--bg2);overflow-y:auto;padding:12px;}
-.props-hint{color:var(--text-m);font-style:italic;font-size:0.85rem;padding:1rem 0;}
-.props-header{margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
-.props-type{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);}
-.prop-row{margin-bottom:10px;}
-.prop-row label{display:block;font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:3px;}
-.prop-row input[type=text],.prop-row input[type=number],.prop-row select,.prop-row textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:0.88rem;padding:5px 8px;outline:none;}
-.prop-row input:focus,.prop-row select:focus,.prop-row textarea:focus{border-color:var(--gold);}
+/* ── Props panel ─────────────────────────────────────────────────────────── */
+.props-panel{
+  width:var(--props);flex-shrink:0;
+  border-left:1px solid var(--border);
+  background:var(--bg2);
+  overflow-y:auto;
+  display:flex;flex-direction:column;
+}
+.props-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-m);text-align:center;font-size:0.85rem;font-style:italic;padding:1.5rem;}
+.props-title{font-family:'Cinzel',serif;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent-l);padding:12px 14px 8px;border-bottom:1px solid var(--border);flex-shrink:0;}
+ 
+details{border-bottom:1px solid var(--border);}
+details[open] summary{border-bottom:1px solid var(--border);}
+.prop-section{
+  font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--text-m);padding:8px 14px;cursor:pointer;list-style:none;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:color 0.12s;user-select:none;
+}
+.prop-section:hover{color:var(--text);}
+details[open] .prop-section{color:var(--accent);}
+.prop-section::after{content:'▸';font-size:0.55rem;opacity:0.5;}
+details[open] .prop-section::after{content:'▾';}
+.prop-section-body{padding:8px 14px 12px;}
+ 
+.prop-row{margin-bottom:8px;}
+.prop-row label{display:block;font-size:0.72rem;color:var(--text-d);margin-bottom:3px;}
+.prop-row input[type=text],.prop-row input[type=number],.prop-row select,.prop-row textarea{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;
+  font-size:0.85rem;padding:5px 8px;outline:none;transition:border-color 0.12s;
+}
+.prop-row input:focus,.prop-row select:focus,.prop-row textarea:focus{border-color:var(--accent);}
 .prop-row select option{background:var(--bg2);}
-.prop-row textarea{resize:vertical;min-height:80px;}
+.prop-row textarea{resize:vertical;min-height:90px;}
+.prop-hint{font-size:0.7rem;color:var(--text-m);margin-top:2px;font-style:italic;}
+.color-row{display:flex;gap:6px;align-items:center;}
+.color-row input[type=color]{width:34px;height:30px;padding:2px;cursor:pointer;flex-shrink:0;border:1px solid var(--border);border-radius:3px;background:var(--bg3);}
+.color-row input[type=text]{flex:1;}
+.chk-row{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;color:var(--text-d);}
+.chk-row input{cursor:pointer;accent-color:var(--accent);}
  
-button.danger,.btn-del{font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:3px;border:1px solid var(--err-b);background:transparent;color:var(--err-t);cursor:pointer;}
-button.danger:hover,.btn-del:hover{background:var(--err);}
-button.primary.sm,.btn-add-in{font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:3px;border:1px solid var(--gold);background:var(--gold-d);color:var(--gold-l);cursor:pointer;}
-button.primary.sm:hover,.btn-add-in:hover{background:rgba(0,204,204,0.2);}
-.sm{padding:5px 10px;font-size:0.62rem;}
+.prop-actions{padding:10px 14px 14px;display:flex;flex-direction:column;gap:6px;}
+.prop-btn-add,.prop-btn-dup,.prop-btn-del{font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.07em;text-transform:uppercase;padding:7px 10px;border-radius:3px;cursor:pointer;transition:all 0.12s;width:100%;}
+.prop-btn-add{border:1px solid var(--accent);background:var(--accent-d);color:var(--accent-l);}
+.prop-btn-add:hover{background:rgba(120,160,200,0.18);}
+.prop-btn-dup{border:1px solid var(--border-h);background:transparent;color:var(--text-d);}
+.prop-btn-dup:hover{background:var(--bg3);color:var(--text);}
+.prop-btn-del{border:1px solid rgba(180,60,70,0.3);background:transparent;color:var(--err-t);}
+.prop-btn-del:hover{background:var(--err-bg);}
  
-/* Type picker modal */
-.type-picker-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;}
-.type-picker-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1.5rem;max-width:480px;width:90%;}
-.type-picker-title{font-family:'Cinzel',serif;font-size:0.9rem;color:var(--gold-l);margin-bottom:1rem;letter-spacing:0.08em;}
-.type-picker-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
-.type-pick-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--text-d);cursor:pointer;font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;}
-.type-pick-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-d);}
-.type-pick-icon{font-size:1.4rem;}
-.type-picker-cancel{margin-top:1rem;width:100%;padding:8px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-m);cursor:pointer;font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;}
-.type-picker-cancel:hover{border-color:var(--err-b);color:var(--err-t);}
-.type-picker-sub{font-size:0.78rem;color:var(--text-m);margin-bottom:0.8rem;}
+/* ── Type picker modal ───────────────────────────────────────────────────── */
+.picker-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  z-index:200;align-items:center;justify-content:center;
+}
+.picker-overlay.open{display:flex;}
+.picker-box{
+  background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  padding:1.5rem;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;
+}
+.picker-title{font-family:'Cinzel',serif;font-size:0.9rem;color:var(--accent-l);margin-bottom:4px;letter-spacing:0.06em;}
+.picker-sub{font-size:0.8rem;color:var(--text-m);margin-bottom:1rem;font-style:italic;}
+.picker-group-label{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-m);padding:8px 0 6px;border-bottom:1px solid var(--border);margin-bottom:6px;}
+.picker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:12px;}
+.picker-btn{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border:1px solid var(--border);border-radius:4px;background:transparent;
+  color:var(--text-d);cursor:pointer;text-align:left;transition:all 0.12s;
+}
+.picker-btn:hover{border-color:var(--accent);color:var(--text);background:var(--accent-d);}
+.picker-icon{font-size:1.3rem;flex-shrink:0;width:26px;text-align:center;}
+.picker-info{flex:1;}
+.picker-label{font-family:'Cinzel',serif;font-size:0.64rem;letter-spacing:0.06em;text-transform:uppercase;}
+.picker-desc{font-size:0.72rem;color:var(--text-m);margin-top:1px;}
+.picker-cancel{width:100%;padding:8px;margin-top:4px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-m);cursor:pointer;font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;}
+.picker-cancel:hover{color:var(--err-t);border-color:rgba(180,60,70,0.3);}
+ 
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:8px 18px;font-size:0.85rem;opacity:0;transition:all 0.2s;pointer-events:none;z-index:300;white-space:nowrap;}
+.toast-show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast-ok{border-color:rgba(60,160,120,0.4);color:var(--ok-t);}
+.toast-err{border-color:rgba(180,60,70,0.4);color:var(--err-t);}
 </style>
 </head>
 <body>
  
+<!-- Top bar -->
 <div class="topbar">
-  <a href="index.html">← Powrót</a>
-  <div class="char-title" id="char-name-display">Ładowanie...</div>
-  <a id="profile-link" href="profile.html" target="_blank" style="font-size:0.78rem;padding:5px 10px;border:1px solid var(--border);border-radius:3px;">👁 Podgląd</a>
-  <div class="pub-toggle">
+  <a href="index.html" class="topbar-back">← Powrót</a>
+  <div class="topbar-divider"></div>
+  <div class="char-title" id="char-name-display">Ładowanie…</div>
+  <button id="undo-btn" class="tb-btn" title="Cofnij (Ctrl+Z)" onclick="Editor.undo()" disabled>↩ Cofnij</button>
+  <button id="redo-btn" class="tb-btn" title="Ponów (Ctrl+Y)" onclick="Editor.redo()" disabled>↪ Ponów</button>
+  <div class="topbar-divider"></div>
+  <label class="pub-toggle" title="Profil widoczny publicznie">
     <input type="checkbox" id="toggle-public">
-    <label for="toggle-public">Publiczny</label>
-  </div>
-  <button class="primary" id="save-btn" onclick="Editor.save()">Zapisz</button>
+    Publiczny
+  </label>
+  <a id="profile-link" href="profile.html" target="_blank" class="tb-btn preview-btn">👁 Podgląd</a>
+  <button class="tb-btn primary" id="save-btn" onclick="Editor.save()">Zapisz</button>
 </div>
  
 <div class="editor-layout">
  
-  <!-- Palette -->
-  <div class="palette">
-    <div class="palette-title">Bloki</div>
-    <div class="pal-add-root" onclick="Editor.addBlock(null)" title="Dodaj blok do głównego obszaru">+ Dodaj blok</div>
+  <!-- Palette sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Bloki</span>
+      <button class="add-root-btn" onclick="Editor.addBlock(null)">＋ Dodaj</button>
+    </div>
+    <div class="sidebar-scroll" id="palette-scroll"></div>
   </div>
  
   <!-- Canvas -->
@@ -113,48 +226,68 @@ button.primary.sm:hover,.btn-add-in:hover{background:rgba(0,204,204,0.2);}
     </div>
   </div>
  
-  <!-- Properties -->
+  <!-- Properties panel -->
   <div class="props-panel" id="props-panel">
-    <p class="props-hint">Kliknij blok aby edytować jego właściwości</p>
+    <div class="props-empty">
+      <div style="font-size:1.8rem;margin-bottom:0.8rem;opacity:0.2">⚙</div>
+      Kliknij blok aby edytować jego właściwości
+    </div>
   </div>
  
 </div>
  
-<!-- Type picker modal -->
-<div class="type-picker-overlay" id="type-picker" onclick="if(event.target===this)this.style.display='none'">
-  <div class="type-picker-box">
-    <div class="type-picker-title">Wybierz typ bloku</div>
-    <div class="type-picker-sub" id="type-picker-target"></div>
-    <div class="type-picker-grid" id="type-picker-grid"></div>
-    <button class="type-picker-cancel" onclick="document.getElementById('type-picker').style.display='none'">Anuluj</button>
+<!-- Type picker -->
+<div class="picker-overlay" id="type-picker" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="picker-box">
+    <div class="picker-title">Wybierz typ bloku</div>
+    <div class="picker-sub" id="picker-sub"></div>
+    <div id="picker-content"></div>
+    <button class="picker-cancel" onclick="document.getElementById('type-picker').classList.remove('open')">Anuluj</button>
   </div>
 </div>
  
-<script>
-// Inline PROXY config so editor.html can find the backend
-window.PROXY = 'https://windzia-production.up.railway.app';
-</script>
+<div class="toast" id="toast"></div>
+ 
+<script>window.PROXY = 'https://windzia-production.up.railway.app';</script>
 <script src="js/blocks.js"></script>
 <script src="js/editor.js"></script>
 <script>
-// Build palette and type picker
+// Build palette and picker
 (function(){
-  const grid = document.getElementById('type-picker-grid');
-  Object.entries(BlockDefs).forEach(([type, def]) => {
-    const btn = document.createElement('button');
-    btn.className = 'type-pick-btn';
-    btn.innerHTML = `<span class="type-pick-icon">${def.icon}</span>${def.label}`;
-    btn.onclick = () => Editor.addBlockOfType(type);
-    grid.appendChild(btn);
+  const scroll = document.getElementById('palette-scroll');
+  const pickerContent = document.getElementById('picker-content');
+ 
+  BlockGroups.forEach(group => {
+    const types = Object.entries(BlockDefs).filter(([,d]) => d.group === group);
+    if (!types.length) return;
+ 
+    // Palette
+    const gl = document.createElement('div');
+    gl.className = 'block-group-label'; gl.textContent = group;
+    scroll.appendChild(gl);
+    types.forEach(([type, def]) => {
+      const btn = document.createElement('div');
+      btn.className = 'pal-block';
+      btn.title = def.desc || '';
+      btn.innerHTML = `<span class="pal-icon">${def.icon}</span><div class="pal-info"><div class="pal-label">${def.label}</div><div class="pal-desc">${def.desc||''}</div></div>`;
+      btn.onclick = () => { Editor.addTarget = Editor.addTarget ?? null; Editor.addBlock(Editor.addTarget); setTimeout(() => Editor.addBlockOfType(type), 0); };
+      scroll.appendChild(btn);
+    });
+ 
+    // Picker
+    const pg = document.createElement('div');
+    pg.innerHTML = `<div class="picker-group-label">${group}</div><div class="picker-grid">${types.map(([type,def])=>`<button class="picker-btn" onclick="Editor.addBlockOfType('${type}')"><span class="picker-icon">${def.icon}</span><div class="picker-info"><div class="picker-label">${def.label}</div><div class="picker-desc">${def.desc||''}</div></div></button>`).join('')}</div>`;
+    pickerContent.appendChild(pg);
   });
 })();
  
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); Editor.save(); }
-  if (e.key === 'Escape') Editor.deselect();
-  if ((e.key === 'Delete' || e.key === 'Backspace') && Editor.selectedId &&
-    !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+  if ((e.ctrlKey||e.metaKey) && e.key==='s') { e.preventDefault(); Editor.save(); }
+  if ((e.ctrlKey||e.metaKey) && e.key==='z') { e.preventDefault(); Editor.undo(); }
+  if ((e.ctrlKey||e.metaKey) && (e.key==='y'||(e.shiftKey&&e.key==='z'))) { e.preventDefault(); Editor.redo(); }
+  if (e.key==='Escape') { Editor.deselect(); document.getElementById('type-picker').classList.remove('open'); }
+  if ((e.key==='Delete'||e.key==='Backspace') && Editor.selectedId && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
     e.preventDefault(); Editor.remove(Editor.selectedId);
   }
 });
