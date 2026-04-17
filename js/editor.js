@@ -1,262 +1,348 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kreator Profilu — Wandzi Windzi</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
-<link rel="icon" type="image/png" href="https://i.ibb.co/cPNxs5v/logosfera.png">
-<style>
-:root{--bg:#0e1117;--bg2:#141920;--bg3:#1c2330;--bg4:#222d3a;--border:rgba(120,160,200,0.15);--border-h:rgba(120,160,200,0.35);--accent:#7ba7c4;--accent-l:#a8c8e0;--accent-d:rgba(120,160,200,0.08);--text:#d8e4ee;--text-d:#7a9bb5;--text-m:#3d5468;--ok-t:#5bbfa0;--err-t:#c97080;--err-bg:rgba(180,60,70,0.15);--sidebar:200px;--props:272px;}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+// editor.js — Profile editor logic
+const Editor = {
+  charId:null, charName:'',
+  blocks:[], selectedId:null,
+  dirty:false, addTarget:null,
+  history:[], historyIndex:-1,
+  copiedStyle:null,
+  pageSettings:{ bg_color:'', bg_image:'', bg_size:'cover', bg_position:'center', max_width:'900px' },
  
-/* Top bar */
-.topbar{display:flex;align-items:center;gap:8px;padding:0 12px;height:44px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;}
-.topbar-back{color:var(--text-d);text-decoration:none;font-size:0.82rem;padding:4px 8px;border-radius:3px;border:1px solid transparent;transition:all 0.12s;}
-.topbar-back:hover{border-color:var(--border-h);color:var(--text);}
-.topbar-divider{width:1px;height:22px;background:var(--border);margin:0 4px;flex-shrink:0;}
-.char-title{font-family:'Cinzel',serif;font-size:0.88rem;color:var(--accent-l);flex:1;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.pub-toggle{display:flex;align-items:center;gap:5px;font-size:0.8rem;color:var(--text-d);cursor:pointer;white-space:nowrap;}
-.pub-toggle input{cursor:pointer;accent-color:var(--accent);}
-.tb-btn{font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.07em;text-transform:uppercase;padding:5px 12px;border-radius:3px;border:1px solid var(--border-h);background:transparent;color:var(--text-d);cursor:pointer;transition:all 0.12s;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:4px;}
-.tb-btn:hover{background:var(--accent-d);border-color:var(--accent);color:var(--accent-l);}
-.tb-btn:disabled{opacity:0.3;cursor:default;pointer-events:none;}
-.tb-btn.primary{background:var(--accent-d);border-color:var(--accent);color:var(--accent-l);}
-.tb-btn.primary:hover{background:rgba(120,160,200,0.2);}
-.tb-btn.dirty::before{content:'● ';font-size:0.5rem;}
+  async init(){
+    const params=new URLSearchParams(window.location.search);
+    this.charId=params.get('id');
+    if(!this.charId){window.location.href='index.html';return;}
+    const token=localStorage.getItem('ww_token');
+    if(!token){window.location.href='index.html';return;}
+    try{
+      const me=await this._api('GET','/auth/me');
+      if(me.error)throw new Error(me.error);
+      const data=await this._api('GET',`/characters/${this.charId}/profile`);
+      if(data.error)throw new Error(data.error);
+      this.charName=data.name;
+      // Handle both old (array) and new (object with blocks+settings) format
+      const pb=data.profile_blocks;
+      if(pb&&!Array.isArray(pb)&&pb.blocks){
+        this.blocks=pb.blocks||[];
+        this.pageSettings={...this.pageSettings,...(pb.settings||{})};
+      } else {
+        this.blocks=pb||[];
+      }
+      document.getElementById('char-name-display').textContent=data.name;
+      document.getElementById('toggle-public').checked=data.profile_public||false;
+      document.getElementById('profile-link').href=`profile.html?id=${this.charId}`;
+      this._applyPageSettingsToEditor();
+      this._renderPageSettingsForm();
+      this._pushHistory();
+      this.render();
+      this._renderProps();
+    }catch(e){this._toast('Błąd: '+e.message,'err');}
+  },
  
-/* Layout */
-.editor-layout{display:flex;flex:1;overflow:hidden;}
+  async _api(method,path,body){
+    const token=localStorage.getItem('ww_token')||'';
+    const opts={method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}};
+    if(body)opts.body=JSON.stringify(body);
+    const res=await fetch((window.PROXY||'')+path,opts);
+    return res.json();
+  },
  
-/* Sidebar */
-.sidebar{width:var(--sidebar);flex-shrink:0;border-right:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow:hidden;}
-.sidebar-top{padding:8px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:6px;flex-shrink:0;}
-.sidebar-title{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-m);}
-.add-root-btn{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.06em;text-transform:uppercase;padding:4px 8px;border-radius:3px;border:1px solid var(--border-h);background:var(--accent-d);color:var(--accent-l);cursor:pointer;transition:all 0.12s;}
-.add-root-btn:hover{background:rgba(120,160,200,0.18);border-color:var(--accent);}
-.sidebar-scroll{flex:1;overflow-y:auto;padding:6px;}
+  // ── History ───────────────────────────────────────────────────────────────
+  _pushHistory(){
+    this.history=this.history.slice(0,this.historyIndex+1);
+    this.history.push(JSON.stringify({blocks:this.blocks,settings:this.pageSettings}));
+    if(this.history.length>50)this.history.shift();
+    this.historyIndex=this.history.length-1;
+    this._updateHistoryBtns();
+  },
+  undo(){
+    if(this.historyIndex<=0)return;
+    this.historyIndex--;
+    const s=JSON.parse(this.history[this.historyIndex]);
+    this.blocks=s.blocks||[];this.pageSettings=s.settings||this.pageSettings;
+    this.selectedId=null;this._markDirty(false);this.render();this._renderProps();this._applyPageSettingsToEditor();
+  },
+  redo(){
+    if(this.historyIndex>=this.history.length-1)return;
+    this.historyIndex++;
+    const s=JSON.parse(this.history[this.historyIndex]);
+    this.blocks=s.blocks||[];this.pageSettings=s.settings||this.pageSettings;
+    this.selectedId=null;this._markDirty(false);this.render();this._renderProps();this._applyPageSettingsToEditor();
+  },
+  _updateHistoryBtns(){
+    const u=document.getElementById('undo-btn'),r=document.getElementById('redo-btn');
+    if(u)u.disabled=this.historyIndex<=0;
+    if(r)r.disabled=this.historyIndex>=this.history.length-1;
+  },
  
-/* Page settings accordion in sidebar */
-.ps-toggle{display:flex;align-items:center;justify-content:space-between;padding:7px 8px;cursor:pointer;border:1px solid var(--border);border-radius:4px;margin-bottom:6px;transition:all 0.12s;}
-.ps-toggle:hover{border-color:var(--border-h);}
-.ps-toggle-label{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-d);}
-.ps-toggle-arr{font-size:0.55rem;color:var(--text-m);}
-#ps-body{display:none;padding:8px 4px;border-bottom:1px solid var(--border);margin-bottom:8px;}
-#ps-body.open{display:block;}
-.ps-row{margin-bottom:8px;}
-.ps-row label{display:block;font-size:0.72rem;color:var(--text-d);margin-bottom:3px;}
-.ps-row input[type=text],.ps-row select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:0.82rem;padding:4px 7px;outline:none;}
-.ps-row input:focus,.ps-row select:focus{border-color:var(--accent);}
-.color-row{display:flex;gap:5px;align-items:center;}
-.color-row input[type=color]{width:30px;height:26px;padding:2px;cursor:pointer;flex-shrink:0;border:1px solid var(--border);border-radius:3px;background:var(--bg3);}
-.color-row input[type=text]{flex:1;}
-.theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:2px;}
-.theme-btn{padding:4px 2px;border-radius:3px;cursor:pointer;font-family:'Cinzel',serif;font-size:0.55rem;letter-spacing:0.04em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-d);transition:all 0.12s;}
-.theme-btn:hover{opacity:0.85;transform:scale(1.05);}
+  // ── Selection ─────────────────────────────────────────────────────────────
+  select(id){
+    if(this.selectedId===id)return;
+    this.selectedId=id;this.addTarget=id;
+    this._highlightSelected();this._renderProps();
+    // For richtext: focus the contenteditable
+    if(id){const block=findBlock(this.blocks,id);if(block?.type==='richtext'){setTimeout(()=>{const el=document.querySelector(`.richtext-editable[data-bid="${id}"]`);if(el)el.focus();},10);}
+    }
+    // Re-render richtext toolbar
+    if(id){const block=findBlock(this.blocks,id);if(block?.type==='richtext'){this.render();}}
+  },
+  deselect(){
+    this.selectedId=null;this.addTarget=null;
+    this._highlightSelected();this._renderProps();
+  },
+  _highlightSelected(){
+    document.querySelectorAll('.eb').forEach(el=>el.classList.toggle('eb-sel',el.dataset.bid===this.selectedId));
+  },
  
-/* Block group labels */
-.block-group-label{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-m);padding:7px 4px 3px;border-bottom:1px solid var(--border);margin-bottom:4px;}
-.pal-block{display:flex;align-items:center;gap:7px;padding:6px 7px;border:1px solid transparent;border-radius:4px;cursor:pointer;transition:all 0.12s;margin-bottom:2px;}
-.pal-block:hover{background:var(--bg3);border-color:var(--border);}
-.pal-block:active{background:var(--accent-d);border-color:var(--accent);}
-.pal-icon{font-size:0.95rem;width:20px;text-align:center;flex-shrink:0;color:var(--text-d);}
-.pal-info{flex:1;min-width:0;}
-.pal-label{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--text);}
-.pal-desc{font-size:0.67rem;color:var(--text-m);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  // ── Rich text ─────────────────────────────────────────────────────────────
+  _richtextInput(id,html){
+    // Update state without re-rendering (preserves cursor)
+    this.blocks=updateBlockProps(this.blocks,id,{content:html});
+    this._markDirty(false); // mark dirty but don't push history on every keystroke
+  },
+  _richtextBlur(id,html){
+    this.blocks=updateBlockProps(this.blocks,id,{content:html});
+    this._markDirty();
+  },
  
-/* Canvas */
-.canvas-wrap{flex:1;overflow-y:auto;padding:24px;display:flex;justify-content:center;position:relative;transition:background 0.3s;}
-.canvas-inner{width:100%;max-width:900px;}
-#canvas{min-height:400px;}
-.canvas-empty{padding:4rem 2rem;text-align:center;color:var(--text-m);border:2px dashed rgba(120,160,200,0.12);border-radius:8px;font-style:italic;}
-.canvas-empty strong{color:var(--accent-l);font-style:normal;}
+  // ── Add block ─────────────────────────────────────────────────────────────
+  addBlock(parentId){
+    this.addTarget=parentId??null;
+    const sub=document.getElementById('picker-sub');
+    if(sub)sub.textContent=parentId?'→ wewnątrz bloku':'→ do głównego obszaru';
+    document.getElementById('type-picker').classList.add('open');
+  },
+  addBlockOfType(type){
+    document.getElementById('type-picker').classList.remove('open');
+    const nb=makeBlock(type);
+    this.blocks=addBlockTo(this.blocks,this.addTarget,nb);
+    this.selectedId=nb.id;
+    this._markDirty();this.render();this._renderProps();
+    setTimeout(()=>{const el=document.querySelector(`[data-bid="${nb.id}"]`);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
+  },
  
-/* Editor block overlays */
-.eb{position:relative;outline:1px dashed transparent;outline-offset:2px;transition:outline-color 0.1s;cursor:pointer;}
-.eb:hover{outline-color:rgba(120,160,200,0.25);}
-.eb-sel{outline:2px solid var(--accent)!important;outline-offset:2px;}
-.eb-bar{display:none;position:absolute;top:0;right:0;z-index:20;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 0 4px;padding:2px 4px;gap:1px;align-items:center;}
-.eb:hover .eb-bar,.eb-sel .eb-bar{display:flex;}
-.eb-type{font-family:'Cinzel',serif;font-size:0.56rem;letter-spacing:0.05em;text-transform:uppercase;color:var(--accent);padding:0 5px;}
-.eb-btn{background:transparent;border:none;color:var(--text-d);cursor:pointer;font-size:0.7rem;padding:2px 4px;border-radius:2px;line-height:1;}
-.eb-btn:hover{background:var(--accent-d);color:var(--accent-l);}
-.eb-del:hover{background:var(--err-bg)!important;color:var(--err-t)!important;}
-.eb-add-child{margin-top:6px;padding:6px;border:1px dashed rgba(120,160,200,0.18);border-radius:4px;text-align:center;cursor:pointer;font-size:0.76rem;color:var(--text-m);transition:all 0.12s;}
-.eb-add-child:hover{border-color:var(--accent);color:var(--accent-l);background:var(--accent-d);}
+  // ── Mutations ─────────────────────────────────────────────────────────────
+  remove(id){
+    if(!confirm('Usunąć blok?'))return;
+    this.blocks=removeBlock(this.blocks,id);
+    if(this.selectedId===id)this.selectedId=null;
+    this._markDirty();this.render();this._renderProps();
+  },
+  move(id,dir){
+    this.blocks=moveBlock(this.blocks,id,dir);
+    this._markDirty();this.render();
+    setTimeout(()=>this._highlightSelected(),10);
+  },
+  duplicate(id){
+    this.blocks=duplicateBlock(this.blocks,id);
+    this._markDirty();this.render();
+  },
+  updateProp(key,value){
+    if(!this.selectedId)return;
+    this.blocks=updateBlockProps(this.blocks,this.selectedId,{[key]:value});
+    const block=findBlock(this.blocks,this.selectedId);
+    if(block?.type==='richtext'&&key==='content'){this._markDirty(false);return;}
+    this._markDirty(false);
+    // Re-render only this block
+    const el=document.querySelector(`[data-bid="${this.selectedId}"]`);
+    if(el&&block){
+      const tmp=document.createElement('div');
+      tmp.innerHTML=Renderer.block(block,true);
+      el.replaceWith(tmp.firstChild);
+      this._highlightSelected();
+    }
+  },
+  _markDirty(push=true){
+    this.dirty=true;
+    if(push)this._pushHistory();
+    const btn=document.getElementById('save-btn');
+    if(btn)btn.classList.add('dirty');
+  },
  
-/* Rich text */
-.richtext-wrap{position:relative;}
-.rt-toolbar{display:flex;align-items:center;gap:2px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:4px 6px;margin-bottom:4px;flex-wrap:wrap;}
-.rt-btn{background:transparent;border:1px solid transparent;border-radius:3px;color:var(--text-d);cursor:pointer;font-size:0.82rem;padding:3px 7px;transition:all 0.1s;display:inline-flex;align-items:center;gap:3px;font-family:'Crimson Pro',serif;}
-.rt-btn:hover{background:var(--bg3);border-color:var(--border);color:var(--text);}
-.rt-btn input[type=color]{width:16px;height:16px;padding:0;border:none;background:transparent;cursor:pointer;vertical-align:middle;}
-.rt-sep{width:1px;height:16px;background:var(--border);margin:0 3px;flex-shrink:0;}
-.richtext-editable{outline:none;min-height:40px;padding:4px;}
-.richtext-editable:focus{outline:1px solid rgba(120,160,200,0.3);border-radius:2px;}
-.richtext-content p{margin:0 0 0.5em;}
+  // ── Copy / paste style ────────────────────────────────────────────────────
+  copyStyle(id){
+    const block=findBlock(this.blocks,id);
+    if(!block)return;
+    this.copiedStyle={type:block.type,props:{...block.props}};
+    this._toast('Skopiowano styl bloku','ok');
+  },
+  pasteStyle(id){
+    if(!this.copiedStyle){this._toast('Brak skopiowanego stylu','err');return;}
+    const block=findBlock(this.blocks,id);
+    if(!block)return;
+    if(block.type!==this.copiedStyle.type){this._toast('Bloki muszą być tego samego typu','err');return;}
+    // Don't copy content, only visual props
+    const contentKeys=['content','children','id'];
+    const stylePropsToPaste=Object.fromEntries(Object.entries(this.copiedStyle.props).filter(([k])=>!contentKeys.includes(k)));
+    this.blocks=updateBlockProps(this.blocks,id,stylePropsToPaste);
+    this._markDirty();this.render();this._renderProps();
+    this._toast('Wklejono styl','ok');
+  },
  
-/* Props panel */
-.props-panel{width:var(--props);flex-shrink:0;border-left:1px solid var(--border);background:var(--bg2);overflow-y:auto;display:flex;flex-direction:column;}
-.props-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-m);text-align:center;font-size:0.85rem;font-style:italic;padding:1.5rem;}
-.props-title{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent-l);padding:11px 14px 8px;border-bottom:1px solid var(--border);flex-shrink:0;}
-details{border-bottom:1px solid var(--border);}
-.prop-section{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-m);padding:7px 14px;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;user-select:none;transition:color 0.1s;}
-.prop-section:hover{color:var(--text);}
-details[open] .prop-section{color:var(--accent);}
-.prop-section::after{content:'▸';font-size:0.52rem;opacity:0.5;}
-details[open] .prop-section::after{content:'▾';}
-.prop-section-body{padding:8px 14px 12px;}
-.prop-row{margin-bottom:8px;}
-.prop-row label{display:block;font-size:0.7rem;color:var(--text-d);margin-bottom:3px;}
-.prop-row input[type=text],.prop-row input[type=number],.prop-row select,.prop-row textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:0.84rem;padding:5px 8px;outline:none;transition:border-color 0.12s;}
-.prop-row input:focus,.prop-row select:focus,.prop-row textarea:focus{border-color:var(--accent);}
-.prop-row select option{background:var(--bg2);}
-.prop-row textarea{resize:vertical;min-height:80px;}
-.prop-hint{font-size:0.68rem;color:var(--text-m);margin-top:2px;font-style:italic;}
-.prop-actions{padding:10px 14px 14px;display:flex;flex-direction:column;gap:5px;}
-.prop-btn-add,.prop-btn-dup,.prop-btn-del{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.07em;text-transform:uppercase;padding:6px 10px;border-radius:3px;cursor:pointer;transition:all 0.12s;width:100%;}
-.prop-btn-add{border:1px solid var(--accent);background:var(--accent-d);color:var(--accent-l);}
-.prop-btn-add:hover{background:rgba(120,160,200,0.18);}
-.prop-btn-dup{border:1px solid var(--border-h);background:transparent;color:var(--text-d);}
-.prop-btn-dup:hover{background:var(--bg3);color:var(--text);}
-.prop-btn-del{border:1px solid rgba(180,60,70,0.3);background:transparent;color:var(--err-t);}
-.prop-btn-del:hover{background:var(--err-bg);}
- 
-/* Type picker */
-.picker-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;align-items:center;justify-content:center;}
-.picker-overlay.open{display:flex;}
-.picker-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1.4rem;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;}
-.picker-title{font-family:'Cinzel',serif;font-size:0.88rem;color:var(--accent-l);margin-bottom:3px;letter-spacing:0.06em;}
-.picker-sub{font-size:0.78rem;color:var(--text-m);margin-bottom:1rem;font-style:italic;}
-.picker-group-label{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-m);padding:7px 0 5px;border-bottom:1px solid var(--border);margin-bottom:5px;}
-.picker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin-bottom:10px;}
-.picker-btn{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--text-d);cursor:pointer;text-align:left;transition:all 0.12s;}
-.picker-btn:hover{border-color:var(--accent);color:var(--text);background:var(--accent-d);}
-.picker-icon{font-size:1.2rem;flex-shrink:0;width:24px;text-align:center;}
-.picker-label{font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.05em;text-transform:uppercase;}
-.picker-desc{font-size:0.7rem;color:var(--text-m);margin-top:1px;}
-.picker-cancel{width:100%;padding:7px;margin-top:3px;border:1px solid var(--border);border-radius:3px;background:transparent;color:var(--text-m);cursor:pointer;font-family:'Cinzel',serif;font-size:0.63rem;letter-spacing:0.06em;text-transform:uppercase;}
-.picker-cancel:hover{color:var(--err-t);border-color:rgba(180,60,70,0.3);}
- 
-/* Toast */
-.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:7px 16px;font-size:0.83rem;opacity:0;transition:all 0.2s;pointer-events:none;z-index:300;white-space:nowrap;}
-.toast-show{opacity:1;transform:translateX(-50%) translateY(0);}
-.toast-ok{border-color:rgba(60,160,120,0.4);color:var(--ok-t);}
-.toast-err{border-color:rgba(180,60,70,0.4);color:var(--err-t);}
-</style>
-</head>
-<body>
- 
-<!-- Top bar -->
-<div class="topbar">
-  <a href="index.html" class="topbar-back">← Powrót</a>
-  <div class="topbar-divider"></div>
-  <div class="char-title" id="char-name-display">Ładowanie…</div>
-  <button id="undo-btn" class="tb-btn" title="Cofnij (Ctrl+Z)" onclick="Editor.undo()" disabled>↩</button>
-  <button id="redo-btn" class="tb-btn" title="Ponów (Ctrl+Y)" onclick="Editor.redo()" disabled>↪</button>
-  <div class="topbar-divider"></div>
-  <label class="pub-toggle" title="Widoczny publicznie">
-    <input type="checkbox" id="toggle-public"> Publiczny
-  </label>
-  <a id="profile-link" href="profile.html" target="_blank" class="tb-btn">👁 Podgląd</a>
-  <button class="tb-btn primary" id="save-btn" onclick="Editor.save()">Zapisz</button>
-</div>
- 
-<div class="editor-layout">
- 
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="sidebar-top">
-      <span class="sidebar-title">Bloki</span>
-      <button class="add-root-btn" onclick="Editor.addBlock(null)">＋ Dodaj</button>
-    </div>
-    <div class="sidebar-scroll" id="sidebar-scroll">
- 
-      <!-- Page settings -->
-      <div class="ps-toggle" onclick="document.getElementById('ps-body').classList.toggle('open');this.querySelector('.ps-toggle-arr').textContent=document.getElementById('ps-body').classList.contains('open')?'▾':'▸'">
-        <span class="ps-toggle-label">⚙ Ustawienia strony</span>
-        <span class="ps-toggle-arr">▸</span>
+  // ── Page settings ─────────────────────────────────────────────────────────
+  updatePageSetting(key,value){
+    this.pageSettings={...this.pageSettings,[key]:value};
+    this._applyPageSettingsToEditor();
+    this._markDirty();
+  },
+  _applyPageSettingsToEditor(){
+    const canvas=document.querySelector('.canvas-wrap');
+    if(!canvas)return;
+    const s=this.pageSettings;
+    canvas.style.background=s.bg_color||'var(--bg)';
+    if(s.bg_image)canvas.style.backgroundImage=`url('${s.bg_image}')`;
+    else canvas.style.backgroundImage='none';
+    canvas.style.backgroundSize=s.bg_size||'cover';
+    canvas.style.backgroundPosition=s.bg_position||'center';
+    const inner=document.querySelector('.canvas-inner');
+    if(inner)inner.style.maxWidth=s.max_width||'900px';
+  },
+  _renderPageSettingsForm(){
+    const el=document.getElementById('page-settings-form');
+    if(!el)return;
+    const s=this.pageSettings;
+    el.innerHTML=`
+      <div class="ps-row"><label>Kolor tła strony</label>
+        <div class="color-row"><input type="color" value="${s.bg_color||'#0e1117'}" oninput="Editor.updatePageSetting('bg_color',this.value)"><input type="text" value="${s.bg_color||''}" placeholder="#0e1117" oninput="Editor.updatePageSetting('bg_color',this.value)"></div>
       </div>
-      <div id="ps-body">
-        <div id="page-settings-form"></div>
+      <div class="ps-row"><label>Obraz tła (URL)</label>
+        <input type="text" value="${s.bg_image||''}" placeholder="https://..." oninput="Editor.updatePageSetting('bg_image',this.value)">
       </div>
- 
-      <div id="palette-blocks"></div>
-    </div>
-  </div>
- 
-  <!-- Canvas -->
-  <div class="canvas-wrap" onclick="Editor.deselect()">
-    <div class="canvas-inner">
-      <div id="canvas"></div>
-    </div>
-  </div>
- 
-  <!-- Props -->
-  <div class="props-panel" id="props-panel">
-    <div class="props-empty">
-      <div style="font-size:1.6rem;margin-bottom:0.8rem;opacity:0.2">⚙</div>
-      Kliknij blok aby edytować
-    </div>
-  </div>
- 
-</div>
- 
-<!-- Type picker -->
-<div class="picker-overlay" id="type-picker" onclick="if(event.target===this)this.classList.remove('open')">
-  <div class="picker-box">
-    <div class="picker-title">Wybierz typ bloku</div>
-    <div class="picker-sub" id="picker-sub"></div>
-    <div id="picker-content"></div>
-    <button class="picker-cancel" onclick="document.getElementById('type-picker').classList.remove('open')">Anuluj</button>
-  </div>
-</div>
- 
-<div class="toast" id="toast"></div>
- 
-<script>window.PROXY = 'https://windzia-production.up.railway.app';</script>
-<script src="js/blocks.js"></script>
-<script src="js/editor.js"></script>
-<script>
-(function(){
-  const paletteBlocks = document.getElementById('palette-blocks');
-  const pickerContent = document.getElementById('picker-content');
- 
-  BlockGroups.forEach(group => {
-    const types = Object.entries(BlockDefs).filter(([,d]) => d.group === group);
-    if (!types.length) return;
- 
-    // Palette
-    const gl = document.createElement('div');
-    gl.className = 'block-group-label'; gl.textContent = group;
-    paletteBlocks.appendChild(gl);
-    types.forEach(([type, def]) => {
-      const btn = document.createElement('div');
-      btn.className = 'pal-block'; btn.title = def.desc || '';
-      btn.innerHTML = `<span class="pal-icon">${def.icon}</span><div class="pal-info"><div class="pal-label">${def.label}</div><div class="pal-desc">${def.desc||''}</div></div>`;
-      btn.onclick = () => Editor.addBlockOfType(type);
-      paletteBlocks.appendChild(btn);
+      <div class="ps-row"><label>Rozmiar tła</label>
+        <select onchange="Editor.updatePageSetting('bg_size',this.value)">
+          ${[['cover','Cover'],['contain','Contain'],['auto','Auto'],['100% 100%','Rozciągnij']].map(([v,l])=>`<option value="${v}"${s.bg_size===v?' selected':''}>${l}</option>`).join('')}
+        </select>
+      </div>
+      <div class="ps-row"><label>Max. szerokość profilu</label>
+        <input type="text" value="${s.max_width||'900px'}" placeholder="900px" oninput="Editor.updatePageSetting('max_width',this.value)">
+      </div>
+      <div class="ps-row"><label>Motyw kolorów</label>
+        <div class="theme-grid">${ColorThemes.map(t=>`<button class="theme-btn" title="${t.name}" onclick="Editor.applyTheme(${JSON.stringify(t).replace(/"/g,'&quot;')})" style="background:${t.bg};border:2px solid ${t.accent}">${t.icon}<span>${t.name}</span></button>`).join('')}</div>
+      </div>`;
+  },
+  applyTheme(theme){
+    this.updatePageSetting('bg_color',theme.bg);
+    // Apply theme colors to all heading blocks
+    this.blocks=this._applyThemeToBlocks(this.blocks,theme);
+    this._markDirty();this.render();this._renderProps();
+    this._toast('Zastosowano motyw: '+theme.name,'ok');
+  },
+  _applyThemeToBlocks(blocks,theme){
+    return blocks.map(b=>{
+      let nb={...b,props:{...b.props}};
+      if(b.type==='heading')nb.props.color=theme.heading;
+      if(b.type==='text')nb.props.color=theme.text;
+      if(b.type==='richtext')nb.props.color=theme.text;
+      if(b.type==='container'&&b.props.border_width>0)nb.props.border_color=theme.accent;
+      if(b.type==='cards'){nb.props.card_border=theme.accent;nb.props.card_bg=theme.card_bg;}
+      if(b.children)nb.children=this._applyThemeToBlocks(b.children,theme);
+      return nb;
     });
+  },
  
-    // Picker
-    const pg = document.createElement('div');
-    pg.innerHTML = `<div class="picker-group-label">${group}</div><div class="picker-grid">${types.map(([t,d])=>`<button class="picker-btn" onclick="Editor.addBlockOfType('${t}')"><span class="picker-icon">${d.icon}</span><div><div class="picker-label">${d.label}</div><div class="picker-desc">${d.desc||''}</div></div></button>`).join('')}</div>`;
-    pickerContent.appendChild(pg);
-  });
-})();
+  // ── Render canvas ─────────────────────────────────────────────────────────
+  render(){
+    const canvas=document.getElementById('canvas');
+    if(!canvas)return;
+    canvas.innerHTML=Renderer.render(this.blocks,true)||`<div class="canvas-empty"><div style="font-size:2rem;margin-bottom:1rem;opacity:0.2">⊞</div><div>Kliknij <strong>＋ Dodaj</strong> aby rozpocząć</div></div>`;
+  },
  
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey||e.metaKey) && e.key==='s') { e.preventDefault(); Editor.save(); }
-  if ((e.ctrlKey||e.metaKey) && e.key==='z') { e.preventDefault(); Editor.undo(); }
-  if ((e.ctrlKey||e.metaKey) && (e.key==='y'||(e.shiftKey&&e.key==='z'))) { e.preventDefault(); Editor.redo(); }
-  if (e.key==='Escape') { Editor.deselect(); document.getElementById('type-picker').classList.remove('open'); }
-  if ((e.key==='Delete'||e.key==='Backspace') && Editor.selectedId && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName) && !document.activeElement.contentEditable==='true') {
-    e.preventDefault(); Editor.remove(Editor.selectedId);
-  }
-});
+  // ── Properties panel ─────────────────────────────────────────────────────
+  _renderProps(){
+    const panel=document.getElementById('props-panel');
+    if(!panel)return;
+    if(!this.selectedId){panel.innerHTML=`<div class="props-empty"><div style="font-size:1.8rem;margin-bottom:0.8rem;opacity:0.2">⚙</div>Kliknij blok aby edytować właściwości</div>`;return;}
+    const block=findBlock(this.blocks,this.selectedId);
+    if(!block){panel.innerHTML='';return;}
+    panel.innerHTML=this._buildPropsForm(block);
+  },
  
-document.addEventListener('DOMContentLoaded', () => Editor.init());
-</script>
-</body>
-</html>
+  _buildPropsForm(block){
+    const p=block.props||{};const def=BlockDefs[block.type];
+    const section=(title,content)=>`<details open><summary class="prop-section">${title}</summary><div class="prop-section-body">${content}</div></details>`;
+    const row=(label,input,hint='')=>`<div class="prop-row"><label>${label}</label>${input}${hint?`<div class="prop-hint">${hint}</div>`:''}</div>`;
+    const txt=(key,ph='')=>`<input type="text" value="${(p[key]||'').toString().replace(/"/g,'&quot;')}" placeholder="${ph}" oninput="Editor.updateProp('${key}',this.value)">`;
+    const num=(key,min=0,max=9999,step=1)=>`<input type="number" value="${p[key]!==undefined?p[key]:0}" min="${min}" max="${max}" step="${step}" oninput="Editor.updateProp('${key}',parseFloat(this.value)||0)">`;
+    const clr=(key,def='#7ba7c4')=>`<div class="color-row"><input type="color" value="${p[key]||def}" oninput="Editor.updateProp('${key}',this.value)"><input type="text" value="${(p[key]||'').replace(/"/g,'&quot;')}" placeholder="${def}" oninput="Editor.updateProp('${key}',this.value)"></div>`;
+    const sel=(key,opts)=>`<select onchange="Editor.updateProp('${key}',this.value)">${opts.map(([v,l])=>`<option value="${v}"${(p[key]||'')===(v)?' selected':''}>${l}</option>`).join('')}</select>`;
+    const textarea=(key,rows=5)=>`<textarea rows="${rows}" oninput="Editor.updateProp('${key}',this.value)">${(p[key]||'').replace(/</g,'&lt;')}</textarea>`;
+ 
+    let html=`<div class="props-title">${def?.icon||''} ${def?.label||block.type}</div>`;
+ 
+    if(block.type==='container'){
+      html+=section('Kolumny i układ',row('Liczba kolumn',num('columns',1,12,1))+row('Własny grid',txt('column_template','np. 1fr 2fr'),'Nadpisuje "Liczba kolumn"')+row('Wyrównanie',sel('align_items',[['start','Góra'],['center','Środek'],['end','Dół'],['stretch','Rozciągnij']]))+row('Odstęp (px)',num('gap',0,200,4))+row('Padding (px)',num('padding',0,200,4)));
+      html+=section('Rozmiar',row('Szerokość',txt('width','100%'),'100%, 500px, auto…')+row('Wysokość',txt('height','auto'),'auto, 300px, 50vh…')+row('Min. wysokość (px)',num('min_height',0,2000,10))+row('Overflow',sel('overflow',[['visible','Widoczny'],['hidden','Ukryty'],['auto','Scroll auto'],['scroll','Zawsze scroll']])));
+      html+=section('Tło',row('Kolor',clr('bg_color','transparent'))+row('URL obrazu',txt('bg_image','https://…'))+row('Rozmiar',sel('bg_size',[['cover','Cover'],['contain','Contain'],['auto','Auto'],['100% 100%','Rozciągnij']]))+row('Pozycja',sel('bg_position',[['center','Środek'],['top','Góra'],['bottom','Dół'],['left','Lewo'],['right','Prawo']])));
+      html+=section('Obramowanie',row('Grubość (px)',num('border_width',0,20,1))+row('Kolor',clr('border_color','rgba(120,160,200,0.4)'))+row('Styl',sel('border_style',[['solid','Ciągłe'],['dashed','Kreskowane'],['dotted','Kropkowane'],['double','Podwójne'],['none','Brak']]))+row('Zaokrąglenie (px)',num('border_radius',0,200,2)));
+    }
+    if(block.type==='cards'){
+      html+=section('Siatka',row('Kolumny',num('columns',1,8,1))+row('Odstęp (px)',num('gap',0,100,4))+row('Padding strony (px)',num('padding',0,100,4))+row('Szerokość',txt('width','100%')));
+      html+=section('Styl kart',row('Tło karty',clr('card_bg','rgba(120,160,200,0.05)'))+row('Obramowanie',clr('card_border','rgba(120,160,200,0.18)'))+row('Zaokrąglenie (px)',num('card_radius',0,50,2))+row('Padding karty (px)',num('card_padding',0,100,4)));
+    }
+    if(block.type==='slider_v'){html+=section('Rozmiar',row('Szerokość',txt('width','100%'))+row('Wysokość',txt('height','400px'),'px, vh…')+row('Odstęp (px)',num('gap',0,100,4))+row('Padding (px)',num('padding',0,100,4))+row('Kolor tła',clr('bg_color','transparent')));}
+    if(block.type==='slider_h'){html+=section('Rozmiar',row('Wysokość',txt('height','220px'))+row('Szer. elementu',txt('item_width','240px'))+row('Odstęp (px)',num('gap',0,100,4))+row('Padding (px)',num('padding',0,100,4))+row('Kolor tła',clr('bg_color','transparent')));}
+ 
+    if(block.type==='richtext'){
+      html+=section('Styl bazowy',row('Kolor',clr('color','#d8e4ee'))+row('Rozmiar (rem)',num('font_size',0.5,6,0.05))+row('Czcionka',sel('font_family',[['Crimson Pro, serif','Crimson Pro'],['Cinzel, serif','Cinzel'],['sans-serif','Sans-serif'],['monospace','Monospace']]))+row('Interlinia',num('line_height',1,5,0.05))+row('Padding (px)',num('padding',0,100,4)));
+      html+=`<div class="prop-hint" style="margin:8px 14px;padding:8px;background:rgba(120,160,200,0.08);border-radius:3px;border:1px solid rgba(120,160,200,0.15);">💡 Zaznacz tekst w bloku i użyj paska narzędzi który pojawi się na górze</div>`;
+    }
+    if(block.type==='text'){
+      html+=section('Treść',row('Tekst',textarea('content',6)));
+      html+=section('Typografia',row('Kolor',clr('color','#d8e4ee'))+row('Rozmiar (rem)',num('font_size',0.5,6,0.05))+row('Grubość',sel('font_weight',[['300','Cienka'],['normal','Normalna'],['500','Medium'],['bold','Pogrubiona']]))+row('Styl',sel('font_style',[['normal','Normalna'],['italic','Kursywa']]))+row('Wyrównanie',sel('text_align',[['left','Lewo'],['center','Środek'],['right','Prawo'],['justify','Wyjust.']]))+row('Czcionka',sel('font_family',[['Crimson Pro, serif','Crimson Pro'],['Cinzel, serif','Cinzel'],['sans-serif','Sans-serif'],['monospace','Mono']]))+row('Interlinia',num('line_height',1,5,0.05)));
+      html+=section('Odstępy',row('Margines górny (px)',num('margin_top',0,200,4))+row('Margines dolny (px)',num('margin_bottom',0,200,4)));
+    }
+    if(block.type==='heading'){
+      html+=section('Treść',row('Tekst',txt('content'))+row('Poziom',sel('level',[['1','H1 — Największy'],['2','H2'],['3','H3'],['4','H4'],['5','H5'],['6','H6 — Najmniejszy']])));
+      html+=section('Typografia',row('Kolor',clr('color','#a8c8e0'))+row('Wyrównanie',sel('text_align',[['left','Lewo'],['center','Środek'],['right','Prawo']]))+row('Czcionka',sel('font_family',[['Cinzel, serif','Cinzel'],['Crimson Pro, serif','Crimson Pro'],['sans-serif','Sans-serif']]))+row('Odstęp liter',txt('letter_spacing','0.08em')));
+      html+=section('Odstępy',row('Margines górny (px)',num('margin_top',0,200,4))+row('Margines dolny (px)',num('margin_bottom',0,200,4)));
+    }
+    if(block.type==='quote'){
+      html+=section('Treść',row('Cytat',textarea('content',4))+row('Autor',txt('author','np. Jan Kowalski')));
+      html+=section('Wygląd',row('Kolor tekstu',clr('color','#a8c8e0'))+row('Kolor kreski',clr('border_color','#7ba7c4'))+row('Tło',clr('bg_color','rgba(120,160,200,0.06)'))+row('Rozmiar (rem)',num('font_size',0.5,4,0.05))+row('Styl',sel('font_style',[['italic','Kursywa'],['normal','Normalna']]))+row('Padding (px)',num('padding',0,100,4)));
+    }
+    if(block.type==='image'){
+      html+=section('Źródło',row('URL obrazu',txt('url','https://i.ibb.co/…'))+row('Alt',txt('alt')));
+      html+=section('Rozmiar',row('Szerokość',txt('width','100%'),'%, px, auto')+row('Max. szerokość',txt('max_width',''))+row('Wysokość',txt('height','auto'),'auto, 200px…')+row('Object-fit',sel('object_fit',[['cover','Cover'],['contain','Contain'],['fill','Fill'],['none','None']]))+row('Wyrównanie',sel('align',[['left','Lewo'],['center','Środek'],['right','Prawo']]))+row('Zaokrąglenie (px)',num('border_radius',0,500,4)));
+    }
+    if(block.type==='divider'){html+=section('Wygląd',row('Kolor',clr('color','rgba(120,160,200,0.25)'))+row('Styl',sel('style',[['solid','Ciągły'],['dashed','Kreskowany'],['dotted','Kropkowany'],['double','Podwójny']]))+row('Grubość (px)',num('thickness',1,20,1))+row('Margines (px)',num('margin',0,100,4)));}
+    if(block.type==='spacer'){html+=section('Rozmiar',row('Wysokość (px)',num('height',4,1000,4)));}
+    if(block.type==='badge'){
+      html+=section('Treść',row('Tekst',txt('content')));
+      html+=section('Wygląd',row('Kolor tekstu',clr('color','#a8c8e0'))+row('Tło',clr('bg_color','rgba(120,160,200,0.15)'))+row('Obramowanie',clr('border_color','rgba(120,160,200,0.4)'))+row('Zaokrąglenie (px)',num('border_radius',0,50,2))+row('Rozmiar (rem)',num('font_size',0.5,3,0.05))+row('Czcionka',sel('font_family',[['Cinzel, serif','Cinzel'],['Crimson Pro, serif','Crimson Pro'],['sans-serif','Sans-serif']])));
+    }
+ 
+    html+=`<div class="prop-actions">`;
+    if(def?.hasChildren)html+=`<button class="prop-btn-add" onclick="Editor.addBlock('${block.id}')">＋ Dodaj blok wewnątrz</button>`;
+    html+=`<button class="prop-btn-dup" onclick="Editor.duplicate('${block.id}')">⧉ Duplikuj blok</button>`;
+    html+=`<button class="prop-btn-dup" onclick="Editor.copyStyle('${block.id}')">⎘ Kopiuj styl</button>`;
+    if(this.copiedStyle?.type===block.type)html+=`<button class="prop-btn-dup" onclick="Editor.pasteStyle('${block.id}')">⎗ Wklej styl</button>`;
+    html+=`<button class="prop-btn-del" onclick="Editor.remove('${block.id}')">✕ Usuń blok</button>`;
+    html+=`</div>`;
+    return html;
+  },
+ 
+  // ── Save ──────────────────────────────────────────────────────────────────
+  async save(){
+    const pub=document.getElementById('toggle-public')?.checked||false;
+    const btn=document.getElementById('save-btn');
+    try{
+      if(btn){btn.textContent='Zapisywanie...';btn.disabled=true;}
+      const data=await this._api('PUT',`/characters/${this.charId}/profile`,{
+        profile_blocks:{blocks:this.blocks,settings:this.pageSettings},
+        profile_public:pub,
+      });
+      if(data.error)throw new Error(data.error);
+      this.dirty=false;
+      if(btn){btn.classList.remove('dirty');btn.textContent='Zapisano ✓';btn.disabled=false;}
+      setTimeout(()=>{if(btn&&!this.dirty)btn.textContent='Zapisz';},2500);
+    }catch(e){
+      if(btn){btn.textContent='Zapisz';btn.disabled=false;}
+      this._toast('Błąd zapisu: '+e.message,'err');
+    }
+  },
+ 
+  _toast(msg,type='ok'){
+    const t=document.getElementById('toast');if(!t)return;
+    t.textContent=msg;t.className='toast toast-'+type+' toast-show';
+    setTimeout(()=>t.classList.remove('toast-show'),3000);
+  },
+};
