@@ -397,6 +397,7 @@
       <div class="admin-tab"        onclick="Admin.switchTab('inventory')">Inwentarz</div>
       <div class="admin-tab"        onclick="Admin.switchTab('calendar'); Admin.loadCalendar()">Kalendarz</div>
       <div class="admin-tab"        onclick="Admin.switchTab('profile'); Admin.loadProfile()">Mój profil</div>
+      <div class="admin-tab"        onclick="Admin.switchTab('houses'); Houses.renderAdminTab()">Rody</div>
     </div>
 
     <!-- Owners -->
@@ -549,7 +550,12 @@
       </div>
     </div>
 
+    <!-- Houses -->
+    <div id="atab-houses" class="admin-content"></div>
+
   </div>
+
+  <!-- ── MODALS ─────────────────────────────────────────────────────────── -->
 
   <!-- Item edit modal -->
   <div id="item-edit-overlay" class="modal-overlay" onclick="if(event.target===this)Admin.closeItemEdit()">
@@ -582,6 +588,57 @@
     </div>
   </div>
 
+  <!-- House picker modal (przypisywanie rodów do postaci) -->
+  <div id="house-picker-overlay" class="modal-overlay"
+    onclick="if(event.target===this)Houses.closeModal()">
+    <div class="modal-box">
+      <div class="modal-title">⚜ Rody postaci</div>
+      <p class="hint" style="margin-bottom:1rem;">Wybierz 0, 1 lub 2 rody.</p>
+      <div id="house-picker-list" class="house-picker"></div>
+      <div class="modal-actions">
+        <button onclick="Houses.closeModal()">Anuluj</button>
+        <button class="primary" onclick="Houses.saveModal()">Zapisz</button>
+      </div>
+      <div class="msg ok"  id="house-modal-ok"></div>
+      <div class="msg err" id="house-modal-err"></div>
+    </div>
+  </div>
+
+  <!-- House edit modal -->
+  <div id="house-edit-overlay" class="modal-overlay"
+    onclick="if(event.target===this)Houses.closeEdit()">
+    <div class="modal-box">
+      <div class="modal-title">Edytuj ród</div>
+      <input type="hidden" id="edit-house-id">
+      <div class="row2">
+        <div class="field">
+          <label>Nazwa</label>
+          <input type="text" id="edit-house-name">
+        </div>
+        <div class="field">
+          <label>Kolor</label>
+          <input type="color" id="edit-house-color"
+            style="height:38px;width:100%;padding:2px 4px;background:var(--bg3);
+                   border:1px solid var(--border);border-radius:3px;cursor:pointer;">
+        </div>
+      </div>
+      <div class="field" style="margin-top:0.8rem;">
+        <label>Herb / emoji</label>
+        <input type="text" id="edit-house-heraldry" placeholder="np. 🐇">
+      </div>
+      <div class="field" style="margin-top:0.8rem;">
+        <label>Opis</label>
+        <textarea id="edit-house-desc" rows="2"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button onclick="Houses.closeEdit()">Anuluj</button>
+        <button class="primary warn-btn" onclick="Houses.saveEdit()">Zapisz</button>
+      </div>
+      <div class="msg ok"  id="house-edit-ok"></div>
+      <div class="msg err" id="house-edit-err"></div>
+    </div>
+  </div>
+
 </div><!-- /.app -->
 <footer>Dane przechowywane na wspólnym serwerze gildii · Wandzi Windzi</footer>
 </div><!-- /#app-screen -->
@@ -595,6 +652,7 @@
 <script src="js/scan.js"></script>
 <script src="js/sheet.js"></script>
 <script src="js/characters.js"></script>
+<script src="js/houses.js"></script>
 <script src="js/gallery.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/app.js"></script>
