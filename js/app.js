@@ -65,7 +65,7 @@ const App = {
   },
 
   switchTab(name) {
-    const tabNames = ['scan', 'sheet', 'chars', 'gallery', 'admin'];
+    const tabNames = ['scan', 'sheet', 'chars', 'gallery', 'admin', 'calendar'];
     tabNames.forEach(t => {
       document.getElementById('tab-' + t)?.classList.toggle('active', t === name);
     });
