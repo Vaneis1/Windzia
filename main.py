@@ -15,7 +15,7 @@ from routes.items import items_bp
 from routes.inventory import inventory_bp
 from routes.admin import admin_bp
 from routes.profiles import profiles_bp
- from routes.houses import houses_bp
+from routes.houses import houses_bp
  
 def create_app() -> Flask:
     app = Flask(__name__)
