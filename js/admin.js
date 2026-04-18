@@ -10,7 +10,7 @@ const Admin = {
 
   switchTab(name) {
     this.activeTab = name;
-    ['owners', 'items', 'inventory', 'profile'].forEach(t => {
+    ['owners', 'items', 'inventory', 'calendar', 'profile', 'houses'].forEach(t => {
       document.getElementById('atab-' + t)?.classList.toggle('active', t === name);
     });
     document.querySelectorAll('.admin-tab').forEach((el, i) => {
