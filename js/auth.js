@@ -6,7 +6,7 @@ const Auth = {
     document.getElementById('app-screen').style.display = 'none';
     this._showForm('login-form');
   },
- 
+
   showApp() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'block';
@@ -17,24 +17,24 @@ const Auth = {
       UI.show('admin-nav-tab');
     }
   },
- 
+
   _showForm(id) {
     ['login-form', 'forgot-form', 'reset-form'].forEach(f => {
       const el = document.getElementById(f);
       if (el) el.style.display = f === id ? 'block' : 'none';
     });
   },
- 
+
   showForgot() { this._showForm('forgot-form'); },
   showLoginForm() { this._showForm('login-form'); },
- 
+
   showResetForm(token) {
     const form = document.getElementById('reset-form');
     if (form) { form.dataset.token = token; form.style.display = 'block'; }
     document.getElementById('login-form').style.display = 'none';
     document.getElementById('forgot-form').style.display = 'none';
   },
- 
+
   // ── Actions ──────────────────────────────────────────────────────────────
   async login() {
     const email = document.getElementById('login-email').value.trim();
@@ -51,12 +51,13 @@ const Auth = {
       UI.err('login-ok', 'login-err', e.message);
     }
   },
- 
+
   logout() {
     State.clearSession();
+    localStorage.removeItem('ww_last_tab');
     this.showLogin();
   },
- 
+
   async forgotPassword() {
     const email = document.getElementById('forgot-email').value.trim();
     UI.clearMsg('forgot-ok', 'forgot-err');
@@ -67,7 +68,7 @@ const Auth = {
       UI.err('forgot-ok', 'forgot-err', e.message);
     }
   },
- 
+
   async resetPassword() {
     const form = document.getElementById('reset-form');
     const token = form?.dataset.token || '';
@@ -85,19 +86,22 @@ const Auth = {
       UI.err('reset-ok', 'reset-err', e.message);
     }
   },
- 
+
   // ── Init ─────────────────────────────────────────────────────────────────
   async init() {
+    // Ukryj oba ekrany na czas sprawdzania tokenu — eliminuje mignięcie
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display = 'none';
+
     const params = new URLSearchParams(window.location.search);
     const resetToken = params.get('reset');
- 
+
     if (resetToken) {
       document.getElementById('login-screen').style.display = 'flex';
-      document.getElementById('app-screen').style.display = 'none';
       this.showResetForm(resetToken);
-      return false; // don't continue to app
+      return false;
     }
- 
+
     if (State.token) {
       try {
         const data = await API.get('/auth/me');
@@ -107,10 +111,10 @@ const Auth = {
           return true;
         }
       } catch (e) {
-        // Token invalid — fall through to login
+        // Token nieważny — pokaż login
       }
     }
- 
+
     this.showLogin();
     return false;
   },
