@@ -2,6 +2,7 @@
 const MetaEditor = {
   data: {},
   calendar: null,
+  _charId: null,
 
   async init() {
     try {
@@ -10,21 +11,59 @@ const MetaEditor = {
     } catch(e) { this.calendar = null; }
   },
 
+  // Load meta fields + fetch events from API
+  async loadWithEvents(charId, meta) {
+    this._charId = charId;
+    this.data = JSON.parse(JSON.stringify(meta || {}));
+    if (!this.data.quotes) this.data.quotes = [];
+    if (!this.data.story_hooks) this.data.story_hooks = [];
+    this.data.events = [];
+    delete this.data.house;
+
+    // Load events from dedicated API
+    try {
+      const token = localStorage.getItem('ww_token') || '';
+      const res = await fetch(
+        (window.PROXY||'') + '/characters/' + charId + '/events',
+        { headers: { 'Authorization': 'Bearer ' + token } }
+      );
+      const eventsData = await res.json();
+      if (Array.isArray(eventsData)) this.data.events = eventsData;
+    } catch(e) {
+      console.error('MetaEditor: błąd ładowania wydarzeń', e.message);
+    }
+
+    this.render();
+  },
+
+  // Legacy load (without events from API — for backwards compat)
   load(meta) {
     this.data = JSON.parse(JSON.stringify(meta || {}));
     if (!this.data.quotes) this.data.quotes = [];
     if (!this.data.story_hooks) this.data.story_hooks = [];
     if (!this.data.events) this.data.events = [];
-    // Usuń stare pole house jeśli istnieje
     delete this.data.house;
     this.render();
   },
 
   getData() {
-    // Upewnij się że house nie trafi do zapisu
     const d = { ...this.data };
     delete d.house;
+    delete d.events; // events saved separately via syncEvents
     return d;
+  },
+
+  // Called from Editor.save() — syncs events to dedicated API
+  async syncEvents(charId, apiFn) {
+    try {
+      const res = await apiFn('PUT', `/characters/${charId}/events`, {
+        events: this.data.events || [],
+      });
+      if (res.error) throw new Error(res.error);
+    } catch(e) {
+      console.error('MetaEditor.syncEvents:', e.message);
+      throw e;
+    }
   },
 
   _genId() {
@@ -39,7 +78,6 @@ const MetaEditor = {
     }
   },
 
-  // ── Field helpers ─────────────────────────────────────────────────────────
   setField(key, value) {
     this.data[key] = value;
     this._markDirty();
@@ -92,7 +130,9 @@ const MetaEditor = {
 
   // ── Events ────────────────────────────────────────────────────────────────
   addEvent() {
-    this.data.events.push({ id: this._genId(), date: '', title: '', description: '', visibility: 'public' });
+    this.data.events.push({
+      id: this._genId(), date: '', title: '', description: '', visibility: 'public',
+    });
     this._markDirty();
     this.renderEvents();
   },
@@ -176,6 +216,11 @@ const MetaEditor = {
           Wydarzenia (oś czasu)
           <button class="meta-add-btn" onclick="MetaEditor.addEvent()">＋ Dodaj wydarzenie</button>
         </div>
+        <div class="meta-hint" style="margin-bottom:0.8rem;">
+          🌐 Publiczne — widoczne dla wszystkich na osi czasu gildii<br>
+          ⚜ Tylko ród — widoczne tylko dla graczy z tego samego rodu<br>
+          🔒 Prywatne — widoczne tylko dla Ciebie
+        </div>
         <div id="meta-events-list"></div>
       </div>
     `;
@@ -255,7 +300,7 @@ const MetaEditor = {
           <select onchange="MetaEditor.updateEvent('${e.id}','visibility',this.value)"
             style="background:var(--bg3,#1c2330);border:1px solid var(--border,rgba(120,160,200,0.2));
                    border-radius:3px;color:var(--text,#d8e4ee);font-family:'Crimson Pro',serif;
-                   font-size:0.88rem;padding:6px 10px;outline:none;cursor:pointer;">
+                   font-size:0.88rem;padding:6px 10px;outline:none;cursor:pointer;flex-shrink:0;">
             <option value="public"  ${vis==='public'  ? 'selected':''}>🌐 Publiczne</option>
             <option value="house"   ${vis==='house'   ? 'selected':''}>⚜ Tylko ród</option>
             <option value="private" ${vis==='private' ? 'selected':''}>🔒 Prywatne</option>
