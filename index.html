@@ -4,19 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wandzi Windzi — Skaner Inwentarza</title>
-<link rel="icon" type="image/png" href="https://i.ibb.co/cPNxs5v/logosfera.png">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
- 
+
 <!-- ══ LOGIN SCREEN ══════════════════════════════════════════════════════════ -->
 <div id="login-screen">
   <div class="login-box">
     <div class="emblem">⚔ ✦ ⚔</div>
     <h2>Wandzi Windzi</h2>
     <p class="tagline">Skaner Inwentarza Gildii</p>
- 
+
     <!-- Login form -->
     <div id="login-form">
       <div class="login-field">
@@ -36,7 +35,7 @@
       <div class="msg err" id="login-err"></div>
       <div class="msg ok"  id="login-ok"></div>
     </div>
- 
+
     <!-- Forgot password form -->
     <div id="forgot-form" style="display:none;">
       <div class="login-field">
@@ -53,7 +52,7 @@
         ← Wróć do logowania
       </span>
     </div>
- 
+
     <!-- Reset password form -->
     <div id="reset-form" style="display:none;">
       <div class="login-field">
@@ -69,11 +68,11 @@
     </div>
   </div>
 </div>
- 
+
 <!-- ══ APP SCREEN ════════════════════════════════════════════════════════════ -->
 <div id="app-screen" style="display:none;">
 <div class="app">
- 
+
   <header>
     <div style="width:180px;"></div>
     <div class="header-title">
@@ -85,18 +84,19 @@
       <button class="sm" onclick="doLogout()">Wyloguj</button>
     </div>
   </header>
- 
+
   <nav>
     <div class="nav-tab active" onclick="switchTab('scan')">⟳ Skanuj</div>
     <div class="nav-tab"        onclick="switchTab('sheet')">⊞ Arkusz</div>
     <div class="nav-tab"        onclick="switchTab('chars')">⚔ Postacie</div>
+    <div class="nav-tab"        onclick="switchTab('gallery')">⛬ Galeria</div>
     <div class="nav-tab admin-t" id="admin-nav-tab" style="display:none;"
       onclick="switchTab('admin')">⚙ Admin</div>
   </nav>
- 
+
   <!-- ── SCAN ──────────────────────────────────────────────────────────── -->
   <div id="tab-scan" class="tab-content active">
- 
+
     <div class="section-label">Postać</div>
     <div class="panel">
       <div class="field">
@@ -104,7 +104,7 @@
         <select id="char-select"><option value="">— wybierz —</option></select>
       </div>
     </div>
- 
+
     <div class="section-label">Zrzuty ekranu</div>
     <div class="panel">
       <div class="upload-zone" id="upload-zone"
@@ -117,7 +117,7 @@
       </div>
       <div class="previews" id="previews"></div>
     </div>
- 
+
     <div class="btn-row">
       <button class="primary" id="scan-btn" onclick="Scan.run()" disabled>⟳ Skanuj inwentarz</button>
       <button id="save-btn" onclick="Scan.save()" disabled>✓ Zapisz do bazy</button>
@@ -129,7 +129,7 @@
     </div>
     <div class="msg ok"  id="scan-ok"></div>
     <div class="msg err" id="scan-err"></div>
- 
+
     <div id="scan-results" style="display:none; margin-top:1.2rem;">
       <div class="section-label">Dopasowane</div>
       <div class="panel" style="padding:0;">
@@ -154,30 +154,104 @@
       </div>
     </div>
   </div>
- 
+
   <!-- ── SHEET ─────────────────────────────────────────────────────────── -->
   <div id="tab-sheet" class="tab-content">
-    <div class="sheet-controls">
-      <div class="search-wrap">
-        <input type="text" id="search-input" placeholder="Szukaj przedmiotu..."
-          oninput="Sheet.render()">
+    <div class="sheet-subtabs">
+      <div class="sheet-subtab active" data-view="mine" onclick="Sheet.switchView('mine')">⚔ Moje</div>
+      <div class="sheet-subtab" data-view="item" onclick="Sheet.switchView('item')">⌕ Surowiec</div>
+      <div class="sheet-subtab" data-view="matrix" onclick="Sheet.switchView('matrix')">⊞ Macierz</div>
+    </div>
+
+    <!-- VIEW: MINE -->
+    <div id="sheet-view-mine" class="sheet-view">
+      <div class="sheet-controls">
+        <div class="search-wrap">
+          <input type="text" id="mine-search-input" placeholder="Szukaj surowca..."
+            oninput="clearTimeout(window._mst);window._mst=setTimeout(()=>{Sheet.mineSearch=this.value;Sheet.loadMine();},300)">
+        </div>
+        <button onclick="Sheet.loadMine()">↺ Odśwież</button>
+        <button onclick="Sheet.exportCSV('mine')">↓ CSV</button>
       </div>
-      <button onclick="Sheet.load()">↺ Odśwież</button>
-      <button onclick="Sheet.exportCSV()">↓ CSV</button>
+      <div class="cat-filter" id="mine-cat-filter"></div>
+      <div class="status-bar">
+        <div class="spinner" id="mine-spinner"></div>
+        <span id="mine-status"></span>
+      </div>
+      <div id="mine-empty" class="empty-msg" style="display:none;"></div>
+      <div id="mine-table-wrap" class="table-wrap" style="display:none;">
+        <table>
+          <thead id="mine-head"></thead>
+          <tbody id="mine-body"></tbody>
+        </table>
+      </div>
     </div>
-    <div class="cat-filter" id="cat-filter"></div>
-    <div class="status-bar">
-      <div class="spinner" id="sheet-spinner"></div>
-      <span id="sheet-status"></span>
+
+    <!-- VIEW: ITEM -->
+    <div id="sheet-view-item" class="sheet-view" style="display:none;">
+      <div class="item-search-wrap">
+        <input type="text" id="item-search-box" class="item-search-input" placeholder="Wpisz nazwę surowca... (min. 2 znaki)" autocomplete="off">
+        <div id="item-search-results" class="item-search-results"></div>
+      </div>
+      <div class="status-bar">
+        <div class="spinner" id="item-spinner"></div>
+        <span id="item-status"></span>
+      </div>
+      <div id="item-holders-wrap"></div>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead id="sheet-head"></thead>
-        <tbody id="sheet-body"></tbody>
-      </table>
+
+    <!-- VIEW: MATRIX -->
+    <div id="sheet-view-matrix" class="sheet-view" style="display:none;">
+      <div class="sheet-controls">
+        <div class="search-wrap">
+          <input type="text" id="matrix-search-input" placeholder="Szukaj surowca..."
+            oninput="clearTimeout(window._mxst);window._mxst=setTimeout(()=>{Sheet.matrixSearch=this.value;Sheet.loadMatrix();},300)">
+        </div>
+        <label class="matrix-toggle">
+          <input type="checkbox" checked onchange="Sheet.matrixOnlyWithData=this.checked;Sheet.loadMatrix()">
+          Tylko z danymi
+        </label>
+        <button onclick="Sheet.loadMatrix()">↺ Odśwież</button>
+        <button onclick="Sheet.exportCSV('matrix')">↓ CSV</button>
+      </div>
+      <div class="filter-section">
+        <div class="filter-label">Postacie:</div>
+        <div class="cat-filter" id="matrix-char-filter"></div>
+      </div>
+      <div class="filter-section">
+        <div class="filter-label">Kategoria:</div>
+        <div class="cat-filter" id="matrix-cat-filter"></div>
+      </div>
+      <div class="filter-section" id="matrix-tag-section">
+        <div class="filter-label">Tagi:</div>
+        <div class="cat-filter" id="matrix-tag-filter"></div>
+      </div>
+      <div class="status-bar">
+        <div class="spinner" id="matrix-spinner"></div>
+        <span id="matrix-status"></span>
+      </div>
+      <div id="matrix-empty" class="empty-msg" style="display:none;"></div>
+      <div id="matrix-table-wrap" class="table-wrap matrix-table" style="display:none;">
+        <table>
+          <thead id="matrix-head"></thead>
+          <tbody id="matrix-body"></tbody>
+        </table>
+      </div>
     </div>
   </div>
- 
+
+  <!-- Character picker modal (matrix) -->
+  <div id="char-picker-overlay" class="modal-overlay" onclick="if(event.target===this)Sheet.closeCharPicker()">
+    <div class="modal-box">
+      <div class="modal-title">Wybierz postacie do wyświetlenia</div>
+      <div id="char-picker-list" class="char-picker-list"></div>
+      <div class="modal-actions">
+        <button onclick="Sheet.closeCharPicker()">Anuluj</button>
+        <button class="primary" onclick="Sheet.applyCharPicker()">Zastosuj</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── CHARACTERS ────────────────────────────────────────────────────── -->
   <div id="tab-chars" class="tab-content">
     <div class="section-label">Moje postacie</div>
@@ -192,7 +266,25 @@
       <div class="msg err" id="char-err"></div>
     </div>
   </div>
- 
+
+  <!-- ── GALLERY ───────────────────────────────────────────────────────── -->
+  <div id="tab-gallery" class="tab-content">
+    <div class="gallery-toolbar">
+      <div class="search-wrap" style="flex:1;max-width:320px;">
+        <input type="text" id="gallery-search" placeholder="Szukaj postaci, rodu, miejsca..."
+          oninput="Gallery.setSearch(this.value)">
+      </div>
+      <div style="display:flex;gap:4px;">
+        <button class="cat-btn gallery-filter-btn active" data-filter="all" onclick="Gallery.setFilter('all')">Wszystkie</button>
+        <button class="cat-btn gallery-filter-btn" data-filter="mine" onclick="Gallery.setFilter('mine')">Moje</button>
+        <button class="cat-btn gallery-filter-btn" data-filter="public" onclick="Gallery.setFilter('public')">Publiczne</button>
+      </div>
+      <button onclick="Gallery.load()">↺ Odśwież</button>
+    </div>
+    <div class="status-bar"><span id="gallery-status"></span></div>
+    <div id="gallery-grid" class="gallery-grid"></div>
+  </div>
+
   <!-- ── ADMIN ──────────────────────────────────────────────────────────── -->
   <div id="tab-admin" class="tab-content">
     <div style="display:flex;align-items:center;justify-content:space-between;
@@ -202,14 +294,15 @@
     </div>
     <div class="msg ok"  id="admin-ok"></div>
     <div class="msg err" id="admin-err"></div>
- 
+
     <div class="admin-tabs">
       <div class="admin-tab active" onclick="Admin.switchTab('owners')">Użytkownicy</div>
       <div class="admin-tab"        onclick="Admin.switchTab('items')">Surowce</div>
       <div class="admin-tab"        onclick="Admin.switchTab('inventory')">Inwentarz</div>
+      <div class="admin-tab"        onclick="Admin.switchTab('calendar'); Admin.loadCalendar()">Kalendarz</div>
       <div class="admin-tab"        onclick="Admin.switchTab('profile'); Admin.loadProfile()">Mój profil</div>
     </div>
- 
+
     <!-- Owners -->
     <div id="atab-owners" class="admin-content active">
       <div id="owners-list"></div>
@@ -243,7 +336,7 @@
         </div>
       </div>
     </div>
- 
+
     <!-- Items -->
     <div id="atab-items" class="admin-content">
       <div class="sheet-controls" style="margin-bottom:0.8rem;">
@@ -282,12 +375,22 @@
           <label>Aliasy (oddzielone przecinkami)</label>
           <input type="text" id="new-item-aliases" placeholder="np. Brylka platyny, Bryłka plat...">
         </div>
+        <div class="row2" style="margin-top:0.8rem;">
+          <div class="field">
+            <label>Tagi (oddzielone przecinkami)</label>
+            <input type="text" id="new-item-tags" placeholder="np. craft-broń, pochodzenie-las">
+          </div>
+          <div class="field">
+            <label>Jednostka (opcjonalnie)</label>
+            <input type="text" id="new-item-unit" placeholder="np. szt., kg, l">
+          </div>
+        </div>
         <div class="btn-row">
           <button class="warn-btn primary" onclick="Admin.createItem()">+ Dodaj surowiec</button>
         </div>
       </div>
     </div>
- 
+
     <!-- Inventory -->
     <div id="atab-inventory" class="admin-content">
       <div class="field" style="margin-bottom:1rem;max-width:300px;">
@@ -298,7 +401,36 @@
       </div>
       <div id="admin-inv-wrap"></div>
     </div>
- 
+
+    <!-- Calendar -->
+    <div id="atab-calendar" class="admin-content">
+      <div class="admin-label">Kalendarz fantasy</div>
+      <div class="panel">
+        <p class="hint" style="margin-bottom:1rem;">Pozwala wyświetlać daty wydarzeń na profilach postaci również w "świecie gry" (np. "15 Kwietnika 3271" zamiast "2026-04-15").</p>
+        <div class="field" style="margin-bottom:0.8rem;">
+          <label><input type="checkbox" id="cal-enabled" style="margin-right:6px;accent-color:var(--gold);"> Włącz kalendarz fantasy</label>
+        </div>
+        <div class="field" style="margin-bottom:0.8rem;">
+          <label>Nazwy 12 miesięcy (oddzielone przecinkami)</label>
+          <textarea id="cal-months" rows="2" placeholder="Lutowik, Brzeźnik, Kwietnik..."></textarea>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Przesunięcie roku (offset)</label>
+            <input type="number" id="cal-offset" placeholder="np. 1245">
+            <p class="hint">Rok 2026 + offset 1245 = 3271</p>
+          </div>
+          <div class="field">
+            <label>Sufiks ery (opcjonalnie)</label>
+            <input type="text" id="cal-suffix" placeholder="np. WG, n.e.">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="warn-btn primary" onclick="Admin.saveCalendar()">Zapisz kalendarz</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Profile -->
     <div id="atab-profile" class="admin-content">
       <div class="admin-label">Wyświetlane informacje</div>
@@ -320,13 +452,44 @@
         </div>
       </div>
     </div>
- 
+
   </div>
- 
+
+  <!-- Item edit modal -->
+  <div id="item-edit-overlay" class="modal-overlay" onclick="if(event.target===this)Admin.closeItemEdit()">
+    <div class="modal-box" style="max-width:520px;">
+      <div class="modal-title" id="item-edit-title">Edytuj surowiec</div>
+      <input type="hidden" id="item-edit-id">
+      <div class="field">
+        <label>Aliasy (oddzielone przecinkami)</label>
+        <input type="text" id="item-edit-aliases">
+      </div>
+      <div class="field" style="margin-top:0.8rem;">
+        <label>Tagi (oddzielone przecinkami)</label>
+        <input type="text" id="item-edit-tags" placeholder="np. craft-broń, pochodzenie-las">
+      </div>
+      <div class="row2" style="margin-top:0.8rem;">
+        <div class="field">
+          <label>Kolejność wyświetlania</label>
+          <input type="number" id="item-edit-order" placeholder="0">
+          <p class="hint">Wyższe = wyżej na liście</p>
+        </div>
+        <div class="field">
+          <label>Jednostka</label>
+          <input type="text" id="item-edit-unit" placeholder="np. szt., kg">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button onclick="Admin.closeItemEdit()">Anuluj</button>
+        <button class="primary warn-btn" onclick="Admin.saveItemEdit()">Zapisz</button>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /.app -->
 <footer>Dane przechowywane na wspólnym serwerze gildii · Wandzi Windzi</footer>
 </div><!-- /#app-screen -->
- 
+
 <!-- ══ SCRIPTS — load order matters ══════════════════════════════════════════ -->
 <script src="js/config.js"></script>
 <script src="js/state.js"></script>
@@ -336,8 +499,9 @@
 <script src="js/scan.js"></script>
 <script src="js/sheet.js"></script>
 <script src="js/characters.js"></script>
+<script src="js/gallery.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/app.js"></script>
- 
+
 </body>
 </html>
