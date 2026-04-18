@@ -926,3 +926,33 @@ footer { margin-top: 3rem; text-align: center; font-size: 0.78rem; color: var(--
 @media (min-width: 901px) {
   .burger-btn { display: none; }
 }
+
+/* ── Houses ───────────────────────────────────────────────────────────────── */
+.house-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: 'Cinzel', serif; font-size: 0.62rem; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 10px;
+  border: 1px solid currentColor; opacity: 0.85;
+  white-space: nowrap;
+}
+.house-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+ 
+.house-picker { display: flex; flex-direction: column; gap: 6px; padding: 4px 0; }
+.house-pick-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px; border-radius: 3px; cursor: pointer;
+  border: 1px solid var(--border); transition: background 0.1s;
+}
+.house-pick-row:hover { background: var(--bg3); }
+.house-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+ 
+.house-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 12px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 3px; margin-bottom: 6px;
+}
+.house-dot-lg  { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; }
+.house-info    { flex: 1; min-width: 0; }
+.house-name    { font-size: 0.95rem; }
+.house-desc    { font-size: 0.78rem; color: var(--text-m); font-style: italic; margin-top: 1px; }
+.house-actions { display: flex; gap: 6px; }
