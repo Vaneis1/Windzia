@@ -6,7 +6,12 @@ const Editor = {
   history:[], historyIndex:-1,
   copiedStyle:null,
   pageSettings:{ bg_color:'', bg_image:'', bg_size:'cover', bg_position:'center', max_width:'900px' },
- 
+  profileCss:'',
+  // Tabs system
+  meta:{}, // predefined Info tab data
+  tabs:[], // [{ id, name, blocks_data: {blocks, settings}, css }]
+  activeTab:'info', // 'info' | tab.id
+
   async init(){
     const params=new URLSearchParams(window.location.search);
     this.charId=params.get('id');
@@ -27,6 +32,15 @@ const Editor = {
       } else {
         this.blocks=pb||[];
       }
+      this.profileCss = data.profile_css || '';
+      if (typeof EditorCode !== 'undefined') EditorCode.cssText = this.profileCss;
+      this.meta = data.meta || {};
+      this.tabs = data.tabs || [];
+      if (typeof MetaEditor !== 'undefined') {
+        await MetaEditor.init();
+        MetaEditor.load(this.meta);
+      }
+      this._renderTabBar();
       document.getElementById('char-name-display').textContent=data.name;
       document.getElementById('toggle-public').checked=data.profile_public||false;
       document.getElementById('profile-link').href=`profile.html?id=${this.charId}`;
@@ -37,7 +51,7 @@ const Editor = {
       this._renderProps();
     }catch(e){this._toast('Błąd: '+e.message,'err');}
   },
- 
+
   async _api(method,path,body){
     const token=localStorage.getItem('ww_token')||'';
     const opts={method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}};
@@ -45,7 +59,7 @@ const Editor = {
     const res=await fetch((window.PROXY||'')+path,opts);
     return res.json();
   },
- 
+
   // ── History ───────────────────────────────────────────────────────────────
   _pushHistory(){
     this.history=this.history.slice(0,this.historyIndex+1);
@@ -73,26 +87,48 @@ const Editor = {
     if(u)u.disabled=this.historyIndex<=0;
     if(r)r.disabled=this.historyIndex>=this.history.length-1;
   },
- 
+
   // ── Selection ─────────────────────────────────────────────────────────────
   select(id){
     if(this.selectedId===id)return;
-    this.selectedId=id;this.addTarget=id;
-    this._highlightSelected();this._renderProps();
-    // For richtext: focus the contenteditable
-    if(id){const block=findBlock(this.blocks,id);if(block?.type==='richtext'){setTimeout(()=>{const el=document.querySelector(`.richtext-editable[data-bid="${id}"]`);if(el)el.focus();},10);}
+    const prevId = this.selectedId;
+    this.selectedId = id;
+    this.addTarget = id;
+    // For richtext blocks (current or previous), re-render that single block to show/hide toolbar
+    const newBlock = id ? findBlock(this.blocks, id) : null;
+    const prevBlock = prevId ? findBlock(this.blocks, prevId) : null;
+    if (prevBlock?.type === 'richtext') this._rerenderBlock(prevId);
+    if (newBlock?.type === 'richtext') {
+      this._rerenderBlock(id);
+      setTimeout(() => {
+        const el = document.querySelector(`.richtext-editable[data-bid="${id}"]`);
+        if (el) el.focus();
+      }, 10);
     }
-    // Re-render richtext toolbar
-    if(id){const block=findBlock(this.blocks,id);if(block?.type==='richtext'){this.render();}}
+    this._highlightSelected();
+    this._renderProps();
   },
   deselect(){
-    this.selectedId=null;this.addTarget=null;
-    this._highlightSelected();this._renderProps();
+    const prevId = this.selectedId;
+    this.selectedId = null;
+    this.addTarget = null;
+    const prevBlock = prevId ? findBlock(this.blocks, prevId) : null;
+    if (prevBlock?.type === 'richtext') this._rerenderBlock(prevId);
+    this._highlightSelected();
+    this._renderProps();
+  },
+  _rerenderBlock(id) {
+    const el = document.querySelector(`[data-bid="${id}"]`);
+    const block = findBlock(this.blocks, id);
+    if (!el || !block) return;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = Renderer.block(block, true);
+    el.replaceWith(tmp.firstChild);
   },
   _highlightSelected(){
     document.querySelectorAll('.eb').forEach(el=>el.classList.toggle('eb-sel',el.dataset.bid===this.selectedId));
   },
- 
+
   // ── Rich text ─────────────────────────────────────────────────────────────
   _savedRange: null,
   _saveSelection(){
@@ -130,7 +166,7 @@ const Editor = {
     this.blocks=updateBlockProps(this.blocks,id,{content:html});
     this._markDirty();
   },
- 
+
   // ── Add block ─────────────────────────────────────────────────────────────
   addBlock(parentId){
     this.addTarget=parentId??null;
@@ -146,7 +182,7 @@ const Editor = {
     this._markDirty();this.render();this._renderProps();
     setTimeout(()=>{const el=document.querySelector(`[data-bid="${nb.id}"]`);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
   },
- 
+
   // ── Mutations ─────────────────────────────────────────────────────────────
   remove(id){
     if(!confirm('Usunąć blok?'))return;
@@ -169,14 +205,8 @@ const Editor = {
     const block=findBlock(this.blocks,this.selectedId);
     if(block?.type==='richtext'&&key==='content'){this._markDirty(false);return;}
     this._markDirty(false);
-    // Re-render only this block
-    const el=document.querySelector(`[data-bid="${this.selectedId}"]`);
-    if(el&&block){
-      const tmp=document.createElement('div');
-      tmp.innerHTML=Renderer.block(block,true);
-      el.replaceWith(tmp.firstChild);
-      this._highlightSelected();
-    }
+    this._rerenderBlock(this.selectedId);
+    this._highlightSelected();
   },
   _markDirty(push=true){
     this.dirty=true;
@@ -184,7 +214,7 @@ const Editor = {
     const btn=document.getElementById('save-btn');
     if(btn)btn.classList.add('dirty');
   },
- 
+
   // ── Copy / paste style ────────────────────────────────────────────────────
   copyStyle(id){
     const block=findBlock(this.blocks,id);
@@ -204,7 +234,7 @@ const Editor = {
     this._markDirty();this.render();this._renderProps();
     this._toast('Wklejono styl','ok');
   },
- 
+
   // ── Page settings ─────────────────────────────────────────────────────────
   updatePageSetting(key,value){
     this.pageSettings={...this.pageSettings,[key]:value};
@@ -265,14 +295,14 @@ const Editor = {
       return nb;
     });
   },
- 
+
   // ── Render canvas ─────────────────────────────────────────────────────────
   render(){
     const canvas=document.getElementById('canvas');
     if(!canvas)return;
     canvas.innerHTML=Renderer.render(this.blocks,true)||`<div class="canvas-empty"><div style="font-size:2rem;margin-bottom:1rem;opacity:0.2">⊞</div><div>Kliknij <strong>＋ Dodaj</strong> aby rozpocząć</div></div>`;
   },
- 
+
   // ── Properties panel ─────────────────────────────────────────────────────
   _renderProps(){
     const panel=document.getElementById('props-panel');
@@ -282,7 +312,7 @@ const Editor = {
     if(!block){panel.innerHTML='';return;}
     panel.innerHTML=this._buildPropsForm(block);
   },
- 
+
   _buildPropsForm(block){
     const p=block.props||{};const def=BlockDefs[block.type];
     const section=(title,content)=>`<details open><summary class="prop-section">${title}</summary><div class="prop-section-body">${content}</div></details>`;
@@ -292,9 +322,9 @@ const Editor = {
     const clr=(key,def='#7ba7c4')=>`<div class="color-row"><input type="color" value="${p[key]||def}" oninput="Editor.updateProp('${key}',this.value)"><input type="text" value="${(p[key]||'').replace(/"/g,'&quot;')}" placeholder="${def}" oninput="Editor.updateProp('${key}',this.value)"></div>`;
     const sel=(key,opts)=>`<select onchange="Editor.updateProp('${key}',this.value)">${opts.map(([v,l])=>`<option value="${v}"${(p[key]||'')===(v)?' selected':''}>${l}</option>`).join('')}</select>`;
     const textarea=(key,rows=5)=>`<textarea rows="${rows}" oninput="Editor.updateProp('${key}',this.value)">${(p[key]||'').replace(/</g,'&lt;')}</textarea>`;
- 
+
     let html=`<div class="props-title">${def?.icon||''} ${def?.label||block.type}</div>`;
- 
+
     if(block.type==='container'){
       html+=section('Kolumny i układ',row('Liczba kolumn',num('columns',1,12,1))+row('Własny grid',txt('column_template','np. 1fr 2fr'),'Nadpisuje "Liczba kolumn"')+row('Wyrównanie',sel('align_items',[['start','Góra'],['center','Środek'],['end','Dół'],['stretch','Rozciągnij']]))+row('Odstęp (px)',num('gap',0,200,4))+row('Padding (px)',num('padding',0,200,4)));
       html+=section('Rozmiar',row('Szerokość',txt('width','100%'),'100%, 500px, auto…')+row('Wysokość',txt('height','auto'),'auto, 300px, 50vh…')+row('Min. wysokość (px)',num('min_height',0,2000,10))+row('Overflow',sel('overflow',[['visible','Widoczny'],['hidden','Ukryty'],['auto','Scroll auto'],['scroll','Zawsze scroll']])));
@@ -307,7 +337,7 @@ const Editor = {
     }
     if(block.type==='slider_v'){html+=section('Rozmiar',row('Szerokość',txt('width','100%'))+row('Wysokość',txt('height','400px'),'px, vh…')+row('Odstęp (px)',num('gap',0,100,4))+row('Padding (px)',num('padding',0,100,4))+row('Kolor tła',clr('bg_color','transparent')));}
     if(block.type==='slider_h'){html+=section('Rozmiar',row('Wysokość',txt('height','220px'))+row('Szer. elementu',txt('item_width','240px'))+row('Odstęp (px)',num('gap',0,100,4))+row('Padding (px)',num('padding',0,100,4))+row('Kolor tła',clr('bg_color','transparent')));}
- 
+
     if(block.type==='richtext'){
       html+=section('Styl bazowy',row('Kolor',clr('color','#d8e4ee'))+row('Rozmiar (rem)',num('font_size',0.5,6,0.05))+row('Czcionka',sel('font_family',[['Crimson Pro, serif','Crimson Pro'],['Cinzel, serif','Cinzel'],['sans-serif','Sans-serif'],['monospace','Monospace']]))+row('Interlinia',num('line_height',1,5,0.05))+row('Padding (px)',num('padding',0,100,4)));
       html+=`<div class="prop-hint" style="margin:8px 14px;padding:8px;background:rgba(120,160,200,0.08);border-radius:3px;border:1px solid rgba(120,160,200,0.15);">💡 Zaznacz tekst w bloku i użyj paska narzędzi który pojawi się na górze</div>`;
@@ -336,7 +366,7 @@ const Editor = {
       html+=section('Treść',row('Tekst',txt('content')));
       html+=section('Wygląd',row('Kolor tekstu',clr('color','#a8c8e0'))+row('Tło',clr('bg_color','rgba(120,160,200,0.15)'))+row('Obramowanie',clr('border_color','rgba(120,160,200,0.4)'))+row('Zaokrąglenie (px)',num('border_radius',0,50,2))+row('Rozmiar (rem)',num('font_size',0.5,3,0.05))+row('Czcionka',sel('font_family',[['Cinzel, serif','Cinzel'],['Crimson Pro, serif','Crimson Pro'],['sans-serif','Sans-serif']])));
     }
- 
+
     html+=`<div class="prop-actions">`;
     if(def?.hasChildren)html+=`<button class="prop-btn-add" onclick="Editor.addBlock('${block.id}')">＋ Dodaj blok wewnątrz</button>`;
     html+=`<button class="prop-btn-dup" onclick="Editor.duplicate('${block.id}')">⧉ Duplikuj blok</button>`;
@@ -346,18 +376,43 @@ const Editor = {
     html+=`</div>`;
     return html;
   },
- 
+
   // ── Save ──────────────────────────────────────────────────────────────────
   async save(){
     const pub=document.getElementById('toggle-public')?.checked||false;
     const btn=document.getElementById('save-btn');
     try{
       if(btn){btn.textContent='Zapisywanie...';btn.disabled=true;}
+      // Sync CSS from textarea if in CSS mode
+      if (typeof EditorCode !== 'undefined' && EditorCode.mode === 'css') {
+        const ta = document.getElementById('css-editor');
+        if (ta) { EditorCode.cssText = ta.value; this.profileCss = ta.value; }
+      }
+      // Save active tab content first
+      this._captureActiveTabState();
+      // Sync meta from MetaEditor
+      if (typeof MetaEditor !== 'undefined') {
+        this.meta = MetaEditor.getData();
+      }
+      // Save profile (first tab + main settings)
       const data=await this._api('PUT',`/characters/${this.charId}/profile`,{
         profile_blocks:{blocks:this.blocks,settings:this.pageSettings},
+        profile_css: this.profileCss || '',
         profile_public:pub,
       });
       if(data.error)throw new Error(data.error);
+      // Save meta
+      const metaRes = await this._api('PUT', `/characters/${this.charId}/meta`, this.meta);
+      if (metaRes.error) throw new Error(metaRes.error);
+      // Save tabs
+      const tabsRes = await this._api('PUT', `/characters/${this.charId}/tabs`, { tabs: this.tabs });
+      if (tabsRes.error) throw new Error(tabsRes.error);
+      if (tabsRes.warnings?.length) {
+        this._toast('Zapisano z ostrzeżeniami: ' + tabsRes.warnings[0], 'err');
+      }
+      if (data.warnings && data.warnings.length) {
+        this._toast('Zapisano z ostrzeżeniami CSS: ' + data.warnings[0], 'err');
+      }
       this.dirty=false;
       if(btn){btn.classList.remove('dirty');btn.textContent='Zapisano ✓';btn.disabled=false;}
       setTimeout(()=>{if(btn&&!this.dirty)btn.textContent='Zapisz';},2500);
@@ -366,7 +421,153 @@ const Editor = {
       this._toast('Błąd zapisu: '+e.message,'err');
     }
   },
- 
+
+  // ── Tab management ────────────────────────────────────────────────────────
+  _captureActiveTabState() {
+    if (this.activeTab === 'info' || this.activeTab === 'profile') return;
+    const tab = this.tabs.find(t => t.id === this.activeTab);
+    if (tab) {
+      tab.blocks_data = { blocks: this.blocks, settings: this.pageSettings };
+      tab.css = this.profileCss || '';
+    }
+  },
+
+  switchTab(tabId) {
+    if (tabId === this.activeTab) return;
+    this._captureActiveTabState();
+    this.selectedId = null;
+
+    const metaPanel = document.getElementById('meta-editor-wrap');
+    const visualMode = document.getElementById('mode-visual');
+
+    if (tabId === 'info') {
+      this.activeTab = 'info';
+      if (metaPanel) metaPanel.style.display = 'block';
+      if (visualMode) visualMode.style.display = 'none';
+      const sidebar = document.querySelector('.sidebar');
+      const props = document.querySelector('.props-panel');
+      if (sidebar) sidebar.style.display = 'none';
+      if (props) props.style.display = 'none';
+      // Hide mode tabs (only relevant for visual mode)
+      const modeTabs = document.querySelector('.mode-tabs');
+      if (modeTabs) modeTabs.style.display = 'none';
+    } else if (tabId === 'profile') {
+      this.activeTab = 'profile';
+      if (metaPanel) metaPanel.style.display = 'none';
+      this.blocks = this._loadedProfile?.blocks || this.blocks;
+      this.pageSettings = this._loadedProfile?.pageSettings || this.pageSettings;
+      this.profileCss = this._loadedProfile?.profileCss || this.profileCss;
+      if (typeof EditorCode !== 'undefined') EditorCode.cssText = this.profileCss;
+      this._showVisualMode();
+      this.render();
+      this._applyPageSettingsToEditor();
+      this._renderPageSettingsForm();
+    } else {
+      // Custom tab
+      const tab = this.tabs.find(t => t.id === tabId);
+      if (!tab) return;
+      this.activeTab = tabId;
+      this.blocks = tab.blocks_data?.blocks || [];
+      this.pageSettings = tab.blocks_data?.settings || { bg_color:'', bg_image:'', bg_size:'cover', bg_position:'center', max_width:'900px' };
+      this.profileCss = tab.css || '';
+      if (typeof EditorCode !== 'undefined') EditorCode.cssText = this.profileCss;
+      if (metaPanel) metaPanel.style.display = 'none';
+      this._showVisualMode();
+      this.render();
+      this._applyPageSettingsToEditor();
+      this._renderPageSettingsForm();
+    }
+    this._renderTabBar();
+  },
+
+  _showVisualMode() {
+    const visualMode = document.getElementById('mode-visual');
+    const sidebar = document.querySelector('.sidebar');
+    const props = document.querySelector('.props-panel');
+    const modeTabs = document.querySelector('.mode-tabs');
+    if (visualMode) visualMode.style.display = 'flex';
+    if (sidebar) sidebar.style.display = '';
+    if (props) props.style.display = '';
+    if (modeTabs) modeTabs.style.display = '';
+    if (typeof EditorCode !== 'undefined') EditorCode.switchMode('visual');
+  },
+
+  addTab() {
+    if (this.tabs.length >= 9) {
+      this._toast('Osiągnięto limit 10 zakładek (Info + 9 własnych)', 'err');
+      return;
+    }
+    const name = prompt('Nazwa nowej zakładki:', 'Nowa zakładka');
+    if (!name || !name.trim()) return;
+    const newTab = {
+      id: 't' + Math.random().toString(36).slice(2, 9),
+      name: name.trim().slice(0, 50),
+      blocks_data: { blocks: [], settings: { bg_color:'', bg_image:'', bg_size:'cover', bg_position:'center', max_width:'900px' } },
+      css: '',
+    };
+    this._captureActiveTabState();
+    this.tabs.push(newTab);
+    this._markDirty();
+    this.switchTab(newTab.id);
+  },
+
+  renameTab(tabId) {
+    const tab = this.tabs.find(t => t.id === tabId);
+    if (!tab) return;
+    const name = prompt('Nowa nazwa zakładki:', tab.name);
+    if (!name || !name.trim()) return;
+    tab.name = name.trim().slice(0, 50);
+    this._markDirty();
+    this._renderTabBar();
+  },
+
+  deleteTab(tabId) {
+    const tab = this.tabs.find(t => t.id === tabId);
+    if (!tab) return;
+    if (!confirm(`Usunąć zakładkę „${tab.name}" i całą jej zawartość?`)) return;
+    this.tabs = this.tabs.filter(t => t.id !== tabId);
+    this._markDirty();
+    if (this.activeTab === tabId) {
+      this.switchTab('profile');
+    } else {
+      this._renderTabBar();
+    }
+  },
+
+  moveTab(tabId, dir) {
+    const idx = this.tabs.findIndex(t => t.id === tabId);
+    if (idx === -1) return;
+    const to = dir === 'left' ? idx - 1 : idx + 1;
+    if (to < 0 || to >= this.tabs.length) return;
+    [this.tabs[idx], this.tabs[to]] = [this.tabs[to], this.tabs[idx]];
+    this._markDirty();
+    this._renderTabBar();
+  },
+
+  _renderTabBar() {
+    const bar = document.getElementById('tab-bar');
+    if (!bar) return;
+    const tabs = [
+      { id: 'info', name: 'ℹ Info', fixed: true },
+      { id: 'profile', name: '✦ Profil', fixed: true },
+      ...this.tabs.map(t => ({ id: t.id, name: t.name, fixed: false })),
+    ];
+    bar.innerHTML = tabs.map((t, i) => {
+      const active = this.activeTab === t.id ? ' active' : '';
+      const customIdx = t.fixed ? -1 : this.tabs.findIndex(x => x.id === t.id);
+      const controls = t.fixed ? '' : `
+        <span class="tab-controls">
+          ${customIdx > 0 ? `<button class="tab-ctrl" onclick="event.stopPropagation();Editor.moveTab('${t.id}','left')" title="W lewo">‹</button>` : ''}
+          ${customIdx < this.tabs.length - 1 ? `<button class="tab-ctrl" onclick="event.stopPropagation();Editor.moveTab('${t.id}','right')" title="W prawo">›</button>` : ''}
+          <button class="tab-ctrl" onclick="event.stopPropagation();Editor.renameTab('${t.id}')" title="Zmień nazwę">✎</button>
+          <button class="tab-ctrl tab-ctrl-del" onclick="event.stopPropagation();Editor.deleteTab('${t.id}')" title="Usuń">✕</button>
+        </span>`;
+      return `<div class="profile-tab${active}" onclick="Editor.switchTab('${t.id}')">
+        <span class="tab-name">${t.name.replace(/</g,'&lt;')}</span>${controls}
+      </div>`;
+    }).join('') + `<button class="tab-add-btn" onclick="Editor.addTab()" title="Dodaj zakładkę">＋</button>`;
+  },
+
   _toast(msg,type='ok'){
     const t=document.getElementById('toast');if(!t)return;
     t.textContent=msg;t.className='toast toast-'+type+' toast-show';
