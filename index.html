@@ -81,8 +81,16 @@
       <div class="brand-tagline">Logosfera</div>
     </div>
   </div>
+  <nav class="top-nav">
+    <div class="top-nav-link" data-tab="gallery" onclick="App.navTo('gallery')">⛬ Galeria</div>
+    <div class="top-nav-link" data-tab="chars" onclick="App.navTo('chars')">⚔ Postacie</div>
+    <div class="top-nav-link" data-tab="sheet" onclick="App.navTo('sheet')">◆ Surowce</div>
+    <div class="top-nav-link" data-tab="timeline" onclick="App.navTo('timeline')">⧗ Oś czasu</div>
+    <div class="top-nav-link" data-tab="scan" onclick="App.navTo('scan')">⟳ Skanuj</div>
+    <div class="top-nav-link admin-t" id="top-admin-link" style="display:none;" data-tab="admin" onclick="App.navTo('admin')">⚙ Admin</div>
+  </nav>
   <div class="header-search">
-    <input type="text" id="header-search-input" placeholder="Szukaj postaci, surowca..."
+    <input type="text" id="header-search-input" placeholder="Szukaj..."
       oninput="App.headerSearch(this.value)" autocomplete="off">
     <div id="header-search-results" class="header-search-results"></div>
   </div>
@@ -91,7 +99,7 @@
   </div>
 </div>
 
-<!-- Side drawer (burger menu) -->
+<!-- Side drawer (burger menu, mobile only) -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="App.closeDrawer()"></div>
 <aside class="drawer" id="drawer">
   <div class="drawer-header">
@@ -102,14 +110,17 @@
     <div class="drawer-link" data-tab="gallery" onclick="App.navTo('gallery')">
       <span class="drawer-link-icon">⛬</span> Galeria
     </div>
-    <div class="drawer-link" data-tab="scan" onclick="App.navTo('scan')">
-      <span class="drawer-link-icon">⟳</span> Skanuj
+    <div class="drawer-link" data-tab="chars" onclick="App.navTo('chars')">
+      <span class="drawer-link-icon">⚔</span> Postacie
     </div>
     <div class="drawer-link" data-tab="sheet" onclick="App.navTo('sheet')">
-      <span class="drawer-link-icon">⊞</span> Arkusz
+      <span class="drawer-link-icon">◆</span> Surowce
     </div>
-    <div class="drawer-link" data-tab="chars" onclick="App.navTo('chars')">
-      <span class="drawer-link-icon">⚔</span> Twoje postacie
+    <div class="drawer-link" data-tab="timeline" onclick="App.navTo('timeline')">
+      <span class="drawer-link-icon">⧗</span> Oś czasu
+    </div>
+    <div class="drawer-link" data-tab="scan" onclick="App.navTo('scan')">
+      <span class="drawer-link-icon">⟳</span> Skanuj
     </div>
     <div class="drawer-link admin-t" id="drawer-admin-link" style="display:none;"
       data-tab="admin" onclick="App.navTo('admin')">
@@ -122,16 +133,16 @@
   </div>
 </aside>
 
-<!-- Mobile bottom nav -->
+<!-- Mobile bottom nav (3 quick actions: Postacie, Surowce, Oś czasu) -->
 <div class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none;">
-  <button data-tab="gallery" onclick="App.navTo('gallery')">
-    <span class="mn-icon">⛬</span><span>Galeria</span>
-  </button>
   <button data-tab="chars" onclick="App.navTo('chars')">
     <span class="mn-icon">⚔</span><span>Postacie</span>
   </button>
-  <button data-tab="scan" onclick="App.navTo('scan')">
-    <span class="mn-icon">⟳</span><span>Skanuj</span>
+  <button data-tab="sheet" onclick="App.navTo('sheet')">
+    <span class="mn-icon">◆</span><span>Surowce</span>
+  </button>
+  <button data-tab="timeline" onclick="App.navTo('timeline')">
+    <span class="mn-icon">⧗</span><span>Oś czasu</span>
   </button>
 </div>
 
@@ -221,6 +232,9 @@
 
   <!-- ── SHEET ─────────────────────────────────────────────────────────── -->
   <div id="tab-sheet" class="tab-content">
+    <h1 class="page-title">◆ Surowce</h1>
+    <p class="page-subtitle">Inwentarz gildii i zapasy postaci</p>
+
     <div class="sheet-subtabs">
       <div class="sheet-subtab active" data-view="mine" onclick="Sheet.switchView('mine')">⚔ Moje</div>
       <div class="sheet-subtab" data-view="item" onclick="Sheet.switchView('item')">⌕ Surowiec</div>
@@ -352,6 +366,19 @@
     </div>
     <div class="status-bar"><span id="gallery-status"></span></div>
     <div id="gallery-grid" class="gallery-grid"></div>
+  </div>
+
+  <!-- ── TIMELINE (placeholder — pełny moduł w kolejnym kroku) ────────── -->
+  <div id="tab-timeline" class="tab-content">
+    <h1 class="page-title">⧗ Oś czasu gildii</h1>
+    <p class="page-subtitle">Zdarzenia w świecie i historii gildii</p>
+    <div class="empty-msg" style="margin-top:2rem;">
+      <div style="font-size:2rem;margin-bottom:1rem;opacity:0.3;">⧗</div>
+      <div style="margin-bottom:0.5rem;">Moduł w przygotowaniu</div>
+      <div style="font-size:0.85rem;color:var(--text-m);">
+        Tu pojawi się wspólna oś czasu gildii z filtrami po postaciach, rodach i datach.
+      </div>
+    </div>
   </div>
 
   <!-- ── ADMIN ──────────────────────────────────────────────────────────── -->
