@@ -71,6 +71,70 @@
 
 <!-- ══ APP SCREEN ════════════════════════════════════════════════════════════ -->
 <div id="app-screen" style="display:none;">
+<!-- New sticky header with burger -->
+<div class="app-header" id="app-header" style="display:none;">
+  <button class="burger-btn" onclick="App.toggleDrawer()" aria-label="Menu">☰</button>
+  <div class="brand">
+    <img src="https://i.ibb.co/cPNxs5v/logosfera.png" alt="" class="brand-logo">
+    <div class="brand-text">
+      <div class="brand-name">Wandzi Windzi</div>
+      <div class="brand-tagline">Logosfera</div>
+    </div>
+  </div>
+  <div class="header-search">
+    <input type="text" id="header-search-input" placeholder="Szukaj postaci, surowca..."
+      oninput="App.headerSearch(this.value)" autocomplete="off">
+    <div id="header-search-results" class="header-search-results"></div>
+  </div>
+  <div class="header-user">
+    <span class="header-user-name">Zalog. jako <strong id="user-display"></strong></span>
+  </div>
+</div>
+
+<!-- Side drawer (burger menu) -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="App.closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-title">Menu</div>
+    <button class="drawer-close" onclick="App.closeDrawer()" aria-label="Zamknij">×</button>
+  </div>
+  <nav class="drawer-nav">
+    <div class="drawer-link" data-tab="gallery" onclick="App.navTo('gallery')">
+      <span class="drawer-link-icon">⛬</span> Galeria
+    </div>
+    <div class="drawer-link" data-tab="scan" onclick="App.navTo('scan')">
+      <span class="drawer-link-icon">⟳</span> Skanuj
+    </div>
+    <div class="drawer-link" data-tab="sheet" onclick="App.navTo('sheet')">
+      <span class="drawer-link-icon">⊞</span> Arkusz
+    </div>
+    <div class="drawer-link" data-tab="chars" onclick="App.navTo('chars')">
+      <span class="drawer-link-icon">⚔</span> Twoje postacie
+    </div>
+    <div class="drawer-link admin-t" id="drawer-admin-link" style="display:none;"
+      data-tab="admin" onclick="App.navTo('admin')">
+      <span class="drawer-link-icon">⚙</span> Admin
+    </div>
+  </nav>
+  <div class="drawer-footer">
+    <div style="margin-bottom:6px;">Zalogowano jako <strong id="drawer-user-name" style="color:var(--gold-l);font-weight:400;"></strong></div>
+    <div class="drawer-footer-link" onclick="doLogout()">↪ Wyloguj</div>
+  </div>
+</aside>
+
+<!-- Mobile bottom nav -->
+<div class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none;">
+  <button data-tab="gallery" onclick="App.navTo('gallery')">
+    <span class="mn-icon">⛬</span><span>Galeria</span>
+  </button>
+  <button data-tab="chars" onclick="App.navTo('chars')">
+    <span class="mn-icon">⚔</span><span>Postacie</span>
+  </button>
+  <button data-tab="scan" onclick="App.navTo('scan')">
+    <span class="mn-icon">⟳</span><span>Skanuj</span>
+  </button>
+</div>
+
 <div class="app">
 
   <header>
@@ -80,7 +144,7 @@
       <h1>Skaner Inwentarza</h1>
     </div>
     <div class="header-user">
-      <span>Zalogowano jako <strong id="user-display"></strong></span>
+      <span>Zalogowano jako <strong id="user-display-old"></strong></span>
       <button class="sm" onclick="doLogout()">Wyloguj</button>
     </div>
   </header>
@@ -269,12 +333,17 @@
 
   <!-- ── GALLERY ───────────────────────────────────────────────────────── -->
   <div id="tab-gallery" class="tab-content">
+    <h1 class="page-title">⛬ Galeria postaci</h1>
+    <p class="page-subtitle">Wszystkie dusze które przemierzają nasze królestwo</p>
+
+    <div id="gallery-hero-wrap"></div>
+
     <div class="gallery-toolbar">
       <div class="search-wrap" style="flex:1;max-width:320px;">
         <input type="text" id="gallery-search" placeholder="Szukaj postaci, rodu, miejsca..."
           oninput="Gallery.setSearch(this.value)">
       </div>
-      <div style="display:flex;gap:4px;">
+      <div class="gallery-filter-group">
         <button class="cat-btn gallery-filter-btn active" data-filter="all" onclick="Gallery.setFilter('all')">Wszystkie</button>
         <button class="cat-btn gallery-filter-btn" data-filter="mine" onclick="Gallery.setFilter('mine')">Moje</button>
         <button class="cat-btn gallery-filter-btn" data-filter="public" onclick="Gallery.setFilter('public')">Publiczne</button>
