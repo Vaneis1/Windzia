@@ -32,8 +32,10 @@ const App = {
       if (headerName) headerName.textContent = name;
     }
     if (u?.role === 'admin') {
-      const link = document.getElementById('drawer-admin-link');
-      if (link) link.style.display = '';
+      const drawerLink = document.getElementById('drawer-admin-link');
+      if (drawerLink) drawerLink.style.display = '';
+      const topLink = document.getElementById('top-admin-link');
+      if (topLink) topLink.style.display = '';
     }
   },
 
@@ -65,18 +67,22 @@ const App = {
   },
 
   switchTab(name) {
-    const tabNames = ['scan', 'sheet', 'chars', 'gallery', 'admin', 'calendar'];
+    const tabNames = ['scan', 'sheet', 'chars', 'gallery', 'timeline', 'admin'];
     tabNames.forEach(t => {
       document.getElementById('tab-' + t)?.classList.toggle('active', t === name);
     });
     document.querySelectorAll('.nav-tab').forEach((el, i) => {
       el.classList.toggle('active', tabNames[i] === name);
     });
+    document.querySelectorAll('.top-nav-link').forEach(el => {
+      el.classList.toggle('active', el.dataset.tab === name);
+    });
 
     if (name === 'sheet') Sheet.init();
     if (name === 'chars') Characters.load();
     if (name === 'gallery') Gallery.load();
     if (name === 'admin') Admin.load();
+    // timeline: module will be added in next step
   },
 
   // ── Header search ─────────────────────────────────────────────────────────
