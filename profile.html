@@ -7,21 +7,63 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="https://i.ibb.co/cPNxs5v/logosfera.png">
 <style>
-:root{--bg:#0F0314;--bg2:#1a0828;--bg3:#221035;--border:rgba(133,214,242,0.18);--gold:#00CCCC;--gold-l:#6BB8D4;--gold-d:rgba(0,204,204,0.1);--text:#dff4fc;--text-d:#7aafc8;--text-m:#3d6a80;}
+:root{--bg:#0e1117;--bg2:#141920;--bg3:#1c2330;--border:rgba(120,160,200,0.15);--accent:#7ba7c4;--accent-l:#a8c8e0;--accent-d:rgba(120,160,200,0.08);--text:#d8e4ee;--text-d:#7a9bb5;--text-m:#3d5468;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:17px;line-height:1.6;min-height:100vh;background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,204,204,0.06) 0%,transparent 60%);}
+body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;font-size:17px;line-height:1.6;min-height:100vh;background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(120,160,200,0.06) 0%,transparent 60%);}
 .profile-wrap{max-width:900px;margin:0 auto;padding:2rem 1.5rem 4rem;}
-.profile-header{display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
-.profile-avatar{width:72px;height:72px;border-radius:50%;border:2px solid var(--gold);object-fit:cover;flex-shrink:0;}
-.profile-avatar-placeholder{width:72px;height:72px;border-radius:50%;border:2px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:1.5rem;color:var(--text-m);flex-shrink:0;}
-.profile-meta{}
-.profile-name{font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold-l);letter-spacing:0.08em;}
+.profile-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+.profile-avatar{width:88px;height:88px;border-radius:50%;border:2px solid var(--accent);object-fit:cover;flex-shrink:0;}
+.profile-avatar-placeholder{width:88px;height:88px;border-radius:50%;border:2px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:1.8rem;color:var(--text-m);flex-shrink:0;}
+.profile-meta{flex:1;min-width:0;}
+.profile-name{font-family:'Cinzel',serif;font-size:1.8rem;color:var(--accent-l);letter-spacing:0.08em;}
 .profile-owner{font-size:0.85rem;color:var(--text-d);margin-top:2px;}
 .back-link{display:inline-block;margin-bottom:1rem;font-size:0.82rem;color:var(--text-m);text-decoration:none;}
-.back-link:hover{color:var(--gold-l);}
+.back-link:hover{color:var(--accent-l);}
 .private-msg{text-align:center;padding:4rem;color:var(--text-m);font-style:italic;}
 .loading-msg{text-align:center;padding:4rem;color:var(--text-m);}
 .profile-container{transition:box-shadow 0.15s;}
+
+/* Profile tabs */
+.profile-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap;}
+.profile-tab-link{padding:8px 16px;font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-d);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.12s;background:none;border-left:none;border-right:none;border-top:none;}
+.profile-tab-link:hover{color:var(--text);}
+.profile-tab-link.active{color:var(--accent-l);border-bottom-color:var(--accent);}
+
+/* Info tab content */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.5rem;}
+.info-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:14px 18px;}
+.info-card-label{font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-m);margin-bottom:5px;}
+.info-card-value{font-size:1.05rem;color:var(--accent-l);}
+.info-card-wide{grid-column:1/-1;}
+.info-bio{white-space:pre-wrap;color:var(--text);font-size:1rem;line-height:1.7;}
+
+.info-section-title{font-family:'Cinzel',serif;font-size:0.85rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin:2rem 0 1rem;padding-bottom:6px;border-bottom:1px solid var(--border);}
+
+.quote-card{background:var(--bg2);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;padding:14px 20px;margin-bottom:10px;font-style:italic;font-size:1.05rem;}
+.quote-card.featured{border-left-color:#c9a04c;background:rgba(200,160,80,0.04);}
+.quote-card.featured::before{content:'★';color:#c9a04c;margin-right:6px;}
+.quote-source{margin-top:6px;font-size:0.8rem;color:var(--text-m);font-family:'Cinzel',serif;letter-spacing:0.06em;font-style:normal;}
+
+.hook-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:14px 18px;margin-bottom:10px;}
+.hook-title{font-family:'Cinzel',serif;font-size:0.95rem;color:var(--accent-l);letter-spacing:0.05em;margin-bottom:6px;}
+.hook-desc{font-size:0.95rem;color:var(--text);white-space:pre-wrap;}
+
+.timeline{position:relative;padding-left:24px;}
+.timeline::before{content:'';position:absolute;left:6px;top:6px;bottom:6px;width:1px;background:var(--border);}
+.event-card{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 16px;margin-bottom:12px;}
+.event-card::before{content:'';position:absolute;left:-22px;top:14px;width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);}
+.event-date{font-family:'Cinzel',serif;font-size:0.72rem;letter-spacing:0.08em;color:var(--text-d);}
+.event-date-alt{display:inline-block;margin-left:8px;background:var(--accent-d);color:var(--accent-l);padding:1px 8px;border-radius:8px;font-size:0.78rem;}
+.event-title{font-family:'Cinzel',serif;font-size:1rem;color:var(--accent-l);margin-top:4px;letter-spacing:0.04em;}
+.event-desc{font-size:0.92rem;color:var(--text);margin-top:6px;white-space:pre-wrap;}
+
+.empty-section{padding:1.4rem;text-align:center;color:var(--text-m);font-style:italic;font-size:0.9rem;}
+
+@media (max-width: 600px){
+  .info-grid{grid-template-columns:1fr;}
+  .profile-name{font-size:1.4rem;}
+  .profile-avatar,.profile-avatar-placeholder{width:64px;height:64px;font-size:1.4rem;}
+}
 </style>
 </head>
 <body>
@@ -32,84 +74,263 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,se
 <script src="js/blocks.js"></script>
 <script>
 window.PROXY = 'https://windzia-production.up.railway.app';
- 
+
+function esc(s){return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+let calendar = null;
+
+function formatAltDate(iso) {
+  if (!iso || !calendar?.enabled) return '';
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return '';
+  const [, year, month, day] = m;
+  const monthName = calendar.month_names[parseInt(month) - 1] || month;
+  const altYear = parseInt(year) + (calendar.year_offset || 0);
+  const suffix = calendar.era_suffix ? ' ' + calendar.era_suffix : '';
+  return `${parseInt(day)} ${monthName} ${altYear}${suffix}`;
+}
+
+function formatPlainDate(iso) {
+  if (!iso) return '—';
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso;
+  return `${m[3]}.${m[2]}.${m[1]}`;
+}
+
+function renderInfoTab(data) {
+  const meta = data.meta || {};
+  const quotes = meta.quotes || [];
+  const hooks = meta.story_hooks || [];
+  const events = meta.events || [];
+
+  const fields = [];
+  if (meta.age) fields.push(['Wiek', meta.age]);
+  if (meta.house) fields.push(['Ród', meta.house]);
+  if (meta.location) fields.push(['Miejsce przebywania', meta.location, true]);
+
+  const fieldsHtml = fields.length ? `
+    <div class="info-grid">
+      ${fields.map(([l,v,wide]) => `<div class="info-card${wide?' info-card-wide':''}">
+        <div class="info-card-label">${l}</div>
+        <div class="info-card-value">${esc(v)}</div>
+      </div>`).join('')}
+    </div>` : '';
+
+  const bioHtml = meta.bio ? `
+    <div class="info-card info-card-wide" style="margin-bottom:1rem;">
+      <div class="info-card-label">O postaci</div>
+      <div class="info-bio">${esc(meta.bio)}</div>
+    </div>` : '';
+
+  const featuredId = meta.featured_quote_id;
+  const quotesHtml = quotes.length ? `
+    <div class="info-section-title">Cytaty</div>
+    ${quotes.map(q => `
+      <div class="quote-card${q.id === featuredId ? ' featured' : ''}">
+        ${esc(q.text)}
+        ${q.source ? `<div class="quote-source">— ${esc(q.source)}</div>` : ''}
+      </div>
+    `).join('')}
+  ` : '';
+
+  const hooksHtml = hooks.length ? `
+    <div class="info-section-title">Poszukiwane wątki fabularne</div>
+    ${hooks.map(h => `
+      <div class="hook-card">
+        <div class="hook-title">${esc(h.title || 'Wątek')}</div>
+        ${h.description ? `<div class="hook-desc">${esc(h.description)}</div>` : ''}
+      </div>
+    `).join('')}
+  ` : '';
+
+  const eventsSorted = [...events].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const eventsHtml = eventsSorted.length ? `
+    <div class="info-section-title">Oś czasu</div>
+    <div class="timeline">
+      ${eventsSorted.map(e => {
+        const altDate = formatAltDate(e.date);
+        const plainDate = formatPlainDate(e.date);
+        return `<div class="event-card">
+          <div class="event-date">
+            ${altDate ? `<span class="event-date-alt">${esc(altDate)}</span>` : ''}
+            <span style="color:var(--text-m);font-size:0.78rem;">${esc(plainDate)}</span>
+          </div>
+          <div class="event-title">${esc(e.title || 'Wydarzenie')}</div>
+          ${e.description ? `<div class="event-desc">${esc(e.description)}</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+  ` : '';
+
+  const hasAnything = fields.length || meta.bio || quotes.length || hooks.length || events.length;
+
+  return hasAnything
+    ? fieldsHtml + bioHtml + quotesHtml + hooksHtml + eventsHtml
+    : '<div class="empty-section">Brak informacji o postaci.</div>';
+}
+
+function renderVisualTab(blocksData, css) {
+  const blocks = blocksData?.blocks || [];
+  const settings = blocksData?.settings || {};
+  // Apply page settings
+  if (settings.bg_color) document.body.style.backgroundColor = settings.bg_color;
+  if (settings.bg_image) {
+    document.body.style.backgroundImage = `url('${settings.bg_image}')`;
+    document.body.style.backgroundSize = settings.bg_size || 'cover';
+    document.body.style.backgroundPosition = settings.bg_position || 'center';
+    document.body.style.backgroundAttachment = 'fixed';
+  } else {
+    document.body.style.backgroundImage = '';
+  }
+  const wrap = document.querySelector('.profile-wrap');
+  if (wrap && settings.max_width) wrap.style.maxWidth = settings.max_width;
+
+  return blocks.length
+    ? `<div id="profile-blocks">${Renderer.render(blocks, false)}</div>`
+    : '<div class="empty-section">Ta zakładka jest pusta.</div>';
+}
+
+let currentData = null;
+let currentTabId = 'info';
+
+function showTab(tabId) {
+  currentTabId = tabId;
+  document.querySelectorAll('.profile-tab-link').forEach(t => {
+    t.classList.toggle('active', t.dataset.tabid === tabId);
+  });
+  const content = document.getElementById('tab-content');
+  if (!content || !currentData) return;
+
+  // Reset body styles
+  document.body.style.backgroundColor = '';
+  document.body.style.backgroundImage = '';
+  // Remove previous tab's user CSS
+  document.getElementById('user-profile-css')?.remove();
+
+  if (tabId === 'info') {
+    content.innerHTML = renderInfoTab(currentData);
+  } else if (tabId === 'profile') {
+    content.innerHTML = renderVisualTab(
+      { blocks: currentData.profile_blocks?.blocks || currentData.profile_blocks, settings: currentData.profile_blocks?.settings },
+      currentData.profile_css
+    );
+    if (currentData.profile_css) loadCss(`/characters/${currentData.id}/profile/css`);
+  } else {
+    const tab = (currentData.tabs || []).find(t => t.id === tabId);
+    if (tab) {
+      content.innerHTML = renderVisualTab(tab.blocks_data, tab.css);
+      // Apply per-tab CSS inline (simpler than separate endpoint per tab)
+      if (tab.css) {
+        const style = document.createElement('style');
+        style.id = 'user-profile-css';
+        style.textContent = scopeCssClient(tab.css, '#profile-blocks');
+        document.head.appendChild(style);
+      }
+    }
+  }
+}
+
+async function loadCss(url) {
+  try {
+    const r = await fetch(window.PROXY + url);
+    if (!r.ok) return;
+    const t = await r.text();
+    if (t) {
+      const s = document.createElement('style');
+      s.id = 'user-profile-css';
+      s.textContent = t;
+      document.head.appendChild(s);
+    }
+  } catch(e) {}
+}
+
+function scopeCssClient(css, scope) {
+  // Minimal client-side scoping (server already sanitizes when from /css endpoint)
+  if (!css) return '';
+  css = css.replace(/javascript\s*:/gi, '/*x*/');
+  css = css.replace(/@import[^;]*;/gi, '/*x*/');
+  css = css.replace(/expression\s*\(/gi, '/*x*/(');
+  css = css.replace(/\/\*.*?\*\//gs, '');
+  return css.replace(/([^{}]+)\{/g, (m, sel) => {
+    const sels = sel.split(',').map(s => s.trim()).filter(Boolean).map(s => `${scope} ${s}`).join(', ');
+    return sels + '{';
+  });
+}
+
 async function loadProfile() {
   const params = new URLSearchParams(window.location.search);
   const id = params.get('id');
   const root = document.getElementById('profile-root');
- 
+
   if (!id) { root.innerHTML = '<div class="private-msg">Brak ID profilu.</div>'; return; }
- 
+
   try {
+    // Load calendar settings
+    try {
+      const calRes = await fetch(window.PROXY + '/settings/calendar');
+      if (calRes.ok) calendar = await calRes.json();
+    } catch(e) {}
+
     const res = await fetch(window.PROXY + '/characters/' + id + '/profile');
     const data = await res.json();
- 
     if (data.error) { root.innerHTML = '<div class="private-msg">' + data.error + '</div>'; return; }
- 
+
     const token = localStorage.getItem('ww_token') || '';
-    let isOwner = false;
+    let isOwner = false, currentUserId = null;
     if (token) {
       try {
         const me = await fetch(window.PROXY + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
         const meData = await me.json();
-        if (!meData.error) isOwner = true;
+        if (!meData.error) { isOwner = true; currentUserId = meData.id; }
       } catch(e) {}
     }
- 
+
     if (!data.profile_public && !isOwner) {
       root.innerHTML = '<div class="private-msg">Ten profil jest prywatny.</div>';
       return;
     }
- 
-    // Handle both old (array) and new (object with blocks+settings) format
-    const pb = data.profile_blocks;
-    let blocks = [], settings = {};
-    if (pb && !Array.isArray(pb) && pb.blocks) {
-      blocks = pb.blocks || [];
-      settings = pb.settings || {};
-    } else {
-      blocks = pb || [];
-    }
- 
-    // Apply page settings
-    if (settings.bg_color || settings.bg_image) {
-      document.body.style.background = settings.bg_color || '#0e1117';
-      if (settings.bg_image) {
-        document.body.style.backgroundImage = `url('${settings.bg_image}')`;
-        document.body.style.backgroundSize = settings.bg_size || 'cover';
-        document.body.style.backgroundPosition = settings.bg_position || 'center';
-        document.body.style.backgroundAttachment = 'fixed';
-      }
-    }
-    const wrap = document.querySelector('.profile-wrap');
-    if (wrap && settings.max_width) wrap.style.maxWidth = settings.max_width;
- 
+
     document.title = data.name + ' — Wandzi Windzi';
- 
-    const avatarHtml = data.avatar_url
-      ? `<img class="profile-avatar" src="${data.avatar_url}" alt="${data.name}">`
-      : `<div class="profile-avatar-placeholder">${data.name[0]?.toUpperCase() || '?'}</div>`;
- 
+    currentData = data;
+
+    const meta = data.meta || {};
+    const avatarUrl = data.avatar_url || meta.avatar_url;
+    const avatarHtml = avatarUrl
+      ? `<img class="profile-avatar" src="${esc(avatarUrl)}" alt="${esc(data.name)}">`
+      : `<div class="profile-avatar-placeholder">${(data.name[0] || '?').toUpperCase()}</div>`;
+
     const editBtn = isOwner
-      ? `<a href="editor.html?id=${id}" style="margin-left:auto;font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:3px;border:1px solid rgba(120,160,200,0.3);color:#7a9bb5;text-decoration:none;">✎ Edytuj</a>`
+      ? `<a href="editor.html?id=${id}" style="font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;padding:6px 14px;border-radius:3px;border:1px solid rgba(120,160,200,0.3);color:#7a9bb5;text-decoration:none;">✎ Edytuj</a>`
       : '';
- 
+
+    // Build tab list
+    const tabs = [
+      { id: 'info', name: 'ℹ Info' },
+      { id: 'profile', name: '✦ Profil' },
+      ...(data.tabs || []).map(t => ({ id: t.id, name: t.name })),
+    ];
+
     root.innerHTML = `
       <div class="profile-header">
         ${avatarHtml}
         <div class="profile-meta">
-          <div class="profile-name">${data.name}</div>
-          <div class="profile-owner">${data.owner_display || data.owner_username}</div>
+          <div class="profile-name">${esc(data.name)}</div>
+          <div class="profile-owner">${esc(data.owner_display || data.owner_username)}</div>
         </div>
         ${editBtn}
       </div>
-      <div id="profile-blocks">${Renderer.render(blocks, false)}</div>`;
- 
+      <div class="profile-tabs">
+        ${tabs.map(t => `<button class="profile-tab-link" data-tabid="${t.id}" onclick="showTab('${t.id}')">${esc(t.name)}</button>`).join('')}
+      </div>
+      <div id="tab-content"></div>
+    `;
+
+    showTab('info');
   } catch(e) {
-    root.innerHTML = '<div class="private-msg">Błąd ładowania: ' + e.message + '</div>';
+    root.innerHTML = '<div class="private-msg">Błąd ładowania: ' + esc(e.message) + '</div>';
   }
 }
- 
+
 loadProfile();
 </script>
 </body>
