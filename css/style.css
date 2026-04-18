@@ -956,3 +956,105 @@ footer { margin-top: 3rem; text-align: center; font-size: 0.78rem; color: var(--
 .house-name    { font-size: 0.95rem; }
 .house-desc    { font-size: 0.78rem; color: var(--text-m); font-style: italic; margin-top: 1px; }
 .house-actions { display: flex; gap: 6px; }
+
+/* ── Timeline ─────────────────────────────────────────────────────────────── */
+.tl-filters {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+  padding: 14px 16px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 6px; margin-bottom: 1.2rem;
+}
+.tl-filter-group { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.tl-filter-label {
+  font-family: 'Cinzel', serif; font-size: 0.58rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-m);
+}
+.tl-filter-group select,
+.tl-filter-group input {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 3px;
+  color: var(--text); font-family: 'Crimson Pro', serif; font-size: 0.9rem;
+  padding: 7px 10px; outline: none; width: 100%;
+}
+.tl-filter-group select:focus,
+.tl-filter-group input:focus { border-color: var(--gold); }
+.tl-filter-actions { display: flex; gap: 6px; align-items: flex-end; }
+ 
+.tl-year { margin-bottom: 2rem; }
+.tl-year-label {
+  font-family: 'Cinzel', serif; font-size: 0.8rem; letter-spacing: 0.12em;
+  color: var(--gold); text-transform: uppercase; margin-bottom: 0.8rem;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.tl-year-events { position: relative; padding-left: 28px; }
+.tl-year-events::before {
+  content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+  width: 1px; background: var(--border);
+}
+ 
+.tl-event { position: relative; margin-bottom: 12px; }
+.tl-event-dot {
+  position: absolute; left: -24px; top: 14px;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--gold); border: 2px solid var(--bg); flex-shrink: 0;
+}
+.tl-event-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px 16px;
+  transition: border-color 0.15s;
+}
+.tl-event-card:hover { border-color: var(--border-h); }
+ 
+.tl-event-header {
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap; margin-bottom: 6px;
+}
+.tl-char-link {
+  display: flex; align-items: center; gap: 8px;
+  text-decoration: none; color: var(--text);
+  transition: color 0.12s;
+}
+.tl-char-link:hover { color: var(--gold-l); }
+.tl-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--border); object-fit: cover; flex-shrink: 0;
+}
+.tl-avatar-placeholder {
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cinzel', serif; font-size: 0.75rem;
+  background: var(--bg3); color: var(--text-m);
+}
+.tl-char-name { font-family: 'Cinzel', serif; font-size: 0.82rem; letter-spacing: 0.05em; }
+ 
+.tl-house-badges { display: flex; gap: 4px; flex-wrap: wrap; }
+.tl-house-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-family: 'Cinzel', serif; font-size: 0.58rem; letter-spacing: 0.05em;
+  padding: 1px 7px; border-radius: 8px; border: 1px solid currentColor;
+  white-space: nowrap; opacity: 0.85;
+}
+.tl-vis-icon { font-size: 0.85rem; opacity: 0.5; margin-left: auto; }
+ 
+.tl-event-date { margin-bottom: 4px; }
+.tl-date-alt {
+  font-family: 'Cinzel', serif; font-size: 0.78rem;
+  color: var(--gold-l); background: var(--gold-d);
+  padding: 1px 8px; border-radius: 8px; margin-right: 6px;
+}
+.tl-date-plain { font-size: 0.78rem; color: var(--text-m); }
+ 
+.tl-event-title {
+  font-family: 'Cinzel', serif; font-size: 0.95rem;
+  color: var(--gold-l); letter-spacing: 0.04em; margin-bottom: 4px;
+}
+.tl-event-desc {
+  font-size: 0.9rem; color: var(--text); line-height: 1.6;
+  white-space: pre-wrap;
+}
+.tl-empty {
+  padding: 3rem; text-align: center; color: var(--text-m);
+  font-style: italic; border: 1px dashed var(--border); border-radius: 6px;
+}
+ 
+@media (max-width: 600px) {
+  .tl-filters { flex-direction: column; }
+  .tl-filter-group { flex: none; width: 100%; }
+}
