@@ -34,6 +34,24 @@ class Owner(db.Model):
         }
 
 
+# ── M2M: character ↔ house ─────────────────────────────────────────────────
+character_houses = db.Table(
+    "character_houses",
+    db.Column(
+        "character_id",
+        db.Integer,
+        db.ForeignKey("characters.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    db.Column(
+        "house_id",
+        db.Integer,
+        db.ForeignKey("houses.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
+
 class Character(db.Model):
     __tablename__ = "characters"
 
@@ -51,13 +69,54 @@ class Character(db.Model):
     inventory_entries = db.relationship(
         "Inventory", backref="character", cascade="all, delete-orphan", lazy="select"
     )
+    houses = db.relationship(
+        "House",
+        secondary="character_houses",
+        back_populates="characters",
+        lazy="select",
+    )
 
     def to_dict(self, include_owner=True):
-        d = {"id": self.id, "name": self.name, "owner_id": self.owner_id,
-             "profile_public": self.profile_public, "avatar_url": self.avatar_url}
+        d = {
+            "id": self.id,
+            "name": self.name,
+            "owner_id": self.owner_id,
+            "profile_public": self.profile_public,
+            "avatar_url": self.avatar_url,
+            "houses": [h.to_dict() for h in (self.houses or [])],
+        }
         if include_owner:
             d["owner_username"] = self.owner.username if self.owner else ""
         return d
+
+
+class House(db.Model):
+    __tablename__ = "houses"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    color = db.Column(db.String(7), default="#c9a45c", nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    heraldry = db.Column(db.String(500), nullable=True)  # emoji lub URL
+    created_by = db.Column(db.Integer, db.ForeignKey("owners.id"), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    characters = db.relationship(
+        "Character",
+        secondary="character_houses",
+        back_populates="houses",
+        lazy="select",
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "color": self.color,
+            "description": self.description or "",
+            "heraldry": self.heraldry or "",
+            "created_by": self.created_by,
+        }
 
 
 class Item(db.Model):
@@ -93,7 +152,9 @@ class Inventory(db.Model):
     __tablename__ = "inventory"
 
     id = db.Column(db.Integer, primary_key=True)
-    character_id = db.Column(db.Integer, db.ForeignKey("characters.id"), nullable=False)
+    character_id = db.Column(
+        db.Integer, db.ForeignKey("characters.id"), nullable=False
+    )
     item_id = db.Column(db.Integer, db.ForeignKey("items.id"), nullable=False)
     quantity = db.Column(db.Integer, default=0, nullable=False)
     updated_at = db.Column(
@@ -105,12 +166,13 @@ class Inventory(db.Model):
     )
 
 
-
 class AppSettings(db.Model):
     __tablename__ = "app_settings"
     key = db.Column(db.String(100), primary_key=True)
     value = db.Column(db.JSON, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     @classmethod
     def get(cls, key, default=None):
