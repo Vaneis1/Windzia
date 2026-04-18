@@ -31,7 +31,44 @@ const Gallery = {
     this.render();
   },
 
+  renderHero() {
+    const wrap = document.getElementById('gallery-hero-wrap');
+    if (!wrap) return;
+    // Pick hero: first character with both avatar and featured quote, else first with quote, else first
+    const withQuoteAndAvatar = this.data.find(c => c.featured_quote && c.avatar_url);
+    const withQuote = this.data.find(c => c.featured_quote);
+    const hero = withQuoteAndAvatar || withQuote || this.data[0];
+    if (!hero) { wrap.innerHTML = ''; return; }
+
+    const avatar = hero.avatar_url
+      ? `<img class="hero-avatar" src="${this._esc(hero.avatar_url)}" alt="${this._esc(hero.name)}">`
+      : `<div class="hero-avatar hero-avatar-placeholder">${(hero.name[0] || '?').toUpperCase()}</div>`;
+
+    const metaParts = [];
+    if (hero.age) metaParts.push(this._esc(hero.age));
+    if (hero.house) metaParts.push(this._esc(hero.house));
+    if (hero.location) metaParts.push(this._esc(hero.location));
+    const metaStr = metaParts.length ? metaParts.join(' · ') : `Postać użytkownika ${this._esc(hero.owner_display)}`;
+
+    const quoteHtml = hero.featured_quote ? `
+      <blockquote class="hero-quote">${this._esc(hero.featured_quote.text)}</blockquote>
+      ${hero.featured_quote.source ? `<div class="hero-quote-source">— ${this._esc(hero.featured_quote.source)}</div>` : ''}
+    ` : '';
+
+    wrap.innerHTML = `<div class="gallery-hero">
+      ${avatar}
+      <div class="hero-content">
+        <div class="hero-label">⛬ Sylwetka dnia</div>
+        <h2 class="hero-name">${this._esc(hero.name)}</h2>
+        <div class="hero-meta">${metaStr}</div>
+        ${quoteHtml}
+        <a href="profile.html?id=${hero.id}" class="hero-link">Zobacz pełny profil →</a>
+      </div>
+    </div>`;
+  },
+
   render() {
+    this.renderHero();
     const grid = document.getElementById('gallery-grid');
     if (!grid) return;
 
