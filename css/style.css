@@ -91,7 +91,7 @@ nav { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5r
 .section-label { font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 0.15em; color: var(--gold); text-transform: uppercase; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 10px; }
 .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-.panel { background: rgba(26,8,40,0.95); border: 1px solid var(--border); border-radius: 4px; padding: 1.1rem 1.4rem; margin-bottom: 1.2rem; }
+.panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 1.1rem 1.4rem; margin-bottom: 1.2rem; }
 
 .field label { display: block; font-family: 'Cinzel', serif; font-size: 0.62rem; letter-spacing: 0.12em; color: var(--gold); text-transform: uppercase; margin-bottom: 0.4rem; }
 .field input, .field select, .field textarea {
@@ -163,7 +163,7 @@ button.sm { padding: 4px 10px; font-size: 0.62rem; }
 
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 4px; }
 table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-thead th { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--gold); padding: 7px 10px; text-align: left; background: rgba(15,3,20,0.9); border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
+thead th { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--gold); padding: 7px 10px; text-align: left; background: var(--bg2); border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
 thead th:hover { color: var(--gold-l); }
 thead th.sorted { color: var(--gold-l); }
 .sort-arr { margin-left: 3px; opacity: 0.5; font-size: 0.65rem; }
@@ -543,7 +543,7 @@ footer { margin-top: 3rem; text-align: center; font-size: 0.78rem; color: var(--
 .drawer-footer-link:hover { color: var(--err-t); }
 
 /* Main app container - reset old header styles */
-.app { max-width: 1280px; margin: 0 auto; padding: 0 20px 4rem; }
+.app { max-width: 1280px; margin: 0 auto; padding: 1.5rem 20px 4rem; }
 .app header { display: none; }  /* hide old header */
 .app nav { display: none; }     /* hide old nav (now in drawer) */
 
