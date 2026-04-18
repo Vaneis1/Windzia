@@ -7,7 +7,9 @@ const App = {
     if (loggedIn) {
       this._showShell();
       Scan.initDropZone();
-      this.navTo('gallery');
+      // Wróć na ostatnią zakładkę lub domyślnie galeria
+      const lastTab = localStorage.getItem('ww_last_tab') || 'gallery';
+      this.navTo(lastTab);
     }
   },
 
@@ -15,6 +17,8 @@ const App = {
     this._showShell();
     Scan.initDropZone();
     await Characters.load();
+    // Po logowaniu zawsze idź na galerię (nie na ostatnią zakładkę)
+    localStorage.setItem('ww_last_tab', 'gallery');
     this.navTo('gallery');
   },
 
@@ -58,6 +62,8 @@ const App = {
   navTo(tab) {
     this.closeDrawer();
     this.switchTab(tab);
+    // Zapamiętaj zakładkę
+    localStorage.setItem('ww_last_tab', tab);
     document.querySelectorAll('.drawer-link').forEach(el => {
       el.classList.toggle('active', el.dataset.tab === tab);
     });
@@ -82,7 +88,6 @@ const App = {
     if (name === 'chars') Characters.load();
     if (name === 'gallery') Gallery.load();
     if (name === 'admin') Admin.load();
-    // timeline: module will be added in next step
   },
 
   // ── Header search ─────────────────────────────────────────────────────────
@@ -126,7 +131,7 @@ const App = {
     document.getElementById('header-search-results').innerHTML = '';
   },
 
-  _esc(s) { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); },
+  _esc(s) { return String(s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;'); },
 };
 
 function doLogin() { Auth.login(); }
