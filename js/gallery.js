@@ -13,7 +13,7 @@ const Gallery = {
       this.data = data;
       this.render();
       if (status) status.textContent = '';
-    } catch(e) {
+    } catch (e) {
       if (status) status.textContent = 'Błąd: ' + e.message;
     }
   },
@@ -34,7 +34,6 @@ const Gallery = {
   renderHero() {
     const wrap = document.getElementById('gallery-hero-wrap');
     if (!wrap) return;
-    // Pick hero: first character with both avatar and featured quote, else first with quote, else first
     const withQuoteAndAvatar = this.data.find(c => c.featured_quote && c.avatar_url);
     const withQuote = this.data.find(c => c.featured_quote);
     const hero = withQuoteAndAvatar || withQuote || this.data[0];
@@ -46,9 +45,11 @@ const Gallery = {
 
     const metaParts = [];
     if (hero.age) metaParts.push(this._esc(hero.age));
-    if (hero.house) metaParts.push(this._esc(hero.house));
+    (hero.houses || []).forEach(h => metaParts.push(this._esc(h.name)));
     if (hero.location) metaParts.push(this._esc(hero.location));
-    const metaStr = metaParts.length ? metaParts.join(' · ') : `Postać użytkownika ${this._esc(hero.owner_display)}`;
+    const metaStr = metaParts.length
+      ? metaParts.join(' · ')
+      : `Postać użytkownika ${this._esc(hero.owner_display)}`;
 
     const quoteHtml = hero.featured_quote ? `
       <blockquote class="hero-quote">${this._esc(hero.featured_quote.text)}</blockquote>
@@ -74,19 +75,17 @@ const Gallery = {
 
     let chars = this.data;
 
-    // Filter
     if (this.filter === 'mine') {
       chars = chars.filter(c => c.owner_username === State.currentUser?.username);
     } else if (this.filter === 'public') {
       chars = chars.filter(c => c.profile_public);
     }
 
-    // Search
     if (this.searchQuery) {
       const q = this.searchQuery;
       chars = chars.filter(c =>
         c.name.toLowerCase().includes(q) ||
-        (c.house || '').toLowerCase().includes(q) ||
+        (c.houses || []).map(h => h.name).join(' ').toLowerCase().includes(q) ||
         (c.location || '').toLowerCase().includes(q) ||
         (c.owner_display || '').toLowerCase().includes(q)
       );
@@ -104,7 +103,9 @@ const Gallery = {
 
       const meta = [];
       if (c.age) meta.push(`<span class="gal-meta-row">⌛ ${this._esc(c.age)}</span>`);
-      if (c.house) meta.push(`<span class="gal-meta-row">⚜ ${this._esc(c.house)}</span>`);
+      (c.houses || []).forEach(h =>
+        meta.push(`<span class="gal-meta-row" style="color:${h.color};">⚜ ${this._esc(h.name)}</span>`)
+      );
       if (c.location) meta.push(`<span class="gal-meta-row">⌖ ${this._esc(c.location)}</span>`);
 
       const quote = c.featured_quote
