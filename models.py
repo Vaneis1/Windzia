@@ -75,6 +75,9 @@ class Character(db.Model):
         back_populates="characters",
         lazy="select",
     )
+    char_events = db.relationship(
+        "Event", back_populates="character", cascade="all, delete-orphan", lazy="select"
+    )
 
     def to_dict(self, include_owner=True):
         d = {
@@ -97,7 +100,7 @@ class House(db.Model):
     name = db.Column(db.String(100), unique=True, nullable=False)
     color = db.Column(db.String(7), default="#c9a45c", nullable=False)
     description = db.Column(db.Text, nullable=True)
-    heraldry = db.Column(db.String(500), nullable=True)  # emoji lub URL
+    heraldry = db.Column(db.String(500), nullable=True)
     created_by = db.Column(db.Integer, db.ForeignKey("owners.id"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -117,6 +120,43 @@ class House(db.Model):
             "heraldry": self.heraldry or "",
             "created_by": self.created_by,
         }
+
+
+class Event(db.Model):
+    __tablename__ = "events"
+
+    id = db.Column(db.Integer, primary_key=True)
+    character_id = db.Column(
+        db.Integer,
+        db.ForeignKey("characters.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    date = db.Column(db.String(10), nullable=True)          # YYYY-MM-DD
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    visibility = db.Column(db.String(10), default="public", nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    character = db.relationship("Character", back_populates="char_events")
+
+    def to_dict(self, include_char=False):
+        d = {
+            "id": self.id,
+            "character_id": self.character_id,
+            "date": self.date or "",
+            "title": self.title,
+            "description": self.description or "",
+            "visibility": self.visibility,
+        }
+        if include_char and self.character:
+            c = self.character
+            d["character_name"] = c.name
+            d["character_avatar"] = c.avatar_url
+            d["owner_display"] = (
+                (c.owner.display_name or c.owner.username) if c.owner else ""
+            )
+            d["houses"] = [h.to_dict() for h in (c.houses or [])]
+        return d
 
 
 class Item(db.Model):
