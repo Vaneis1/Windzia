@@ -14,7 +14,7 @@ const Admin = {
       document.getElementById('atab-' + t)?.classList.toggle('active', t === name);
     });
     document.querySelectorAll('.admin-tab').forEach((el, i) => {
-      el.classList.toggle('active', ['owners', 'items', 'inventory', 'profile'][i] === name);
+      el.classList.toggle('active', ['owners', 'items', 'inventory', 'calendar', 'profile', 'houses'][i] === name);
     });
   },
 
