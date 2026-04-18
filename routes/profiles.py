@@ -36,6 +36,7 @@ def get_profile(cid):
         "avatar_url": char.avatar_url,
         "meta": char.meta or {},
         "tabs": char.tabs or [],
+        "houses": [h.to_dict() for h in (char.houses or [])],
     })
 
 
@@ -91,18 +92,15 @@ def get_profile_css(cid):
 # ── Character metadata (Info tab — predefined) ────────────────────────────────
 
 def _validate_meta(meta: dict) -> tuple[bool, str | None]:
-    """Validate metadata structure."""
     if not isinstance(meta, dict):
         return False, "meta musi być obiektem"
 
-    # String fields
-    for key in ("avatar_url", "age", "house", "location", "bio"):
+    for key in ("avatar_url", "age", "location", "bio"):
         if key in meta and meta[key] is not None and not isinstance(meta[key], str):
             return False, f"Pole {key} musi być tekstem"
     if len(meta.get("bio") or "") > MAX_BIO_LENGTH:
         return False, f"Bio za długie (max {MAX_BIO_LENGTH} znaków)"
 
-    # Quotes: [{id, text, source}]
     quotes = meta.get("quotes", [])
     if not isinstance(quotes, list):
         return False, "quotes musi być tablicą"
@@ -114,14 +112,12 @@ def _validate_meta(meta: dict) -> tuple[bool, str | None]:
         if len(q.get("text", "")) > 1000:
             return False, "Cytat za długi (max 1000 znaków)"
 
-    # Story hooks: [{id, title, description}]
     hooks = meta.get("story_hooks", [])
     if not isinstance(hooks, list):
         return False, "story_hooks musi być tablicą"
     if len(hooks) > MAX_HOOKS:
         return False, f"Za dużo wątków (max {MAX_HOOKS})"
 
-    # Events: [{id, date, title, description}]
     events = meta.get("events", [])
     if not isinstance(events, list):
         return False, "events musi być tablicą"
@@ -160,18 +156,19 @@ def save_meta(cid):
     if not ok:
         return jsonify({"error": err}), 400
 
+    # Usuń stare pole house jeśli zostało w danych
+    body.pop("house", None)
+
     char.meta = body
-    # If avatar_url was set in meta, sync to top-level field too
     if "avatar_url" in body:
         char.avatar_url = body.get("avatar_url") or None
     db.session.commit()
     return jsonify({"ok": True})
 
 
-# ── Custom tabs (with their own blocks + css) ─────────────────────────────────
+# ── Custom tabs ───────────────────────────────────────────────────────────────
 
 def _validate_tabs(tabs: list) -> tuple[bool, str | None, int]:
-    """Validate tabs structure. Returns (ok, error, total_size_bytes)."""
     if not isinstance(tabs, list):
         return False, "tabs musi być tablicą", 0
     if len(tabs) > MAX_TABS:
@@ -193,13 +190,9 @@ def _validate_tabs(tabs: list) -> tuple[bool, str | None, int]:
         if not ok:
             return False, f"Zakładka „{name}\": {err}", total_size
 
-        # Per-tab size warning
         tab_json = _json.dumps(tab)
         size = len(tab_json.encode('utf-8'))
         total_size += size
-        if size > 50_000:
-            # Soft warning — still allow but flag it later
-            pass
 
     return True, None, total_size
 
@@ -230,7 +223,6 @@ def save_tabs(cid):
 
     char.tabs = tabs
 
-    # Sanitize CSS in each tab if present
     warnings = []
     for tab in tabs:
         if tab.get("css"):
@@ -246,12 +238,11 @@ def save_tabs(cid):
     return jsonify(response)
 
 
-# ── Gallery (all characters) ──────────────────────────────────────────────────
+# ── Gallery ───────────────────────────────────────────────────────────────────
 
 @profiles_bp.route("/gallery", methods=["GET"])
 @require_auth
 def gallery():
-    """Return all characters with key info for the gallery view."""
     chars = (
         Character.query
         .join(Owner, Character.owner_id == Owner.id)
@@ -261,7 +252,6 @@ def gallery():
     out = []
     for c in chars:
         meta = c.meta or {}
-        # Find featured quote: first marked, or just first quote
         featured_quote = None
         quotes = meta.get("quotes", []) or []
         featured_id = meta.get("featured_quote_id")
@@ -277,7 +267,7 @@ def gallery():
             "owner_display": (c.owner.display_name or c.owner.username) if c.owner else "",
             "owner_username": c.owner.username if c.owner else "",
             "age": meta.get("age", ""),
-            "house": meta.get("house", ""),
+            "houses": [h.to_dict() for h in (c.houses or [])],
             "location": meta.get("location", ""),
             "featured_quote": featured_quote,
             "profile_public": c.profile_public,
@@ -285,7 +275,7 @@ def gallery():
     return jsonify(out)
 
 
-# ── Calendar settings (admin only for write) ──────────────────────────────────
+# ── Calendar settings ─────────────────────────────────────────────────────────
 
 DEFAULT_CALENDAR = {
     "enabled": False,
@@ -307,7 +297,6 @@ def get_calendar():
 def save_calendar():
     body = request.get_json(silent=True) or {}
 
-    # Validate structure
     months = body.get("month_names", DEFAULT_CALENDAR["month_names"])
     if not isinstance(months, list) or len(months) != 12:
         return jsonify({"error": "month_names musi mieć dokładnie 12 nazw"}), 400
