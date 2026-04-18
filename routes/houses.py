@@ -1,190 +1,104 @@
-// houses.js — House CRUD + modal picker for assigning houses to characters
-const Houses = {
-  all: [],
-  _modalCharId: null,
+from flask import Blueprint, request, jsonify
+from models import db, House, Character
+from utils import get_current_owner, require_auth
 
-  async loadAll() {
-    try {
-      const data = await API.get('/houses');
-      if (Array.isArray(data)) this.all = data;
-    } catch (e) {
-      console.error('Houses.loadAll:', e.message);
-    }
-    return this.all;
-  },
+houses_bp = Blueprint("houses", __name__)
 
-  // ── Admin tab ─────────────────────────────────────────────────────────────
-  async renderAdminTab() {
-    const wrap = document.getElementById('atab-houses');
-    if (!wrap) return;
-    await this.loadAll();
 
-    const listHtml = this.all.length
-      ? this.all.map(h => `
-          <div class="house-row">
-            <div class="house-dot-lg" style="background:${h.color}"></div>
-            <div class="house-info">
-              <div class="house-name">${h.heraldry ? h.heraldry + ' ' : ''}${this._esc(h.name)}</div>
-              ${h.description ? `<div class="house-desc">${this._esc(h.description)}</div>` : ''}
-            </div>
-            <div class="house-actions">
-              <button class="sm" onclick="Houses._openEdit(${h.id})">✎ Edytuj</button>
-              <button class="sm danger" onclick="Houses._delete(${h.id}, '${h.name.replace(/'/g, "\\'")}')">Usuń</button>
-            </div>
-          </div>`).join('')
-      : '<div class="empty-msg">Brak rodów. Dodaj pierwszy poniżej.</div>';
+@houses_bp.route("/houses", methods=["GET"])
+@require_auth
+def get_houses():
+    houses = House.query.order_by(House.name).all()
+    return jsonify([h.to_dict() for h in houses])
 
-    wrap.innerHTML = `
-      <div id="houses-list" style="margin-bottom:1.2rem;">${listHtml}</div>
-      <div class="admin-label">Dodaj ród</div>
-      <div class="panel">
-        <div class="row2">
-          <div class="field">
-            <label>Nazwa rodu</label>
-            <input type="text" id="new-house-name" placeholder="np. Ród Królika">
-          </div>
-          <div class="field">
-            <label>Kolor herbu</label>
-            <input type="color" id="new-house-color" value="#c9a45c"
-              style="height:38px;width:100%;padding:2px 4px;background:var(--bg3);
-                     border:1px solid var(--border);border-radius:3px;cursor:pointer;">
-          </div>
-        </div>
-        <div class="field" style="margin-top:0.8rem;">
-          <label>Herb / emoji (opcjonalnie)</label>
-          <input type="text" id="new-house-heraldry" placeholder="np. 🐇">
-        </div>
-        <div class="field" style="margin-top:0.8rem;">
-          <label>Opis (opcjonalnie)</label>
-          <textarea id="new-house-desc" rows="2" placeholder="Krótki opis rodu..."></textarea>
-        </div>
-        <div class="btn-row">
-          <button class="primary warn-btn" onclick="Houses._create()">+ Dodaj ród</button>
-        </div>
-        <div class="msg ok"  id="house-ok"></div>
-        <div class="msg err" id="house-err"></div>
-      </div>`;
-  },
 
-  async _create() {
-    const name = document.getElementById('new-house-name')?.value.trim();
-    if (!name) { UI.err('house-ok', 'house-err', 'Podaj nazwę rodu'); return; }
-    UI.clearMsg('house-ok', 'house-err');
-    try {
-      const res = await API.post('/houses', {
-        name,
-        color:       document.getElementById('new-house-color')?.value || '#c9a45c',
-        heraldry:    document.getElementById('new-house-heraldry')?.value.trim() || '',
-        description: document.getElementById('new-house-desc')?.value.trim() || '',
-      });
-      if (res.error) throw new Error(res.error);
-      UI.ok('house-ok', 'house-err', `Dodano ród „${name}".`);
-      document.getElementById('new-house-name').value     = '';
-      document.getElementById('new-house-heraldry').value = '';
-      document.getElementById('new-house-desc').value     = '';
-      await this.renderAdminTab();
-    } catch (e) {
-      UI.err('house-ok', 'house-err', 'Błąd: ' + e.message);
-    }
-  },
+@houses_bp.route("/houses", methods=["POST"])
+@require_auth
+def create_house():
+    owner = get_current_owner()
+    body = request.get_json(silent=True) or {}
+    name = body.get("name", "").strip()
 
-  async _delete(id, name) {
-    if (!confirm(`Usunąć ród „${name}"?\nZostanie odłączony od wszystkich postaci.`)) return;
-    try {
-      const res = await API.delete('/houses/' + id);
-      if (res.error) throw new Error(res.error);
-      await this.renderAdminTab();
-    } catch (e) {
-      alert('Błąd: ' + e.message);
-    }
-  },
+    if not name:
+        return jsonify({"error": "Nazwa rodu jest wymagana"}), 400
+    if len(name) > 100:
+        return jsonify({"error": "Nazwa za długa (max 100 znaków)"}), 400
+    if House.query.filter_by(name=name).first():
+        return jsonify({"error": "Ród o tej nazwie już istnieje"}), 409
 
-  _openEdit(id) {
-    const h = this.all.find(x => x.id === id);
-    if (!h) return;
-    document.getElementById('edit-house-id').value       = h.id;
-    document.getElementById('edit-house-name').value     = h.name;
-    document.getElementById('edit-house-color').value    = h.color;
-    document.getElementById('edit-house-heraldry').value = h.heraldry || '';
-    document.getElementById('edit-house-desc').value     = h.description || '';
-    document.getElementById('house-edit-overlay').classList.add('open');
-  },
+    house = House(
+        name=name,
+        color=body.get("color", "#c9a45c"),
+        description=body.get("description", "").strip() or None,
+        heraldry=body.get("heraldry", "").strip() or None,
+        created_by=owner.id,
+    )
+    db.session.add(house)
+    db.session.commit()
+    return jsonify(house.to_dict()), 201
 
-  closeEdit() {
-    document.getElementById('house-edit-overlay').classList.remove('open');
-  },
 
-  async saveEdit() {
-    const id = parseInt(document.getElementById('edit-house-id').value);
-    UI.clearMsg('house-edit-ok', 'house-edit-err');
-    try {
-      const res = await API.put('/houses/' + id, {
-        name:        document.getElementById('edit-house-name').value.trim(),
-        color:       document.getElementById('edit-house-color').value,
-        heraldry:    document.getElementById('edit-house-heraldry').value.trim(),
-        description: document.getElementById('edit-house-desc').value.trim(),
-      });
-      if (res.error) throw new Error(res.error);
-      this.closeEdit();
-      await this.renderAdminTab();
-    } catch (e) {
-      UI.err('house-edit-ok', 'house-edit-err', 'Błąd: ' + e.message);
-    }
-  },
+@houses_bp.route("/houses/<int:hid>", methods=["PUT"])
+@require_auth
+def update_house(hid):
+    owner = get_current_owner()
+    house = db.session.get(House, hid)
+    if not house:
+        return jsonify({"error": "Nie znaleziono rodu"}), 404
+    if owner.role != "admin" and house.created_by != owner.id:
+        return jsonify({"error": "Brak uprawnień"}), 403
 
-  // ── Character house picker modal ──────────────────────────────────────────
-  async openModal(charId, currentIds) {
-    this._modalCharId = charId;
-    await this.loadAll();
-    const list = document.getElementById('house-picker-list');
-    if (!list) return;
-    UI.clearMsg('house-modal-ok', 'house-modal-err');
+    body = request.get_json(silent=True) or {}
+    if "name" in body:
+        name = body["name"].strip()
+        if not name:
+            return jsonify({"error": "Nazwa nie może być pusta"}), 400
+        existing = House.query.filter_by(name=name).first()
+        if existing and existing.id != hid:
+            return jsonify({"error": "Ród o tej nazwie już istnieje"}), 409
+        house.name = name
+    if "color" in body:
+        house.color = body["color"]
+    if "description" in body:
+        house.description = body["description"].strip() or None
+    if "heraldry" in body:
+        house.heraldry = body["heraldry"].strip() or None
 
-    if (!this.all.length) {
-      list.innerHTML = '<p style="color:var(--text-m);font-style:italic;padding:0.5rem;">Brak rodów. Admin może dodać rody w panelu → Rody.</p>';
-    } else {
-      list.innerHTML = '';
-      this.all.forEach(h => {
-        const checked = currentIds.includes(h.id);
-        const row = document.createElement('label');
-        row.className = 'house-pick-row';
-        row.innerHTML = `
-          <input type="checkbox" value="${h.id}" ${checked ? 'checked' : ''}
-            style="accent-color:${h.color};cursor:pointer;width:16px;height:16px;">
-          <span class="house-dot" style="background:${h.color}"></span>
-          <span style="flex:1;">${h.heraldry ? h.heraldry + ' ' : ''}${this._esc(h.name)}</span>
-          ${h.description ? `<span style="font-size:0.78rem;color:var(--text-m);font-style:italic;">${this._esc(h.description)}</span>` : ''}`;
-        list.appendChild(row);
-      });
-    }
-    document.getElementById('house-picker-overlay').classList.add('open');
-  },
+    db.session.commit()
+    return jsonify(house.to_dict())
 
-  closeModal() {
-    document.getElementById('house-picker-overlay').classList.remove('open');
-  },
 
-  async saveModal() {
-    const list     = document.getElementById('house-picker-list');
-    const checked  = Array.from(list.querySelectorAll('input:checked'));
-    const houseIds = checked.map(i => parseInt(i.value));
+@houses_bp.route("/houses/<int:hid>", methods=["DELETE"])
+@require_auth
+def delete_house(hid):
+    owner = get_current_owner()
+    house = db.session.get(House, hid)
+    if not house:
+        return jsonify({"error": "Nie znaleziono rodu"}), 404
+    if owner.role != "admin" and house.created_by != owner.id:
+        return jsonify({"error": "Brak uprawnień"}), 403
 
-    if (houseIds.length > 2) {
-      UI.err('house-modal-ok', 'house-modal-err', 'Maksymalnie 2 rody na postać.');
-      return;
-    }
-    UI.clearMsg('house-modal-ok', 'house-modal-err');
-    try {
-      const res = await API.put(`/characters/${this._modalCharId}/houses`, { house_ids: houseIds });
-      if (res.error) throw new Error(res.error);
-      this.closeModal();
-      await Characters.load();
-    } catch (e) {
-      UI.err('house-modal-ok', 'house-modal-err', 'Błąd: ' + e.message);
-    }
-  },
+    db.session.delete(house)
+    db.session.commit()
+    return jsonify({"ok": True})
 
-  _esc(s) {
-    return String(s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  },
-};
+
+@houses_bp.route("/characters/<int:cid>/houses", methods=["PUT"])
+@require_auth
+def set_character_houses(cid):
+    owner = get_current_owner()
+    char = db.session.get(Character, cid)
+    if not char:
+        return jsonify({"error": "Nie znaleziono postaci"}), 404
+    if owner.role != "admin" and char.owner_id != owner.id:
+        return jsonify({"error": "Brak uprawnień"}), 403
+
+    body = request.get_json(silent=True) or {}
+    house_ids = body.get("house_ids", [])
+    if len(house_ids) > 2:
+        return jsonify({"error": "Postać może należeć do maksymalnie 2 rodów"}), 400
+
+    houses = House.query.filter(House.id.in_(house_ids)).all() if house_ids else []
+    char.houses = houses
+    db.session.commit()
+    return jsonify({"ok": True, "houses": [h.to_dict() for h in houses]})
