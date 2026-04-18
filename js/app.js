@@ -6,14 +6,14 @@ const App = {
       Scan.initDropZone();
     }
   },
- 
+
   // Called after successful login
   async onLogin() {
     Scan.initDropZone();
     await Characters.load();
     await Sheet.load();
   },
- 
+
   switchTab(name) {
     const tabNames = ['scan', 'sheet', 'chars', 'admin'];
     tabNames.forEach(t => {
@@ -22,13 +22,14 @@ const App = {
     document.querySelectorAll('.nav-tab').forEach((el, i) => {
       el.classList.toggle('active', tabNames[i] === name);
     });
- 
-    if (name === 'sheet') Sheet.load();
+
+    if (name === 'sheet') Sheet.init();
     if (name === 'chars') Characters.load();
-    if (name === 'admin') { Admin.load(); Admin.loadProfile(); }
+    if (name === 'gallery') Gallery.load();
+    if (name === 'admin') Admin.load();
   },
 };
- 
+
 // ── Global event handlers (called from HTML onclick) ──────────────────────────
 function doLogin() { Auth.login(); }
 function doLogout() { Auth.logout(); }
@@ -36,9 +37,9 @@ function doForgot() { Auth.forgotPassword(); }
 function doReset() { Auth.resetPassword(); }
 function showForgot() { Auth.showForgot(); }
 function showLogin() { Auth.showLoginForm(); }
- 
+
 function switchTab(name) { App.switchTab(name); }
 function switchAdminTab(name) { Admin.switchTab(name); }
- 
+
 // ── Start ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => App.init());
