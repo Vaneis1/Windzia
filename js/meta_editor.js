@@ -4,7 +4,6 @@ const MetaEditor = {
   calendar: null,
 
   async init() {
-    // Load calendar settings
     try {
       const cal = await fetch((window.PROXY||'') + '/settings/calendar').then(r => r.json());
       this.calendar = cal;
@@ -16,11 +15,16 @@ const MetaEditor = {
     if (!this.data.quotes) this.data.quotes = [];
     if (!this.data.story_hooks) this.data.story_hooks = [];
     if (!this.data.events) this.data.events = [];
+    // Usuń stare pole house jeśli istnieje
+    delete this.data.house;
     this.render();
   },
 
   getData() {
-    return this.data;
+    // Upewnij się że house nie trafi do zapisu
+    const d = { ...this.data };
+    delete d.house;
+    return d;
   },
 
   _genId() {
@@ -88,7 +92,7 @@ const MetaEditor = {
 
   // ── Events ────────────────────────────────────────────────────────────────
   addEvent() {
-    this.data.events.push({ id: this._genId(), date: '', title: '', description: '' });
+    this.data.events.push({ id: this._genId(), date: '', title: '', description: '', visibility: 'public' });
     this._markDirty();
     this.renderEvents();
   },
@@ -137,11 +141,6 @@ const MetaEditor = {
             <label>Wiek</label>
             <input type="text" value="${this._esc(d.age||'')}" placeholder="np. 27 zim"
               oninput="MetaEditor.setField('age',this.value)">
-          </div>
-          <div class="meta-field">
-            <label>Ród</label>
-            <input type="text" value="${this._esc(d.house||'')}" placeholder="np. Ród Voraskar"
-              oninput="MetaEditor.setField('house',this.value)">
           </div>
           <div class="meta-field meta-field-wide">
             <label>Miejsce przebywania</label>
@@ -238,10 +237,10 @@ const MetaEditor = {
       el.innerHTML = '<div class="meta-empty">Brak wydarzeń. Kliknij „Dodaj wydarzenie" aby zacząć.</div>';
       return;
     }
-    // Sort by date ascending
     const sorted = [...this.data.events].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
     el.innerHTML = sorted.map(e => {
       const altDate = e.date && this.calendar?.enabled ? this.formatDate(e.date) : '';
+      const vis = e.visibility || 'public';
       return `
       <div class="meta-item">
         <div class="meta-item-header">
@@ -253,6 +252,14 @@ const MetaEditor = {
             oninput="MetaEditor.updateEvent('${e.id}','date',this.value);MetaEditor.renderEvents()">
           <input type="text" placeholder="Tytuł wydarzenia..." value="${this._esc(e.title||'')}"
             oninput="MetaEditor.updateEvent('${e.id}','title',this.value)">
+          <select onchange="MetaEditor.updateEvent('${e.id}','visibility',this.value)"
+            style="background:var(--bg3,#1c2330);border:1px solid var(--border,rgba(120,160,200,0.2));
+                   border-radius:3px;color:var(--text,#d8e4ee);font-family:'Crimson Pro',serif;
+                   font-size:0.88rem;padding:6px 10px;outline:none;cursor:pointer;">
+            <option value="public"  ${vis==='public'  ? 'selected':''}>🌐 Publiczne</option>
+            <option value="house"   ${vis==='house'   ? 'selected':''}>⚜ Tylko ród</option>
+            <option value="private" ${vis==='private' ? 'selected':''}>🔒 Prywatne</option>
+          </select>
         </div>
         <textarea rows="3" placeholder="Opis wydarzenia..."
           oninput="MetaEditor.updateEvent('${e.id}','description',this.value)">${this._esc(e.description||'')}</textarea>
