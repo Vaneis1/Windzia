@@ -16,6 +16,8 @@ from routes.inventory import inventory_bp
 from routes.admin import admin_bp
 from routes.profiles import profiles_bp
 from routes.houses import houses_bp
+from routes.events import events_bp
+
  
 def create_app() -> Flask:
     app = Flask(__name__)
@@ -46,6 +48,7 @@ def create_app() -> Flask:
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(profiles_bp)
     app.register_blueprint(houses_bp)
+    app.register_blueprint(events_bp)
  
     # ── Health check ──────────────────────────────────────────────────────────
     from flask import jsonify
