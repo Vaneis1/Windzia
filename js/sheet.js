@@ -1,6 +1,6 @@
 // sheet.js — Inventory views: Mine / Item / Matrix.
 const Sheet = {
-  activeView: 'mine', // 'mine' | 'item' | 'matrix'
+  activeView: 'mine',
 
   // Shared state
   allTags: [],
@@ -20,7 +20,7 @@ const Sheet = {
   matrixData: null,
   matrixCategory: '',
   matrixTags: [],
-  matrixCharIds: [], // empty = "show first 10 with data"
+  matrixCharIds: [],
   matrixSearch: '',
   matrixOnlyWithData: true,
   matrixSortCol: 0,
@@ -30,14 +30,8 @@ const Sheet = {
 
   // ── Init / view switch ────────────────────────────────────────────────────
   async init() {
-    const loggedIn = await Auth.init();
-    if (loggedIn) {
-      this._showShell();
-      Scan.initDropZone();
-      await Characters.load(); // ← dodaj
-      const lastTab = localStorage.getItem('ww_last_tab') || 'gallery';
-      this.navTo(lastTab);
-    }
+    await this.loadTags();
+    this.switchView('mine');
   },
 
   async loadTags() {
@@ -48,17 +42,17 @@ const Sheet = {
   },
 
   switchView(view) {
-     this.currentView = view;
-     ['scan', 'mine', 'item', 'matrix'].forEach(v => {   // ← dodaj 'scan'
-       const el = document.getElementById('sheet-view-' + v);
-       if (el) el.style.display = v === view ? '' : 'none';
+    this.currentView = view;
+    ['scan', 'mine', 'item', 'matrix'].forEach(v => {
+      const el = document.getElementById('sheet-view-' + v);
+      if (el) el.style.display = v === view ? '' : 'none';
     });
-     document.querySelectorAll('.sheet-subtab').forEach(el => {
-       el.classList.toggle('active', el.dataset.view === view);
+    document.querySelectorAll('.sheet-subtab').forEach(el => {
+      el.classList.toggle('active', el.dataset.view === view);
     });
-    if (view === 'scan') Scan.initDropZone();
+    if (view === 'scan')   Scan.initDropZone();
     if (view === 'mine')   this.loadMine();
-    if (view === 'item')   this.initItemSearch();
+    if (view === 'item')   this.renderItemView();
     if (view === 'matrix') this.loadMatrix();
   },
 
@@ -110,7 +104,6 @@ const Sheet = {
 
   // ── Item view (lookup) ────────────────────────────────────────────────────
   renderItemView() {
-    // Show search box; on input fetch suggestions
     const box = document.getElementById('item-search-box');
     if (box && !box.dataset.bound) {
       box.dataset.bound = '1';
@@ -119,23 +112,46 @@ const Sheet = {
         clearTimeout(timeout);
         timeout = setTimeout(() => this._itemSearchInput(box.value), 200);
       });
+      // Przy kliknięciu w puste pole — pokaż od razu listę
+      box.addEventListener('focus', () => {
+        if (!box.value) this._itemSearchInput('');
+      });
     }
   },
 
   async _itemSearchInput(q) {
     this.itemSearch = q.trim();
     const results = document.getElementById('item-search-results');
-    if (!this.itemSearch || this.itemSearch.length < 2) {
+    if (!results) return;
+
+    // Za krótkie zapytanie — czekaj
+    if (this.itemSearch.length > 0 && this.itemSearch.length < 2) {
       results.innerHTML = '';
       return;
     }
+
     try {
-      const data = await API.get('/search?q=' + encodeURIComponent(this.itemSearch));
-      const items = data.items || [];
+      let items;
+      if (!this.itemSearch) {
+        // Puste pole — pokaż pierwsze 30 surowców z bazy
+        const data = await API.get('/items');
+        items = Array.isArray(data) ? data.slice(0, 30) : [];
+      } else {
+        // Wpisano tekst — szukaj przez /search
+        const data = await API.get('/search?q=' + encodeURIComponent(this.itemSearch));
+        items = data.items || [];
+      }
+
       results.innerHTML = items.length
-        ? items.map(i => `<div class="item-suggest" onclick="Sheet.selectItem(${i.id}, '${i.name.replace(/'/g, "\\'")}')">
-            <div><strong>${i.name}</strong> <span style="color:var(--text-m);font-size:0.78rem;">${i.category}</span></div>
-            ${(i.tags||[]).length ? `<div style="font-size:0.72rem;color:var(--text-m);margin-top:2px;">${i.tags.map(t=>'#'+t).join(' ')}</div>` : ''}
+        ? items.map(i => `<div class="item-suggest"
+              onclick="Sheet.selectItem(${i.id}, '${i.name.replace(/'/g, "\\'")}')">
+            <div>
+              <strong>${i.name}</strong>
+              <span style="color:var(--text-m);font-size:0.78rem;margin-left:6px;">${i.category}</span>
+            </div>
+            ${(i.tags||[]).length
+              ? `<div style="font-size:0.72rem;color:var(--text-m);margin-top:2px;">${i.tags.map(t=>'#'+t).join(' ')}</div>`
+              : ''}
           </div>`).join('')
         : '<div style="padding:1rem;color:var(--text-m);font-style:italic;">Brak wyników</div>';
     } catch(e) {
@@ -245,8 +261,6 @@ const Sheet = {
     const wrap = document.getElementById('matrix-char-filter');
     if (!wrap || !this.matrixData) return;
     const allChars = this.matrixData.characters || [];
-    // Need full list of characters available, regardless of current filter
-    // For now use what's in current data
     wrap.innerHTML = `
       <button class="cat-btn${this.matrixCharIds.length === 0 ? ' active' : ''}" onclick="Sheet.clearCharFilter()">Wszystkie (${allChars.length})</button>
       <button class="cat-btn" onclick="Sheet.openCharPicker()">Wybierz postacie...</button>
@@ -260,7 +274,6 @@ const Sheet = {
   },
 
   async openCharPicker() {
-    // Fetch ALL characters (no filter)
     try {
       const chars = await API.get('/characters');
       if (!Array.isArray(chars)) return;
@@ -331,7 +344,6 @@ const Sheet = {
     const body = document.getElementById(bodyId);
     if (!head || !body) return;
 
-    // Header
     head.innerHTML = '';
     const hr = document.createElement('tr');
     const cols = ['Przedmiot', 'Kategoria', ...characters.map(c => c.name)];
@@ -343,7 +355,6 @@ const Sheet = {
     });
     head.appendChild(hr);
 
-    // Body
     body.innerHTML = '';
     items.forEach(item => {
       const tr = document.createElement('tr');
@@ -369,9 +380,6 @@ const Sheet = {
       if (this.matrixCategory) params.set('category', this.matrixCategory);
       if (this.matrixCharIds.length) params.set('characters', this.matrixCharIds.join(','));
     }
-    const url = Config.PROXY + '/export?' + params + '&token=' + State.token;
-    // Server doesn't accept token in query — use auth header trick via download iframe
-    // Simpler: open with fetch + blob
     fetch(Config.PROXY + '/export?' + params, {
       headers: { 'Authorization': 'Bearer ' + State.token }
     }).then(r => r.blob()).then(blob => {
