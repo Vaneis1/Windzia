@@ -3,13 +3,20 @@ const MetaEditor = {
   data: {},
   calendar: null,
   _charId: null,
-  _allChars: [],      // all other characters (for participant picker)
-  _sharedEvents: [],  // events where this char is tagged (read-only)
+  _allChars: [],
+  _sharedEvents: [],
+  _categories: [],
 
   async init() {
     try {
-      const cal = await fetch((window.PROXY||'') + '/settings/calendar').then(r => r.json());
+      const [cal, cats] = await Promise.all([
+        fetch((window.PROXY||'') + '/settings/calendar').then(r => r.json()).catch(() => null),
+        fetch((window.PROXY||'') + '/events/categories', {
+          headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('ww_token')||'') }
+        }).then(r => r.json()).catch(() => []),
+      ]);
       this.calendar = cal;
+      this._categories = Array.isArray(cats) ? cats : [];
     } catch(e) { this.calendar = null; }
   },
 
@@ -33,7 +40,7 @@ const MetaEditor = {
       const charsData  = await charsRes.json();
 
       if (Array.isArray(eventsData)) {
-        this.data.events  = eventsData.filter(e => !e.is_shared);
+        this.data.events   = eventsData.filter(e => !e.is_shared);
         this._sharedEvents = eventsData.filter(e =>  e.is_shared);
       }
       this._allChars = Array.isArray(charsData)
@@ -46,7 +53,6 @@ const MetaEditor = {
     this.render();
   },
 
-  // Legacy load (no API fetch)
   load(meta) {
     this.data = JSON.parse(JSON.stringify(meta || {}));
     if (!this.data.quotes) this.data.quotes = [];
@@ -59,7 +65,7 @@ const MetaEditor = {
   getData() {
     const d = { ...this.data };
     delete d.house;
-    delete d.events; // events saved via syncEvents
+    delete d.events;
     return d;
   },
 
@@ -82,7 +88,6 @@ const MetaEditor = {
 
   setField(key, value) { this.data[key] = value; this._markDirty(); },
 
-  // ── Birthday ──────────────────────────────────────────────────────────────
   renderBirthday() {
     const el = document.getElementById('meta-birthday-display');
     if (!el) return;
@@ -133,7 +138,8 @@ const MetaEditor = {
   addEvent() {
     this.data.events.push({
       id: this._genId(), date: '', title: '',
-      description: '', visibility: 'public', participant_ids: [],
+      description: '', visibility: 'public',
+      category: '', participant_ids: [],
     });
     this._markDirty(); this.renderEvents();
   },
@@ -156,10 +162,12 @@ const MetaEditor = {
       e.participant_ids = e.participant_ids.filter(id => id !== charId);
     }
     this._markDirty();
+    // Re-render just participant section to reflect change
+    this.renderEvents();
   },
 
   async dismissSharedEvent(eventId, charId) {
-    if (!confirm('Usunąć to wydarzenie ze swojego profilu? Wydarzenie pozostanie u właściciela.')) return;
+    if (!confirm('Usunąć to wydarzenie ze swojego profilu?\nWydarzenie pozostanie u właściciela.')) return;
     try {
       const token = localStorage.getItem('ww_token') || '';
       const res = await fetch(
@@ -170,6 +178,7 @@ const MetaEditor = {
       if (data.error) throw new Error(data.error);
       this._sharedEvents = this._sharedEvents.filter(e => e.id !== eventId);
       this.renderEvents();
+      this.renderSharedEvents();
     } catch(e) {
       alert('Błąd: ' + e.message);
     }
@@ -264,17 +273,15 @@ const MetaEditor = {
           <button class="meta-add-btn" onclick="MetaEditor.addEvent()">＋ Dodaj wydarzenie</button>
         </div>
         <div class="meta-hint" style="margin-bottom:0.8rem;">
-          🌐 <strong>Publiczne</strong> — widoczne na osi czasu bez filtrów &nbsp;·&nbsp;
-          ⚜ <strong>Ród</strong> — widoczne tylko przy filtrze rodu &nbsp;·&nbsp;
-          🔒 <strong>Osobiste</strong> — widoczne tylko przy filtrze postaci
+          🌐 <strong>Publiczne</strong> — zawsze widoczne na osi czasu &nbsp;·&nbsp;
+          ⚜ <strong>Ród</strong> — widoczne przy filtrze rodu &nbsp;·&nbsp;
+          🔒 <strong>Osobiste</strong> — widoczne przy filtrze postaci
         </div>
         <div id="meta-events-list"></div>
       </div>
 
       <div class="meta-section" id="meta-shared-section" style="${this._sharedEvents.length ? '' : 'display:none;'}">
-        <div class="meta-section-title" style="color:var(--text-d);">
-          Tagowane w wydarzeniach
-        </div>
+        <div class="meta-section-title" style="color:var(--text-d);">Tagowana w wydarzeniach</div>
         <div id="meta-shared-events-list"></div>
       </div>
     `;
@@ -335,56 +342,77 @@ const MetaEditor = {
     }
 
     const sorted = [...this.data.events].sort((a, b) => (a.date||'').localeCompare(b.date||''));
+    const catOptions = ['', ...this._categories].map(c =>
+      `<option value="${this._esc(c)}">${c || '— brak kategorii —'}</option>`
+    ).join('');
 
     el.innerHTML = sorted.map(e => {
       const altDate = e.date && this.calendar?.enabled ? this.formatDate(e.date) : '';
       const vis = e.visibility || 'public';
       const participantIds = e.participant_ids || [];
 
-      // Participant picker
-      const pickerHtml = this._allChars.length ? `
-        <details style="margin-top:6px;">
-          <summary style="font-size:0.8rem;color:var(--text-m);cursor:pointer;user-select:none;
-            padding:4px 0;list-style:none;">
-            ＋ Taguj postacie ${participantIds.length ? `<span style="color:var(--gold);">(${participantIds.length})</span>` : ''}
-          </summary>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;padding:8px;
-            background:var(--bg3);border-radius:4px;border:1px solid var(--border);">
-            ${this._allChars.map(c => `
-              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;
-                font-size:0.85rem;padding:3px 8px;border-radius:3px;
-                background:${participantIds.includes(c.id) ? 'var(--gold-d)' : 'transparent'};
-                border:1px solid ${participantIds.includes(c.id) ? 'var(--border-h)' : 'transparent'};">
-                <input type="checkbox" value="${c.id}"
-                  ${participantIds.includes(c.id) ? 'checked' : ''}
-                  style="accent-color:var(--gold);cursor:pointer;"
-                  onchange="MetaEditor.toggleParticipant('${e.id}',${c.id},this.checked);MetaEditor.renderEvents()">
-                ${this._esc(c.name)}
-              </label>`).join('')}
+      // Participant chips
+      const selectedChars = this._allChars.filter(c => participantIds.includes(c.id));
+      const unselectedChars = this._allChars.filter(c => !participantIds.includes(c.id));
+
+      const selectedChips = selectedChars.map(c => `
+        <button type="button" class="participant-chip participant-chip-on"
+          onclick="MetaEditor.toggleParticipant('${e.id}',${c.id},false)"
+          title="Usuń ${this._esc(c.name)}">
+          ${this._esc(c.name)} ✕
+        </button>`).join('');
+
+      const unselectedChips = unselectedChars.map(c => `
+        <button type="button" class="participant-chip participant-chip-off"
+          onclick="MetaEditor.toggleParticipant('${e.id}',${c.id},true)"
+          title="Dodaj ${this._esc(c.name)}">
+          + ${this._esc(c.name)}
+        </button>`).join('');
+
+      const participantSection = this._allChars.length ? `
+        <div class="participant-picker">
+          <div class="participant-picker-label">Uczestnicy:</div>
+          <div class="participant-chips">
+            ${selectedChips}
+            ${unselectedChips}
           </div>
-        </details>` : '';
+        </div>` : '';
 
       return `
       <div class="meta-item">
         <div class="meta-item-header">
-          <span class="meta-item-label">Wydarzenie ${altDate ? `<span class="meta-alt-date">${this._esc(altDate)}</span>` : ''}</span>
+          <span class="meta-item-label">
+            ${e.category ? `<span class="event-cat-badge">${this._esc(e.category)}</span>` : ''}
+            Wydarzenie
+            ${altDate ? `<span class="meta-alt-date">${this._esc(altDate)}</span>` : ''}
+          </span>
           <button class="meta-remove-btn" onclick="MetaEditor.removeEvent('${e.id}')">✕</button>
         </div>
         <div class="meta-event-row">
           <input type="date" value="${this._esc(e.date||'')}"
             oninput="MetaEditor.updateEvent('${e.id}','date',this.value);MetaEditor.renderEvents()">
           <input type="text" placeholder="Tytuł wydarzenia..." value="${this._esc(e.title||'')}"
-            oninput="MetaEditor.updateEvent('${e.id}','title',this.value)">
-          <select onchange="MetaEditor.updateEvent('${e.id}','visibility',this.value)"
-            style="background:var(--bg3,#1c2330);border:1px solid var(--border,rgba(120,160,200,0.2));
+            oninput="MetaEditor.updateEvent('${e.id}','title',this.value)" style="flex:2;">
+        </div>
+        <div class="meta-event-row" style="margin-top:6px;">
+          <select onchange="MetaEditor.updateEvent('${e.id}','category',this.value)"
+            style="flex:1;background:var(--bg3,#1c2330);border:1px solid var(--border,rgba(120,160,200,0.2));
                    border-radius:3px;color:var(--text,#d8e4ee);font-family:'Crimson Pro',serif;
-                   font-size:0.88rem;padding:6px 10px;outline:none;cursor:pointer;flex-shrink:0;">
-            <option value="public"   ${vis==='public'   ? 'selected':''}>🌐 Publiczne</option>
-            <option value="house"    ${vis==='house'    ? 'selected':''}>⚜ Ród</option>
-            <option value="personal" ${vis==='personal' ? 'selected':''}>🔒 Osobiste</option>
+                   font-size:0.88rem;padding:6px 10px;outline:none;cursor:pointer;">
+            ${['', ...this._categories].map(c =>
+              `<option value="${this._esc(c)}" ${(e.category||'')===(c)?'selected':''}>${c || '— kategoria —'}</option>`
+            ).join('')}
+          </select>
+          <select onchange="MetaEditor.updateEvent('${e.id}','visibility',this.value)"
+            style="flex:1;background:var(--bg3,#1c2330);border:1px solid var(--border,rgba(120,160,200,0.2));
+                   border-radius:3px;color:var(--text,#d8e4ee);font-family:'Crimson Pro',serif;
+                   font-size:0.88rem;padding:6px 10px;outline:none;cursor:pointer;">
+            <option value="public"   ${vis==='public'   ?'selected':''}>🌐 Publiczne</option>
+            <option value="house"    ${vis==='house'    ?'selected':''}>⚜ Ród</option>
+            <option value="personal" ${vis==='personal' ?'selected':''}>🔒 Osobiste</option>
           </select>
         </div>
-        ${pickerHtml}
+        ${participantSection}
         <textarea rows="3" placeholder="Opis wydarzenia..."
           oninput="MetaEditor.updateEvent('${e.id}','description',this.value)">${this._esc(e.description||'')}</textarea>
       </div>`;
@@ -402,18 +430,18 @@ const MetaEditor = {
     el.innerHTML = this._sharedEvents.map(e => {
       const altDate = e.date && this.calendar?.enabled ? this.formatDate(e.date) : '';
       const plain = this._formatPlain(e.date);
-      const ownerName = e.character_name || '?';
-      const visLabel = e.visibility === 'house' ? '⚜ Ród' : e.visibility === 'personal' ? '🔒 Osobiste' : '🌐 Publiczne';
+      const catBadge = e.category
+        ? `<span class="event-cat-badge">${this._esc(e.category)}</span>` : '';
       return `
       <div class="meta-item" style="border-left:3px solid var(--border-h);opacity:0.85;">
         <div class="meta-item-header">
           <span class="meta-item-label" style="color:var(--text-d);">
-            ${visLabel} · od <strong>${this._esc(ownerName)}</strong>
+            ${catBadge} od <strong>${this._esc(e.character_name||'?')}</strong>
             ${altDate ? `· <span style="color:var(--gold)">${this._esc(altDate)}</span>` : plain ? `· ${this._esc(plain)}` : ''}
           </span>
           <button class="meta-remove-btn" style="font-size:0.7rem;"
             onclick="MetaEditor.dismissSharedEvent(${e.id},${this._charId})"
-            title="Usuń z profilu">✕ Usuń z profilu</button>
+            title="Usuń z profilu">✕ Usuń</button>
         </div>
         <div style="font-size:0.95rem;color:var(--text);margin-top:4px;">
           <strong>${this._esc(e.title)}</strong>
@@ -424,6 +452,6 @@ const MetaEditor = {
   },
 
   _esc(s) {
-    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   },
 };
