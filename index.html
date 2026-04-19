@@ -16,7 +16,6 @@
     <h2>Wandzi Windzi</h2>
     <p class="tagline">Skaner Inwentarza Gildii</p>
 
-    <!-- Login form -->
     <div id="login-form">
       <div class="login-field">
         <label>Email</label>
@@ -29,40 +28,30 @@
           onkeydown="if(event.key==='Enter') doLogin()">
         <span class="forgot-link" onclick="showForgot()">Zapomniałem hasła</span>
       </div>
-      <button class="primary" style="width:100%;margin-top:0.5rem;" onclick="doLogin()">
-        Zaloguj się
-      </button>
+      <button class="primary" style="width:100%;margin-top:0.5rem;" onclick="doLogin()">Zaloguj się</button>
       <div class="msg err" id="login-err"></div>
       <div class="msg ok"  id="login-ok"></div>
     </div>
 
-    <!-- Forgot password form -->
     <div id="forgot-form" style="display:none;">
       <div class="login-field">
         <label>Twój email</label>
         <input type="email" id="forgot-email" placeholder="twoj@email.com"
           onkeydown="if(event.key==='Enter') doForgot()">
       </div>
-      <button class="primary" style="width:100%;margin-top:0.5rem;" onclick="doForgot()">
-        Wyślij link resetujący
-      </button>
+      <button class="primary" style="width:100%;margin-top:0.5rem;" onclick="doForgot()">Wyślij link resetujący</button>
       <div class="msg ok"  id="forgot-ok"></div>
       <div class="msg err" id="forgot-err"></div>
-      <span class="forgot-link" style="margin-top:0.8rem;display:block;" onclick="showLogin()">
-        ← Wróć do logowania
-      </span>
+      <span class="forgot-link" style="margin-top:0.8rem;display:block;" onclick="showLogin()">← Wróć do logowania</span>
     </div>
 
-    <!-- Reset password form -->
     <div id="reset-form" style="display:none;">
       <div class="login-field">
         <label>Nowe hasło</label>
         <input type="password" id="reset-pwd" placeholder="min. 6 znaków"
           onkeydown="if(event.key==='Enter') doReset()">
       </div>
-      <button class="primary" style="width:100%;margin-top:0.5rem;" onclick="doReset()">
-        Ustaw nowe hasło
-      </button>
+      <button class="primary" style="width:100%;margin-top:0.5rem;" onclick="doReset()">Ustaw nowe hasło</button>
       <div class="msg ok"  id="reset-ok"></div>
       <div class="msg err" id="reset-err"></div>
     </div>
@@ -71,7 +60,7 @@
 
 <!-- ══ APP SCREEN ════════════════════════════════════════════════════════════ -->
 <div id="app-screen" style="display:none;">
-<!-- New sticky header with burger -->
+
 <div class="app-header" id="app-header" style="display:none;">
   <button class="burger-btn" onclick="App.toggleDrawer()" aria-label="Menu">☰</button>
   <div class="brand">
@@ -82,12 +71,13 @@
     </div>
   </div>
   <nav class="top-nav">
-    <div class="top-nav-link" data-tab="gallery" onclick="App.navTo('gallery')">⛬ Galeria</div>
-    <div class="top-nav-link" data-tab="chars" onclick="App.navTo('chars')">⚔ Postacie</div>
-    <div class="top-nav-link" data-tab="sheet" onclick="App.navTo('sheet')">◆ Surowce</div>
+    <div class="top-nav-link" data-tab="gallery"  onclick="App.navTo('gallery')">⛬ Galeria</div>
+    <div class="top-nav-link" data-tab="chars"    onclick="App.navTo('chars')">⚔ Postacie</div>
+    <div class="top-nav-link" data-tab="sheet"    onclick="App.navTo('sheet')">◆ Surowce</div>
     <div class="top-nav-link" data-tab="timeline" onclick="App.navTo('timeline')">⧗ Oś czasu</div>
-    <div class="top-nav-link" data-tab="scan" onclick="App.navTo('scan')">⟳ Skanuj</div>
-    <div class="top-nav-link admin-t" id="top-admin-link" style="display:none;" data-tab="admin" onclick="App.navTo('admin')">⚙ Admin</div>
+    <div class="top-nav-link" data-tab="scan"     onclick="App.navTo('scan')">⟳ Skanuj</div>
+    <div class="top-nav-link admin-t" id="top-admin-link" style="display:none;"
+      data-tab="admin" onclick="App.navTo('admin')">⚙ Admin</div>
   </nav>
   <div class="header-search">
     <input type="text" id="header-search-input" placeholder="Szukaj..."
@@ -99,7 +89,6 @@
   </div>
 </div>
 
-<!-- Side drawer (burger menu, mobile only) -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="App.closeDrawer()"></div>
 <aside class="drawer" id="drawer">
   <div class="drawer-header">
@@ -107,25 +96,13 @@
     <button class="drawer-close" onclick="App.closeDrawer()" aria-label="Zamknij">×</button>
   </div>
   <nav class="drawer-nav">
-    <div class="drawer-link" data-tab="gallery" onclick="App.navTo('gallery')">
-      <span class="drawer-link-icon">⛬</span> Galeria
-    </div>
-    <div class="drawer-link" data-tab="chars" onclick="App.navTo('chars')">
-      <span class="drawer-link-icon">⚔</span> Postacie
-    </div>
-    <div class="drawer-link" data-tab="sheet" onclick="App.navTo('sheet')">
-      <span class="drawer-link-icon">◆</span> Surowce
-    </div>
-    <div class="drawer-link" data-tab="timeline" onclick="App.navTo('timeline')">
-      <span class="drawer-link-icon">⧗</span> Oś czasu
-    </div>
-    <div class="drawer-link" data-tab="scan" onclick="App.navTo('scan')">
-      <span class="drawer-link-icon">⟳</span> Skanuj
-    </div>
+    <div class="drawer-link" data-tab="gallery"  onclick="App.navTo('gallery')"><span class="drawer-link-icon">⛬</span> Galeria</div>
+    <div class="drawer-link" data-tab="chars"    onclick="App.navTo('chars')"><span class="drawer-link-icon">⚔</span> Postacie</div>
+    <div class="drawer-link" data-tab="sheet"    onclick="App.navTo('sheet')"><span class="drawer-link-icon">◆</span> Surowce</div>
+    <div class="drawer-link" data-tab="timeline" onclick="App.navTo('timeline')"><span class="drawer-link-icon">⧗</span> Oś czasu</div>
+    <div class="drawer-link" data-tab="scan"     onclick="App.navTo('scan')"><span class="drawer-link-icon">⟳</span> Skanuj</div>
     <div class="drawer-link admin-t" id="drawer-admin-link" style="display:none;"
-      data-tab="admin" onclick="App.navTo('admin')">
-      <span class="drawer-link-icon">⚙</span> Admin
-    </div>
+      data-tab="admin" onclick="App.navTo('admin')"><span class="drawer-link-icon">⚙</span> Admin</div>
   </nav>
   <div class="drawer-footer">
     <div style="margin-bottom:6px;">Zalogowano jako <strong id="drawer-user-name" style="color:var(--gold-l);font-weight:400;"></strong></div>
@@ -133,45 +110,31 @@
   </div>
 </aside>
 
-<!-- Mobile bottom nav (3 quick actions: Postacie, Surowce, Oś czasu) -->
 <div class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none;">
-  <button data-tab="chars" onclick="App.navTo('chars')">
-    <span class="mn-icon">⚔</span><span>Postacie</span>
-  </button>
-  <button data-tab="sheet" onclick="App.navTo('sheet')">
-    <span class="mn-icon">◆</span><span>Surowce</span>
-  </button>
-  <button data-tab="timeline" onclick="App.navTo('timeline')">
-    <span class="mn-icon">⧗</span><span>Oś czasu</span>
-  </button>
+  <button data-tab="chars"    onclick="App.navTo('chars')"><span class="mn-icon">⚔</span><span>Postacie</span></button>
+  <button data-tab="timeline" onclick="App.navTo('timeline')"><span class="mn-icon">⧗</span><span>Oś czasu</span></button>
+  <button data-tab="sheet"    onclick="App.navTo('sheet')"><span class="mn-icon">◆</span><span>Surowce</span></button>
 </div>
 
 <div class="app">
-
   <header>
     <div style="width:180px;"></div>
-    <div class="header-title">
-      <p>Wandzi Windzi</p>
-      <h1>Skaner Inwentarza</h1>
-    </div>
+    <div class="header-title"><p>Wandzi Windzi</p><h1>Skaner Inwentarza</h1></div>
     <div class="header-user">
       <span>Zalogowano jako <strong id="user-display-old"></strong></span>
       <button class="sm" onclick="doLogout()">Wyloguj</button>
     </div>
   </header>
-
   <nav>
     <div class="nav-tab active" onclick="switchTab('scan')">⟳ Skanuj</div>
     <div class="nav-tab"        onclick="switchTab('sheet')">⊞ Arkusz</div>
     <div class="nav-tab"        onclick="switchTab('chars')">⚔ Postacie</div>
     <div class="nav-tab"        onclick="switchTab('gallery')">⛬ Galeria</div>
-    <div class="nav-tab admin-t" id="admin-nav-tab" style="display:none;"
-      onclick="switchTab('admin')">⚙ Admin</div>
+    <div class="nav-tab admin-t" id="admin-nav-tab" style="display:none;" onclick="switchTab('admin')">⚙ Admin</div>
   </nav>
 
-  <!-- ── SCAN ──────────────────────────────────────────────────────────── -->
+  <!-- ── SCAN ────────────────────────────────────────────────────────────── -->
   <div id="tab-scan" class="tab-content active">
-
     <div class="section-label">Postać</div>
     <div class="panel">
       <div class="field">
@@ -179,48 +142,34 @@
         <select id="char-select"><option value="">— wybierz —</option></select>
       </div>
     </div>
-
     <div class="section-label">Zrzuty ekranu</div>
     <div class="panel">
-      <div class="upload-zone" id="upload-zone"
-        onclick="document.getElementById('file-input').click()">
-        <input type="file" id="file-input" accept="image/*" multiple
-          style="display:none"
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept="image/*" multiple style="display:none"
           onchange="Array.from(this.files).forEach(f => Scan.addImage(f)); this.value='';">
         <p><strong>Kliknij, przeciągnij lub wklej</strong> zrzuty ekranu (Ctrl+V)</p>
         <p style="font-size:0.82rem;margin-top:3px;">PNG, JPG, WebP · wiele plików naraz</p>
       </div>
       <div class="previews" id="previews"></div>
     </div>
-
     <div class="btn-row">
       <button class="primary" id="scan-btn" onclick="Scan.run()" disabled>⟳ Skanuj inwentarz</button>
       <button id="save-btn" onclick="Scan.save()" disabled>✓ Zapisz do bazy</button>
       <button id="csv-btn"  onclick="Scan.copyCSV()" disabled>⎘ Kopiuj CSV</button>
     </div>
-    <div class="status-bar">
-      <div class="spinner" id="scan-spinner"></div>
-      <span id="scan-status"></span>
-    </div>
+    <div class="status-bar"><div class="spinner" id="scan-spinner"></div><span id="scan-status"></span></div>
     <div class="msg ok"  id="scan-ok"></div>
     <div class="msg err" id="scan-err"></div>
-
     <div id="scan-results" style="display:none; margin-top:1.2rem;">
       <div class="section-label">Dopasowane</div>
       <div class="panel" style="padding:0;">
-        <div class="results-hdr">
-          <span>Przedmiot</span>
-          <span style="text-align:right;">Ilość</span>
-          <span>Kategoria</span>
-        </div>
+        <div class="results-hdr"><span>Przedmiot</span><span style="text-align:right;">Ilość</span><span>Kategoria</span></div>
         <div id="results-body"></div>
       </div>
       <div id="unknown-wrap" style="display:none; margin-top:0.8rem;">
         <div class="section-label">Nierozpoznane — pominięto</div>
         <div class="panel" style="padding:0.7rem 1.2rem;">
-          <p class="hint" style="margin-bottom:0.6rem;">
-            Nie znaleziono w bazie surowców. Admin może dodać aliasy.
-          </p>
+          <p class="hint" style="margin-bottom:0.6rem;">Nie znaleziono w bazie surowców. Admin może dodać aliasy.</p>
           <div id="unknown-body"></div>
         </div>
       </div>
@@ -230,90 +179,52 @@
     </div>
   </div>
 
-  <!-- ── SHEET ─────────────────────────────────────────────────────────── -->
+  <!-- ── SHEET ──────────────────────────────────────────────────────────── -->
   <div id="tab-sheet" class="tab-content">
     <h1 class="page-title">◆ Surowce</h1>
     <p class="page-subtitle">Inwentarz gildii i zapasy postaci</p>
-
     <div class="sheet-subtabs">
-      <div class="sheet-subtab active" data-view="mine" onclick="Sheet.switchView('mine')">⚔ Moje</div>
-      <div class="sheet-subtab" data-view="item" onclick="Sheet.switchView('item')">⌕ Surowiec</div>
-      <div class="sheet-subtab" data-view="matrix" onclick="Sheet.switchView('matrix')">⊞ Macierz</div>
+      <div class="sheet-subtab active" data-view="mine"   onclick="Sheet.switchView('mine')">⚔ Moje</div>
+      <div class="sheet-subtab"        data-view="item"   onclick="Sheet.switchView('item')">⌕ Surowiec</div>
+      <div class="sheet-subtab"        data-view="matrix" onclick="Sheet.switchView('matrix')">⊞ Macierz</div>
     </div>
-
-    <!-- VIEW: MINE -->
     <div id="sheet-view-mine" class="sheet-view">
       <div class="sheet-controls">
-        <div class="search-wrap">
-          <input type="text" id="mine-search-input" placeholder="Szukaj surowca..."
-            oninput="clearTimeout(window._mst);window._mst=setTimeout(()=>{Sheet.mineSearch=this.value;Sheet.loadMine();},300)">
-        </div>
+        <div class="search-wrap"><input type="text" id="mine-search-input" placeholder="Szukaj surowca..."
+          oninput="clearTimeout(window._mst);window._mst=setTimeout(()=>{Sheet.mineSearch=this.value;Sheet.loadMine();},300)"></div>
         <button onclick="Sheet.loadMine()">↺ Odśwież</button>
         <button onclick="Sheet.exportCSV('mine')">↓ CSV</button>
       </div>
       <div class="cat-filter" id="mine-cat-filter"></div>
-      <div class="status-bar">
-        <div class="spinner" id="mine-spinner"></div>
-        <span id="mine-status"></span>
-      </div>
+      <div class="status-bar"><div class="spinner" id="mine-spinner"></div><span id="mine-status"></span></div>
       <div id="mine-empty" class="empty-msg" style="display:none;"></div>
       <div id="mine-table-wrap" class="table-wrap" style="display:none;">
-        <table>
-          <thead id="mine-head"></thead>
-          <tbody id="mine-body"></tbody>
-        </table>
+        <table><thead id="mine-head"></thead><tbody id="mine-body"></tbody></table>
       </div>
     </div>
-
-    <!-- VIEW: ITEM -->
     <div id="sheet-view-item" class="sheet-view" style="display:none;">
       <div class="item-search-wrap">
         <input type="text" id="item-search-box" class="item-search-input" placeholder="Wpisz nazwę surowca... (min. 2 znaki)" autocomplete="off">
         <div id="item-search-results" class="item-search-results"></div>
       </div>
-      <div class="status-bar">
-        <div class="spinner" id="item-spinner"></div>
-        <span id="item-status"></span>
-      </div>
+      <div class="status-bar"><div class="spinner" id="item-spinner"></div><span id="item-status"></span></div>
       <div id="item-holders-wrap"></div>
     </div>
-
-    <!-- VIEW: MATRIX -->
     <div id="sheet-view-matrix" class="sheet-view" style="display:none;">
       <div class="sheet-controls">
-        <div class="search-wrap">
-          <input type="text" id="matrix-search-input" placeholder="Szukaj surowca..."
-            oninput="clearTimeout(window._mxst);window._mxst=setTimeout(()=>{Sheet.matrixSearch=this.value;Sheet.loadMatrix();},300)">
-        </div>
-        <label class="matrix-toggle">
-          <input type="checkbox" checked onchange="Sheet.matrixOnlyWithData=this.checked;Sheet.loadMatrix()">
-          Tylko z danymi
-        </label>
+        <div class="search-wrap"><input type="text" id="matrix-search-input" placeholder="Szukaj surowca..."
+          oninput="clearTimeout(window._mxst);window._mxst=setTimeout(()=>{Sheet.matrixSearch=this.value;Sheet.loadMatrix();},300)"></div>
+        <label class="matrix-toggle"><input type="checkbox" checked onchange="Sheet.matrixOnlyWithData=this.checked;Sheet.loadMatrix()"> Tylko z danymi</label>
         <button onclick="Sheet.loadMatrix()">↺ Odśwież</button>
         <button onclick="Sheet.exportCSV('matrix')">↓ CSV</button>
       </div>
-      <div class="filter-section">
-        <div class="filter-label">Postacie:</div>
-        <div class="cat-filter" id="matrix-char-filter"></div>
-      </div>
-      <div class="filter-section">
-        <div class="filter-label">Kategoria:</div>
-        <div class="cat-filter" id="matrix-cat-filter"></div>
-      </div>
-      <div class="filter-section" id="matrix-tag-section">
-        <div class="filter-label">Tagi:</div>
-        <div class="cat-filter" id="matrix-tag-filter"></div>
-      </div>
-      <div class="status-bar">
-        <div class="spinner" id="matrix-spinner"></div>
-        <span id="matrix-status"></span>
-      </div>
+      <div class="filter-section"><div class="filter-label">Postacie:</div><div class="cat-filter" id="matrix-char-filter"></div></div>
+      <div class="filter-section"><div class="filter-label">Kategoria:</div><div class="cat-filter" id="matrix-cat-filter"></div></div>
+      <div class="filter-section" id="matrix-tag-section"><div class="filter-label">Tagi:</div><div class="cat-filter" id="matrix-tag-filter"></div></div>
+      <div class="status-bar"><div class="spinner" id="matrix-spinner"></div><span id="matrix-status"></span></div>
       <div id="matrix-empty" class="empty-msg" style="display:none;"></div>
       <div id="matrix-table-wrap" class="table-wrap matrix-table" style="display:none;">
-        <table>
-          <thead id="matrix-head"></thead>
-          <tbody id="matrix-body"></tbody>
-        </table>
+        <table><thead id="matrix-head"></thead><tbody id="matrix-body"></tbody></table>
       </div>
     </div>
   </div>
@@ -330,7 +241,7 @@
     </div>
   </div>
 
-  <!-- ── CHARACTERS ────────────────────────────────────────────────────── -->
+  <!-- ── CHARACTERS ──────────────────────────────────────────────────────── -->
   <div id="tab-chars" class="tab-content">
     <div class="section-label">Moje postacie</div>
     <div class="panel">
@@ -345,22 +256,20 @@
     </div>
   </div>
 
-  <!-- ── GALLERY ───────────────────────────────────────────────────────── -->
+  <!-- ── GALLERY ─────────────────────────────────────────────────────────── -->
   <div id="tab-gallery" class="tab-content">
     <h1 class="page-title">⛬ Galeria postaci</h1>
     <p class="page-subtitle">Wszystkie dusze które przemierzają nasze królestwo</p>
-
     <div id="gallery-hero-wrap"></div>
-
     <div class="gallery-toolbar">
       <div class="search-wrap" style="flex:1;max-width:320px;">
         <input type="text" id="gallery-search" placeholder="Szukaj postaci, rodu, miejsca..."
           oninput="Gallery.setSearch(this.value)">
       </div>
       <div class="gallery-filter-group">
-        <button class="cat-btn gallery-filter-btn active" data-filter="all" onclick="Gallery.setFilter('all')">Wszystkie</button>
-        <button class="cat-btn gallery-filter-btn" data-filter="mine" onclick="Gallery.setFilter('mine')">Moje</button>
-        <button class="cat-btn gallery-filter-btn" data-filter="public" onclick="Gallery.setFilter('public')">Publiczne</button>
+        <button class="cat-btn gallery-filter-btn active" data-filter="all"    onclick="Gallery.setFilter('all')">Wszystkie</button>
+        <button class="cat-btn gallery-filter-btn"        data-filter="mine"   onclick="Gallery.setFilter('mine')">Moje</button>
+        <button class="cat-btn gallery-filter-btn"        data-filter="public" onclick="Gallery.setFilter('public')">Publiczne</button>
       </div>
       <button onclick="Gallery.load()">↺ Odśwież</button>
     </div>
@@ -368,23 +277,43 @@
     <div id="gallery-grid" class="gallery-grid"></div>
   </div>
 
-  <!-- ── TIMELINE (placeholder — pełny moduł w kolejnym kroku) ────────── -->
+  <!-- ── TIMELINE ────────────────────────────────────────────────────────── -->
   <div id="tab-timeline" class="tab-content">
     <h1 class="page-title">⧗ Oś czasu gildii</h1>
-    <p class="page-subtitle">Zdarzenia w świecie i historii gildii</p>
-    <div class="empty-msg" style="margin-top:2rem;">
-      <div style="font-size:2rem;margin-bottom:1rem;opacity:0.3;">⧗</div>
-      <div style="margin-bottom:0.5rem;">Moduł w przygotowaniu</div>
-      <div style="font-size:0.85rem;color:var(--text-m);">
-        Tu pojawi się wspólna oś czasu gildii z filtrami po postaciach, rodach i datach.
+    <p class="page-subtitle">Wspólna historia i ważne zdarzenia</p>
+    <div class="tl-filters">
+      <div class="tl-filter-group">
+        <div class="tl-filter-label">Postać</div>
+        <select id="tl-filter-char" onchange="Timeline.setFilter('character_id',this.value)">
+          <option value="">Wszystkie postacie</option>
+        </select>
+      </div>
+      <div class="tl-filter-group">
+        <div class="tl-filter-label">Ród</div>
+        <select id="tl-filter-house" onchange="Timeline.setFilter('house_id',this.value)">
+          <option value="">Wszystkie rody</option>
+        </select>
+      </div>
+      <div class="tl-filter-group">
+        <div class="tl-filter-label">Data od</div>
+        <input type="date" id="tl-filter-from" onchange="Timeline.setFilter('date_from',this.value)">
+      </div>
+      <div class="tl-filter-group">
+        <div class="tl-filter-label">Data do</div>
+        <input type="date" id="tl-filter-to" onchange="Timeline.setFilter('date_to',this.value)">
+      </div>
+      <div class="tl-filter-actions">
+        <button onclick="Timeline.clearFilters()">✕ Wyczyść</button>
+        <button onclick="Timeline.load()">↺ Odśwież</button>
       </div>
     </div>
+    <div class="status-bar"><span id="timeline-status"></span></div>
+    <div id="timeline-events"></div>
   </div>
 
-  <!-- ── ADMIN ──────────────────────────────────────────────────────────── -->
+  <!-- ── ADMIN ───────────────────────────────────────────────────────────── -->
   <div id="tab-admin" class="tab-content">
-    <div style="display:flex;align-items:center;justify-content:space-between;
-      margin-bottom:1.2rem;flex-wrap:wrap;gap:8px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:8px;">
       <div class="admin-label" style="margin:0;flex:1;">Panel Administratora</div>
       <button class="sm" onclick="Admin.load()">↺ Odśwież</button>
     </div>
@@ -400,110 +329,64 @@
       <div class="admin-tab"        onclick="Admin.switchTab('houses'); Houses.renderAdminTab()">Rody</div>
     </div>
 
-    <!-- Owners -->
     <div id="atab-owners" class="admin-content active">
       <div id="owners-list"></div>
       <div class="admin-label" style="margin-top:1.2rem;">Dodaj użytkownika</div>
       <div class="panel">
         <div class="row2">
-          <div class="field">
-            <label>Nazwa użytkownika</label>
-            <input type="text" id="new-owner-username" placeholder="np. Wandzia">
-          </div>
-          <div class="field">
-            <label>Email</label>
-            <input type="email" id="new-owner-email" placeholder="email@...">
-          </div>
+          <div class="field"><label>Nazwa użytkownika</label><input type="text" id="new-owner-username" placeholder="np. Wandzia"></div>
+          <div class="field"><label>Email</label><input type="email" id="new-owner-email" placeholder="email@..."></div>
         </div>
         <div class="row2" style="margin-top:0.8rem;">
-          <div class="field">
-            <label>Hasło</label>
-            <input type="password" id="new-owner-pwd" placeholder="min. 6 znaków">
-          </div>
-          <div class="field">
-            <label>Rola</label>
-            <select id="new-owner-role">
-              <option value="owner">Owner</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
+          <div class="field"><label>Hasło</label><input type="password" id="new-owner-pwd" placeholder="min. 6 znaków"></div>
+          <div class="field"><label>Rola</label><select id="new-owner-role"><option value="owner">Owner</option><option value="admin">Admin</option></select></div>
         </div>
-        <div class="btn-row">
-          <button class="warn-btn primary" onclick="Admin.createOwner()">+ Utwórz konto</button>
-        </div>
+        <div class="btn-row"><button class="warn-btn primary" onclick="Admin.createOwner()">+ Utwórz konto</button></div>
       </div>
     </div>
 
-    <!-- Items -->
     <div id="atab-items" class="admin-content">
       <div class="sheet-controls" style="margin-bottom:0.8rem;">
-        <div class="search-wrap">
-          <input type="text" id="item-search" placeholder="Szukaj surowca..."
-            oninput="Admin._renderItems()">
-        </div>
+        <div class="search-wrap"><input type="text" id="item-search" placeholder="Szukaj surowca..." oninput="Admin._renderItems()"></div>
         <select id="item-cat-filter" onchange="Admin._renderItems()"
-          style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;
-            color:var(--text);font-family:'Crimson Pro',serif;font-size:0.92rem;
-            padding:7px 11px;outline:none;">
+          style="background:var(--bg3);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Crimson Pro',serif;font-size:0.92rem;padding:7px 11px;outline:none;">
           <option value="">Wszystkie kategorie</option>
         </select>
       </div>
-      <div id="items-list"
-        style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;">
-      </div>
+      <div id="items-list" style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;"></div>
       <div class="admin-label" style="margin-top:1.2rem;">Dodaj surowiec</div>
       <div class="panel">
         <div class="row2">
-          <div class="field">
-            <label>Nazwa</label>
-            <input type="text" id="new-item-name" placeholder="np. Bryłka platyny">
-          </div>
+          <div class="field"><label>Nazwa</label><input type="text" id="new-item-name" placeholder="np. Bryłka platyny"></div>
           <div class="field">
             <label>Kategoria</label>
-            <select id="new-item-cat-select" onchange="Admin.onCatSelectChange()">
-              <option value="">— wybierz kategorię —</option>
-            </select>
+            <select id="new-item-cat-select" onchange="Admin.onCatSelectChange()"><option value="">— wybierz kategorię —</option></select>
             <div id="new-item-cat-custom-wrap" style="display:none;margin-top:6px;">
               <input type="text" id="new-item-cat-custom" placeholder="Nazwa nowej kategorii (np. BROŃ)">
             </div>
           </div>
         </div>
-        <div class="field" style="margin-top:0.8rem;">
-          <label>Aliasy (oddzielone przecinkami)</label>
-          <input type="text" id="new-item-aliases" placeholder="np. Brylka platyny, Bryłka plat...">
-        </div>
+        <div class="field" style="margin-top:0.8rem;"><label>Aliasy (oddzielone przecinkami)</label><input type="text" id="new-item-aliases" placeholder="np. Brylka platyny, Bryłka plat..."></div>
         <div class="row2" style="margin-top:0.8rem;">
-          <div class="field">
-            <label>Tagi (oddzielone przecinkami)</label>
-            <input type="text" id="new-item-tags" placeholder="np. craft-broń, pochodzenie-las">
-          </div>
-          <div class="field">
-            <label>Jednostka (opcjonalnie)</label>
-            <input type="text" id="new-item-unit" placeholder="np. szt., kg, l">
-          </div>
+          <div class="field"><label>Tagi (oddzielone przecinkami)</label><input type="text" id="new-item-tags" placeholder="np. craft-broń, pochodzenie-las"></div>
+          <div class="field"><label>Jednostka (opcjonalnie)</label><input type="text" id="new-item-unit" placeholder="np. szt., kg, l"></div>
         </div>
-        <div class="btn-row">
-          <button class="warn-btn primary" onclick="Admin.createItem()">+ Dodaj surowiec</button>
-        </div>
+        <div class="btn-row"><button class="warn-btn primary" onclick="Admin.createItem()">+ Dodaj surowiec</button></div>
       </div>
     </div>
 
-    <!-- Inventory -->
     <div id="atab-inventory" class="admin-content">
       <div class="field" style="margin-bottom:1rem;max-width:300px;">
         <label>Wybierz postać</label>
-        <select id="admin-char-select" onchange="Admin.loadInventory()">
-          <option value="">— wybierz —</option>
-        </select>
+        <select id="admin-char-select" onchange="Admin.loadInventory()"><option value="">— wybierz —</option></select>
       </div>
       <div id="admin-inv-wrap"></div>
     </div>
 
-    <!-- Calendar -->
     <div id="atab-calendar" class="admin-content">
       <div class="admin-label">Kalendarz fantasy</div>
       <div class="panel">
-        <p class="hint" style="margin-bottom:1rem;">Pozwala wyświetlać daty wydarzeń na profilach postaci również w "świecie gry" (np. "15 Kwietnika 3271" zamiast "2026-04-15").</p>
+        <p class="hint" style="margin-bottom:1rem;">Pozwala wyświetlać daty wydarzeń w "świecie gry" (np. "15 Kwietnika 3271").</p>
         <div class="field" style="margin-bottom:0.8rem;">
           <label><input type="checkbox" id="cal-enabled" style="margin-right:6px;accent-color:var(--gold);"> Włącz kalendarz fantasy</label>
         </div>
@@ -512,74 +395,38 @@
           <textarea id="cal-months" rows="2" placeholder="Lutowik, Brzeźnik, Kwietnik..."></textarea>
         </div>
         <div class="row2">
-          <div class="field">
-            <label>Przesunięcie roku (offset)</label>
-            <input type="number" id="cal-offset" placeholder="np. 1245">
-            <p class="hint">Rok 2026 + offset 1245 = 3271</p>
-          </div>
-          <div class="field">
-            <label>Sufiks ery (opcjonalnie)</label>
-            <input type="text" id="cal-suffix" placeholder="np. WG, n.e.">
-          </div>
+          <div class="field"><label>Przesunięcie roku (offset)</label><input type="number" id="cal-offset" placeholder="np. 1245"><p class="hint">Rok 2026 + offset 1245 = 3271</p></div>
+          <div class="field"><label>Sufiks ery (opcjonalnie)</label><input type="text" id="cal-suffix" placeholder="np. WG, n.e."></div>
         </div>
-        <div class="btn-row">
-          <button class="warn-btn primary" onclick="Admin.saveCalendar()">Zapisz kalendarz</button>
-        </div>
+        <div class="btn-row"><button class="warn-btn primary" onclick="Admin.saveCalendar()">Zapisz kalendarz</button></div>
       </div>
     </div>
 
-    <!-- Profile -->
     <div id="atab-profile" class="admin-content">
       <div class="admin-label">Wyświetlane informacje</div>
       <div class="panel">
         <div class="row2">
-          <div class="field">
-            <label>Wyświetlana nazwa</label>
-            <input type="text" id="profile-display-name" placeholder="Pozostaw puste = nazwa loginu">
-            <p class="hint">Widoczna w nagłówku aplikacji</p>
-          </div>
-          <div class="field">
-            <label>Wyświetlana rola</label>
-            <input type="text" id="profile-display-role" placeholder="np. Mistrz Gildii">
-            <p class="hint">Widoczna przy nazwie w nagłówku</p>
-          </div>
+          <div class="field"><label>Wyświetlana nazwa</label><input type="text" id="profile-display-name" placeholder="Pozostaw puste = nazwa loginu"><p class="hint">Widoczna w nagłówku aplikacji</p></div>
+          <div class="field"><label>Wyświetlana rola</label><input type="text" id="profile-display-role" placeholder="np. Mistrz Gildii"><p class="hint">Widoczna przy nazwie w nagłówku</p></div>
         </div>
-        <div class="btn-row">
-          <button class="primary warn-btn" onclick="Admin.saveProfile()">Zapisz</button>
-        </div>
+        <div class="btn-row"><button class="primary warn-btn" onclick="Admin.saveProfile()">Zapisz</button></div>
       </div>
     </div>
 
-    <!-- Houses -->
     <div id="atab-houses" class="admin-content"></div>
-
   </div>
 
-  <!-- ── MODALS ─────────────────────────────────────────────────────────── -->
+  <!-- ── MODALS ──────────────────────────────────────────────────────────── -->
 
-  <!-- Item edit modal -->
   <div id="item-edit-overlay" class="modal-overlay" onclick="if(event.target===this)Admin.closeItemEdit()">
     <div class="modal-box" style="max-width:520px;">
       <div class="modal-title" id="item-edit-title">Edytuj surowiec</div>
       <input type="hidden" id="item-edit-id">
-      <div class="field">
-        <label>Aliasy (oddzielone przecinkami)</label>
-        <input type="text" id="item-edit-aliases">
-      </div>
-      <div class="field" style="margin-top:0.8rem;">
-        <label>Tagi (oddzielone przecinkami)</label>
-        <input type="text" id="item-edit-tags" placeholder="np. craft-broń, pochodzenie-las">
-      </div>
+      <div class="field"><label>Aliasy (oddzielone przecinkami)</label><input type="text" id="item-edit-aliases"></div>
+      <div class="field" style="margin-top:0.8rem;"><label>Tagi (oddzielone przecinkami)</label><input type="text" id="item-edit-tags" placeholder="np. craft-broń, pochodzenie-las"></div>
       <div class="row2" style="margin-top:0.8rem;">
-        <div class="field">
-          <label>Kolejność wyświetlania</label>
-          <input type="number" id="item-edit-order" placeholder="0">
-          <p class="hint">Wyższe = wyżej na liście</p>
-        </div>
-        <div class="field">
-          <label>Jednostka</label>
-          <input type="text" id="item-edit-unit" placeholder="np. szt., kg">
-        </div>
+        <div class="field"><label>Kolejność wyświetlania</label><input type="number" id="item-edit-order" placeholder="0"><p class="hint">Wyższe = wyżej na liście</p></div>
+        <div class="field"><label>Jednostka</label><input type="text" id="item-edit-unit" placeholder="np. szt., kg"></div>
       </div>
       <div class="modal-actions">
         <button onclick="Admin.closeItemEdit()">Anuluj</button>
@@ -588,9 +435,7 @@
     </div>
   </div>
 
-  <!-- House picker modal (przypisywanie rodów do postaci) -->
-  <div id="house-picker-overlay" class="modal-overlay"
-    onclick="if(event.target===this)Houses.closeModal()">
+  <div id="house-picker-overlay" class="modal-overlay" onclick="if(event.target===this)Houses.closeModal()">
     <div class="modal-box">
       <div class="modal-title">⚜ Rody postaci</div>
       <p class="hint" style="margin-bottom:1rem;">Wybierz 0, 1 lub 2 rody.</p>
@@ -604,32 +449,16 @@
     </div>
   </div>
 
-  <!-- House edit modal -->
-  <div id="house-edit-overlay" class="modal-overlay"
-    onclick="if(event.target===this)Houses.closeEdit()">
+  <div id="house-edit-overlay" class="modal-overlay" onclick="if(event.target===this)Houses.closeEdit()">
     <div class="modal-box">
       <div class="modal-title">Edytuj ród</div>
       <input type="hidden" id="edit-house-id">
       <div class="row2">
-        <div class="field">
-          <label>Nazwa</label>
-          <input type="text" id="edit-house-name">
-        </div>
-        <div class="field">
-          <label>Kolor</label>
-          <input type="color" id="edit-house-color"
-            style="height:38px;width:100%;padding:2px 4px;background:var(--bg3);
-                   border:1px solid var(--border);border-radius:3px;cursor:pointer;">
-        </div>
+        <div class="field"><label>Nazwa</label><input type="text" id="edit-house-name"></div>
+        <div class="field"><label>Kolor</label><input type="color" id="edit-house-color" style="height:38px;width:100%;padding:2px 4px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;cursor:pointer;"></div>
       </div>
-      <div class="field" style="margin-top:0.8rem;">
-        <label>Herb / emoji</label>
-        <input type="text" id="edit-house-heraldry" placeholder="np. 🐇">
-      </div>
-      <div class="field" style="margin-top:0.8rem;">
-        <label>Opis</label>
-        <textarea id="edit-house-desc" rows="2"></textarea>
-      </div>
+      <div class="field" style="margin-top:0.8rem;"><label>Herb / emoji</label><input type="text" id="edit-house-heraldry" placeholder="np. 🐇"></div>
+      <div class="field" style="margin-top:0.8rem;"><label>Opis</label><textarea id="edit-house-desc" rows="2"></textarea></div>
       <div class="modal-actions">
         <button onclick="Houses.closeEdit()">Anuluj</button>
         <button class="primary warn-btn" onclick="Houses.saveEdit()">Zapisz</button>
@@ -643,7 +472,7 @@
 <footer>Dane przechowywane na wspólnym serwerze gildii · Wandzi Windzi</footer>
 </div><!-- /#app-screen -->
 
-<!-- ══ SCRIPTS — load order matters ══════════════════════════════════════════ -->
+<!-- ══ SCRIPTS ════════════════════════════════════════════════════════════════ -->
 <script src="js/config.js"></script>
 <script src="js/state.js"></script>
 <script src="js/api.js"></script>
@@ -654,6 +483,7 @@
 <script src="js/characters.js"></script>
 <script src="js/houses.js"></script>
 <script src="js/gallery.js"></script>
+<script src="js/timeline.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/app.js"></script>
 
