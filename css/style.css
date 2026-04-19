@@ -643,3 +643,19 @@ footer { margin-top: 3rem; text-align: center; font-size: 0.78rem; color: var(--
   color: var(--gold-l);
   background: var(--gold-d);
 }
+
+/* ── Rename button on character card ─────────────────────────────────────── */
+.char-rename-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-m);
+  padding: 2px 5px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  vertical-align: middle;
+}
+.char-card:hover .char-rename-btn { opacity: 1; }
+.char-rename-btn:hover { color: var(--gold-l); background: transparent; border: none; }
+.char-name-wrap { display: flex; align-items: center; gap: 4px; }
