@@ -24,6 +24,7 @@ def _run_migrations(app):
     migrations = [
         "ALTER TABLE events ADD COLUMN IF NOT EXISTS external_id VARCHAR(30)",
         "ALTER TABLE events ADD COLUMN IF NOT EXISTS category VARCHAR(50)",
+        "ALTER TABLE items  ADD COLUMN IF NOT EXISTS description TEXT",
         "CREATE INDEX IF NOT EXISTS ix_events_external_id ON events (external_id)",
     ]
     with app.app_context():
