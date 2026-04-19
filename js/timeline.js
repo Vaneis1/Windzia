@@ -1,10 +1,11 @@
-// timeline.js — Guild timeline with filters and participant display
+// timeline.js — Guild timeline with compact chip filters
 const Timeline = {
   events: [],
   characters: [],
   houses: [],
+  categories: [],
   calendar: null,
-  filters: { character_id: '', house_id: '', date_from: '', date_to: '' },
+  filters: { character_id: '', house_id: '', category: '', date_from: '', date_to: '' },
   _initialized: false,
 
   async init() {
@@ -12,14 +13,19 @@ const Timeline = {
     this._initialized = true;
 
     try {
-      const [calData, chars, houses] = await Promise.all([
+      const token = localStorage.getItem('ww_token') || '';
+      const headers = { 'Authorization': 'Bearer ' + token };
+      const [calData, chars, houses, cats] = await Promise.all([
         API.get('/settings/calendar').catch(() => null),
         API.get('/characters').catch(() => []),
         API.get('/houses').catch(() => []),
+        fetch((window.PROXY||Config.PROXY) + '/events/categories', { headers })
+          .then(r => r.json()).catch(() => []),
       ]);
       this.calendar = calData;
       this.characters = Array.isArray(chars) ? chars : [];
       this.houses = Array.isArray(houses) ? houses : [];
+      this.categories = Array.isArray(cats) ? cats : [];
     } catch(e) {
       console.error('Timeline.init:', e.message);
     }
@@ -35,6 +41,7 @@ const Timeline = {
     const params = new URLSearchParams();
     if (this.filters.character_id) params.set('character_id', this.filters.character_id);
     if (this.filters.house_id)     params.set('house_id',     this.filters.house_id);
+    if (this.filters.category)     params.set('category',     this.filters.category);
     if (this.filters.date_from)    params.set('date_from',    this.filters.date_from);
     if (this.filters.date_to)      params.set('date_to',      this.filters.date_to);
 
@@ -42,7 +49,9 @@ const Timeline = {
       const data = await API.get('/events?' + params.toString());
       if (!Array.isArray(data)) throw new Error(data?.error || 'Błąd serwera');
       this.events = data;
-      if (status) status.textContent = `${data.length} wydarzeń`;
+      if (status) status.textContent = data.length
+        ? `${data.length} wydarzeń`
+        : '';
       this._render();
     } catch(e) {
       if (status) status.textContent = 'Błąd: ' + e.message;
@@ -51,31 +60,129 @@ const Timeline = {
 
   setFilter(key, value) {
     this.filters[key] = value;
+    // Update active state on chips
+    if (key === 'character_id' || key === 'house_id' || key === 'category') {
+      this._updateChipState(key, value);
+    }
+    if (key === 'date_from' || key === 'date_to') {
+      this._updateDateDisplay(key, value);
+    }
     clearTimeout(this._filterTimer);
     this._filterTimer = setTimeout(() => this.load(), 300);
   },
 
   clearFilters() {
-    this.filters = { character_id: '', house_id: '', date_from: '', date_to: '' };
-    const ids = ['tl-filter-char', 'tl-filter-house', 'tl-filter-from', 'tl-filter-to'];
-    ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    this.filters = { character_id: '', house_id: '', category: '', date_from: '', date_to: '' };
+    this._renderFilters();
     this.load();
   },
 
+  _updateChipState(key, value) {
+    const group = document.querySelector(`.tl-chip-group[data-filter="${key}"]`);
+    if (!group) return;
+    group.querySelectorAll('.tl-chip').forEach(chip => {
+      chip.classList.toggle('active', chip.dataset.value === value);
+    });
+  },
+
+  _updateDateDisplay(key, value) {
+    const displayId = key === 'date_from' ? 'tl-date-from-display' : 'tl-date-to-display';
+    const el = document.getElementById(displayId);
+    if (!el) return;
+    if (!value) { el.textContent = ''; return; }
+    const alt = this._formatAltDate(value);
+    const plain = this._formatPlainDate(value);
+    el.textContent = alt ? `${alt} (${plain})` : plain;
+  },
+
   _renderFilters() {
-    const charSel = document.getElementById('tl-filter-char');
-    const houseSel = document.getElementById('tl-filter-house');
-    if (!charSel || !houseSel) return;
+    const wrap = document.getElementById('timeline-filters');
+    if (!wrap) return;
 
-    charSel.innerHTML = '<option value="">Wszystkie postacie</option>' +
-      this.characters.map(c =>
-        `<option value="${c.id}">${this._esc(c.name)}</option>`
-      ).join('');
+    const charChips = [
+      { label: 'Wszystkie', value: '' },
+      ...this.characters.map(c => ({ label: c.name, value: String(c.id) })),
+    ];
+    const houseChips = [
+      { label: 'Wszystkie rody', value: '' },
+      ...this.houses.map(h => ({
+        label: (h.heraldry ? h.heraldry + ' ' : '') + h.name,
+        value: String(h.id),
+        color: h.color,
+      })),
+    ];
+    const catChips = [
+      { label: 'Wszystkie', value: '' },
+      ...this.categories.map(c => ({ label: c, value: c })),
+    ];
 
-    houseSel.innerHTML = '<option value="">Wszystkie rody</option>' +
-      this.houses.map(h =>
-        `<option value="${h.id}">${h.heraldry ? h.heraldry + ' ' : ''}${this._esc(h.name)}</option>`
-      ).join('');
+    wrap.innerHTML = `
+      <!-- Postacie -->
+      <div class="tl-filter-row">
+        <div class="tl-filter-row-label">Postać</div>
+        <div class="tl-chip-group tl-chip-scroll" data-filter="character_id">
+          ${charChips.map(c => `
+            <button class="tl-chip${c.value === this.filters.character_id ? ' active' : ''}"
+              data-value="${this._esc(c.value)}"
+              onclick="Timeline.setFilter('character_id','${this._esc(c.value)}')">
+              ${this._esc(c.label)}
+            </button>`).join('')}
+        </div>
+      </div>
+
+      <!-- Rody -->
+      ${this.houses.length ? `
+      <div class="tl-filter-row">
+        <div class="tl-filter-row-label">Ród</div>
+        <div class="tl-chip-group tl-chip-scroll" data-filter="house_id">
+          ${houseChips.map(h => `
+            <button class="tl-chip${h.value === this.filters.house_id ? ' active' : ''}"
+              data-value="${this._esc(h.value)}"
+              style="${h.value && h.color ? `--chip-color:${h.color}` : ''}"
+              onclick="Timeline.setFilter('house_id','${this._esc(h.value)}')">
+              ${this._esc(h.label)}
+            </button>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <!-- Kategorie -->
+      ${this.categories.length ? `
+      <div class="tl-filter-row">
+        <div class="tl-filter-row-label">Typ</div>
+        <div class="tl-chip-group tl-chip-scroll" data-filter="category">
+          ${catChips.map(c => `
+            <button class="tl-chip${c.value === this.filters.category ? ' active' : ''}"
+              data-value="${this._esc(c.value)}"
+              onclick="Timeline.setFilter('category','${this._esc(c.value)}')">
+              ${this._esc(c.label)}
+            </button>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <!-- Daty -->
+      <div class="tl-filter-row">
+        <div class="tl-filter-row-label">Daty</div>
+        <div class="tl-date-range">
+          <div class="tl-date-field">
+            <span class="tl-date-field-label">Od</span>
+            <input type="date" id="tl-date-from" value="${this.filters.date_from}"
+              onchange="Timeline.setFilter('date_from',this.value)">
+            <span id="tl-date-from-display" class="tl-date-alt-display"></span>
+          </div>
+          <div class="tl-date-field">
+            <span class="tl-date-field-label">Do</span>
+            <input type="date" id="tl-date-to" value="${this.filters.date_to}"
+              onchange="Timeline.setFilter('date_to',this.value)">
+            <span id="tl-date-to-display" class="tl-date-alt-display"></span>
+          </div>
+          <button class="tl-clear-btn" onclick="Timeline.clearFilters()" title="Wyczyść filtry">✕</button>
+        </div>
+      </div>
+    `;
+
+    // Init alt date displays
+    if (this.filters.date_from) this._updateDateDisplay('date_from', this.filters.date_from);
+    if (this.filters.date_to)   this._updateDateDisplay('date_to',   this.filters.date_to);
   },
 
   _render() {
@@ -83,17 +190,13 @@ const Timeline = {
     if (!wrap) return;
 
     if (!this.events.length) {
-      const hint = this.filters.character_id || this.filters.house_id
-        ? 'Brak wydarzeń dla wybranych filtrów.'
-        : 'Brak publicznych wydarzeń. Wybierz postać lub ród aby zobaczyć więcej.';
       wrap.innerHTML = `<div class="tl-empty">
         <div style="font-size:2rem;margin-bottom:1rem;opacity:0.25;">⧗</div>
-        ${hint}
+        Brak wydarzeń dla wybranych filtrów.
       </div>`;
       return;
     }
 
-    // Group by year (or "?" for no date)
     const byYear = {};
     const noDate = [];
     this.events.forEach(e => {
@@ -108,8 +211,11 @@ const Timeline = {
 
     years.forEach(year => {
       const altYear = this._altYear(year);
+      const yearLabel = altYear
+        ? `${altYear} <span style="color:var(--text-m);font-size:0.75em;font-family:'Crimson Pro',serif;">(${year})</span>`
+        : year;
       html += `<div class="tl-year">
-        <div class="tl-year-label">${altYear ? `${altYear} <span style="color:var(--text-m);font-size:0.75em;">(${year})</span>` : year}</div>
+        <div class="tl-year-label">${yearLabel}</div>
         <div class="tl-year-events">
           ${byYear[year].map(e => this._renderEvent(e)).join('')}
         </div>
@@ -138,10 +244,9 @@ const Timeline = {
 
     const avatar = e.character_avatar
       ? `<img class="tl-avatar" src="${this._esc(e.character_avatar)}" alt="">`
-      : `<div class="tl-avatar tl-avatar-placeholder">${(e.character_name?.[0] || '?').toUpperCase()}</div>`;
+      : `<div class="tl-avatar tl-avatar-placeholder">${(e.character_name?.[0]||'?').toUpperCase()}</div>`;
 
-    // Participants line
-    const participants = (e.participants_detail || []);
+    const participants = e.participants_detail || [];
     const participantsHtml = participants.length ? `
       <div class="tl-participants">
         <span class="tl-participants-label">z udziałem:</span>
@@ -153,7 +258,10 @@ const Timeline = {
         }).join('')}
       </div>` : '';
 
-    const visIcon = e.visibility === 'house' ? ' ⚜' : e.visibility === 'personal' ? ' 🔒' : '';
+    const catBadge = e.category
+      ? `<span class="tl-cat-badge">${this._esc(e.category)}</span>` : '';
+
+    const visIcon = e.visibility === 'house' ? '⚜' : e.visibility === 'personal' ? '🔒' : '';
 
     return `<div class="tl-event">
       <div class="tl-event-dot"></div>
@@ -161,9 +269,10 @@ const Timeline = {
         <div class="tl-event-header">
           <a href="profile.html?id=${e.character_id}" class="tl-char-link">
             ${avatar}
-            <span class="tl-char-name">${this._esc(e.character_name || '')}${visIcon}</span>
+            <span class="tl-char-name">${this._esc(e.character_name||'')}${visIcon ? ' ' + visIcon : ''}</span>
           </a>
           ${houseBadges ? `<div class="tl-house-badges">${houseBadges}</div>` : ''}
+          ${catBadge}
         </div>
         ${participantsHtml}
         <div class="tl-event-date">
@@ -202,6 +311,6 @@ const Timeline = {
   },
 
   _esc(s) {
-    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   },
 };
