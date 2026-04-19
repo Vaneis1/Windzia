@@ -297,7 +297,7 @@ def scan():
                 },
                 json={
                     "model": "claude-haiku-4-5-20251001",
-                    "max_tokens": 2048,
+                    "max_tokens": 4096,
                     "messages": [{
                         "role": "user",
                         "content": [
@@ -325,7 +325,18 @@ def scan():
                 .replace("```", "")
                 .strip()
             )
-            parsed = json.loads(raw_text)
+
+            # Naprawa urwanego JSON (gdy odpowiedź urywa się przy limicie tokenów)
+            if raw_text and not raw_text.endswith("]"):
+                last_brace = raw_text.rfind("}")
+                if last_brace != -1:
+                    raw_text = raw_text[:last_brace + 1] + "]"
+
+            try:
+                parsed = json.loads(raw_text)
+            except json.JSONDecodeError:
+                continue  # pomiń ten obraz, kontynuuj z kolejnymi
+
             for entry in parsed:
                 name = entry.get("name", "").strip()
                 qty = int(entry.get("quantity", 1))
