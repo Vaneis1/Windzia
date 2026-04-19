@@ -7,7 +7,6 @@ const App = {
     if (loggedIn) {
       this._showShell();
       Scan.initDropZone();
-      // Wróć na ostatnią zakładkę lub domyślnie galeria
       const lastTab = localStorage.getItem('ww_last_tab') || 'gallery';
       this.navTo(lastTab);
     }
@@ -17,7 +16,6 @@ const App = {
     this._showShell();
     Scan.initDropZone();
     await Characters.load();
-    // Po logowaniu zawsze idź na galerię (nie na ostatnią zakładkę)
     localStorage.setItem('ww_last_tab', 'gallery');
     this.navTo('gallery');
   },
@@ -43,7 +41,6 @@ const App = {
     }
   },
 
-  // ── Drawer ────────────────────────────────────────────────────────────────
   toggleDrawer() {
     const drawer = document.getElementById('drawer');
     if (drawer.classList.contains('open')) this.closeDrawer();
@@ -58,11 +55,9 @@ const App = {
     document.getElementById('drawer-overlay')?.classList.remove('open');
   },
 
-  // ── Navigation ────────────────────────────────────────────────────────────
   navTo(tab) {
     this.closeDrawer();
     this.switchTab(tab);
-    // Zapamiętaj zakładkę
     localStorage.setItem('ww_last_tab', tab);
     document.querySelectorAll('.drawer-link').forEach(el => {
       el.classList.toggle('active', el.dataset.tab === tab);
@@ -84,13 +79,13 @@ const App = {
       el.classList.toggle('active', el.dataset.tab === name);
     });
 
-    if (name === 'sheet') Sheet.init();
-    if (name === 'chars') Characters.load();
-    if (name === 'gallery') Gallery.load();
-    if (name === 'admin') Admin.load();
+    if (name === 'sheet')    Sheet.init();
+    if (name === 'chars')    Characters.load();
+    if (name === 'gallery')  Gallery.load();
+    if (name === 'admin')    Admin.load();
+    if (name === 'timeline') Timeline.init();
   },
 
-  // ── Header search ─────────────────────────────────────────────────────────
   headerSearch(q) {
     clearTimeout(this.searchTimer);
     const results = document.getElementById('header-search-results');
