@@ -75,7 +75,6 @@
     <div class="top-nav-link" data-tab="chars"    onclick="App.navTo('chars')">⚔ Postacie</div>
     <div class="top-nav-link" data-tab="sheet"    onclick="App.navTo('sheet')">◆ Surowce</div>
     <div class="top-nav-link" data-tab="timeline" onclick="App.navTo('timeline')">⧗ Oś czasu</div>
-    <div class="top-nav-link" data-tab="scan"     onclick="App.navTo('scan')">⟳ Skanuj</div>
     <div class="top-nav-link admin-t" id="top-admin-link" style="display:none;"
       data-tab="admin" onclick="App.navTo('admin')">⚙ Admin</div>
   </nav>
@@ -100,7 +99,6 @@
     <div class="drawer-link" data-tab="chars"    onclick="App.navTo('chars')"><span class="drawer-link-icon">⚔</span> Postacie</div>
     <div class="drawer-link" data-tab="sheet"    onclick="App.navTo('sheet')"><span class="drawer-link-icon">◆</span> Surowce</div>
     <div class="drawer-link" data-tab="timeline" onclick="App.navTo('timeline')"><span class="drawer-link-icon">⧗</span> Oś czasu</div>
-    <div class="drawer-link" data-tab="scan"     onclick="App.navTo('scan')"><span class="drawer-link-icon">⟳</span> Skanuj</div>
     <div class="drawer-link admin-t" id="drawer-admin-link" style="display:none;"
       data-tab="admin" onclick="App.navTo('admin')"><span class="drawer-link-icon">⚙</span> Admin</div>
   </nav>
@@ -183,60 +181,141 @@
   <div id="tab-sheet" class="tab-content">
     <h1 class="page-title">◆ Surowce</h1>
     <p class="page-subtitle">Inwentarz gildii i zapasy postaci</p>
+ 
     <div class="sheet-subtabs">
-      <div class="sheet-subtab active" data-view="mine"   onclick="Sheet.switchView('mine')">⚔ Moje</div>
-      <div class="sheet-subtab"        data-view="item"   onclick="Sheet.switchView('item')">⌕ Surowiec</div>
-      <div class="sheet-subtab"        data-view="matrix" onclick="Sheet.switchView('matrix')">⊞ Macierz</div>
+      <div class="sheet-subtab" data-view="scan" onclick="Sheet.switchView('scan')">⟳ Skanuj</div>
+      <div class="sheet-subtab active" data-view="mine" onclick="Sheet.switchView('mine')">⚔ Moje</div>
+      <div class="sheet-subtab" data-view="item" onclick="Sheet.switchView('item')">⌕ Surowiec</div>
+      <div class="sheet-subtab" data-view="matrix" onclick="Sheet.switchView('matrix')">⊞ Macierz</div>
     </div>
+ 
+    <!-- VIEW: SCAN (przeniesione z osobnej zakładki) -->
+    <div id="sheet-view-scan" class="sheet-view" style="display:none;">
+      <div class="panel">
+        <div class="field">
+          <label>Wybierz postać</label>
+          <select id="char-select"><option value="">— wybierz —</option></select>
+        </div>
+      </div>
+ 
+      <div class="section-label">Zrzuty ekranu</div>
+      <div class="panel">
+        <div class="upload-zone" id="upload-zone"
+          onclick="document.getElementById('file-input').click()">
+          <input type="file" id="file-input" accept="image/*" multiple
+            style="display:none"
+            onchange="Array.from(this.files).forEach(f => Scan.addImage(f)); this.value='';">
+          <p><strong>Kliknij, przeciągnij lub wklej</strong> zrzuty ekranu (Ctrl+V)</p>
+          <p style="font-size:0.82rem;margin-top:3px;">PNG, JPG, WebP · wiele plików naraz</p>
+        </div>
+        <div class="previews" id="previews"></div>
+      </div>
+ 
+      <div class="btn-row">
+        <button class="primary" id="scan-btn" onclick="Scan.run()" disabled>⟳ Skanuj inwentarz</button>
+        <button id="save-btn" onclick="Scan.save()" disabled>✓ Zapisz do bazy</button>
+        <button id="csv-btn" onclick="Scan.copyCSV()" disabled>⎘ Kopiuj CSV</button>
+      </div>
+      <div class="status-bar">
+        <div class="spinner" id="scan-spinner"></div>
+        <span id="scan-status"></span>
+      </div>
+      <div class="msg ok"  id="scan-ok"></div>
+      <div class="msg err" id="scan-err"></div>
+ 
+      <div id="scan-results" style="display:none; margin-top:1.2rem;">
+        <div class="section-label">Dopasowane</div>
+        <div class="panel" style="padding:0;">
+          <div class="results-hdr">
+            <span>Przedmiot</span>
+            <span style="text-align:right;">Ilość</span>
+            <span>Kategoria</span>
+          </div>
+          <div id="results-body"></div>
+        </div>
+        <div id="unknown-wrap" style="display:none; margin-top:0.8rem;">
+          <div class="section-label">Nierozpoznane — pominięto</div>
+          <div class="panel" style="padding:0.7rem 1.2rem;">
+            <p class="hint" style="margin-bottom:0.6rem;">
+              Nie znaleziono w bazie surowców. Admin może dodać aliasy.
+            </p>
+            <div id="unknown-body"></div>
+          </div>
+        </div>
+        <div id="rescan-wrap" style="display:none;margin-top:0.8rem;">
+          <button class="warn-btn" onclick="Scan.rescan()">↺ Skanuj ponownie po dodaniu surowców</button>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- VIEW: MINE -->
     <div id="sheet-view-mine" class="sheet-view">
       <div class="sheet-controls">
-        <div class="search-wrap"><input type="text" id="mine-search-input" placeholder="Szukaj surowca..."
-          oninput="clearTimeout(window._mst);window._mst=setTimeout(()=>{Sheet.mineSearch=this.value;Sheet.loadMine();},300)"></div>
+        <div class="search-wrap">
+          <input type="text" id="mine-search-input" placeholder="Szukaj surowca..."
+            oninput="clearTimeout(window._mst);window._mst=setTimeout(()=>{Sheet.mineSearch=this.value;Sheet.loadMine();},300)">
+        </div>
         <button onclick="Sheet.loadMine()">↺ Odśwież</button>
         <button onclick="Sheet.exportCSV('mine')">↓ CSV</button>
       </div>
       <div class="cat-filter" id="mine-cat-filter"></div>
-      <div class="status-bar"><div class="spinner" id="mine-spinner"></div><span id="mine-status"></span></div>
+      <div class="status-bar">
+        <div class="spinner" id="mine-spinner"></div>
+        <span id="mine-status"></span>
+      </div>
       <div id="mine-empty" class="empty-msg" style="display:none;"></div>
       <div id="mine-table-wrap" class="table-wrap" style="display:none;">
         <table><thead id="mine-head"></thead><tbody id="mine-body"></tbody></table>
       </div>
     </div>
+ 
+    <!-- VIEW: ITEM -->
     <div id="sheet-view-item" class="sheet-view" style="display:none;">
       <div class="item-search-wrap">
-        <input type="text" id="item-search-box" class="item-search-input" placeholder="Wpisz nazwę surowca... (min. 2 znaki)" autocomplete="off">
+        <input type="text" id="item-search-box" class="item-search-input"
+          placeholder="Wpisz nazwę surowca... (min. 2 znaki)" autocomplete="off">
         <div id="item-search-results" class="item-search-results"></div>
       </div>
-      <div class="status-bar"><div class="spinner" id="item-spinner"></div><span id="item-status"></span></div>
+      <div class="status-bar">
+        <div class="spinner" id="item-spinner"></div>
+        <span id="item-status"></span>
+      </div>
       <div id="item-holders-wrap"></div>
     </div>
+ 
+    <!-- VIEW: MATRIX -->
     <div id="sheet-view-matrix" class="sheet-view" style="display:none;">
       <div class="sheet-controls">
-        <div class="search-wrap"><input type="text" id="matrix-search-input" placeholder="Szukaj surowca..."
-          oninput="clearTimeout(window._mxst);window._mxst=setTimeout(()=>{Sheet.matrixSearch=this.value;Sheet.loadMatrix();},300)"></div>
-        <label class="matrix-toggle"><input type="checkbox" checked onchange="Sheet.matrixOnlyWithData=this.checked;Sheet.loadMatrix()"> Tylko z danymi</label>
+        <div class="search-wrap">
+          <input type="text" id="matrix-search-input" placeholder="Szukaj surowca..."
+            oninput="clearTimeout(window._mxst);window._mxst=setTimeout(()=>{Sheet.matrixSearch=this.value;Sheet.loadMatrix();},300)">
+        </div>
+        <label class="matrix-toggle">
+          <input type="checkbox" checked onchange="Sheet.matrixOnlyWithData=this.checked;Sheet.loadMatrix()">
+          Tylko z danymi
+        </label>
         <button onclick="Sheet.loadMatrix()">↺ Odśwież</button>
         <button onclick="Sheet.exportCSV('matrix')">↓ CSV</button>
       </div>
-      <div class="filter-section"><div class="filter-label">Postacie:</div><div class="cat-filter" id="matrix-char-filter"></div></div>
-      <div class="filter-section"><div class="filter-label">Kategoria:</div><div class="cat-filter" id="matrix-cat-filter"></div></div>
-      <div class="filter-section" id="matrix-tag-section"><div class="filter-label">Tagi:</div><div class="cat-filter" id="matrix-tag-filter"></div></div>
-      <div class="status-bar"><div class="spinner" id="matrix-spinner"></div><span id="matrix-status"></span></div>
+      <div class="filter-section">
+        <div class="filter-label">Postacie:</div>
+        <div class="cat-filter" id="matrix-char-filter"></div>
+      </div>
+      <div class="filter-section">
+        <div class="filter-label">Kategoria:</div>
+        <div class="cat-filter" id="matrix-cat-filter"></div>
+      </div>
+      <div class="filter-section" id="matrix-tag-section">
+        <div class="filter-label">Tagi:</div>
+        <div class="cat-filter" id="matrix-tag-filter"></div>
+      </div>
+      <div class="status-bar">
+        <div class="spinner" id="matrix-spinner"></div>
+        <span id="matrix-status"></span>
+      </div>
       <div id="matrix-empty" class="empty-msg" style="display:none;"></div>
       <div id="matrix-table-wrap" class="table-wrap matrix-table" style="display:none;">
         <table><thead id="matrix-head"></thead><tbody id="matrix-body"></tbody></table>
-      </div>
-    </div>
-  </div>
-
-  <!-- Character picker modal (matrix) -->
-  <div id="char-picker-overlay" class="modal-overlay" onclick="if(event.target===this)Sheet.closeCharPicker()">
-    <div class="modal-box">
-      <div class="modal-title">Wybierz postacie do wyświetlenia</div>
-      <div id="char-picker-list" class="char-picker-list"></div>
-      <div class="modal-actions">
-        <button onclick="Sheet.closeCharPicker()">Anuluj</button>
-        <button class="primary" onclick="Sheet.applyCharPicker()">Zastosuj</button>
       </div>
     </div>
   </div>
