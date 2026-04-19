@@ -24,10 +24,9 @@ const EditorCode = {
 
   switchMode(newMode) {
     if (newMode === this.mode) return;
-
     if (this.mode === 'json' && newMode !== 'json') {
       const ok = this._applyJsonText(false);
-      if (!ok && !confirm('JSON ma błąd — czy na pewno chcesz wyjść? Niezapisane zmiany przepadną.')) return;
+      if (!ok && !confirm('JSON ma błąd — czy na pewno chcesz wyjść?')) return;
     }
     if (this.mode === 'css' && newMode !== 'css') {
       const ta = document.getElementById('css-editor');
@@ -35,7 +34,6 @@ const EditorCode = {
       Editor.profileCss = this.cssText;
       this._applyCssLivePreview();
     }
-
     this.mode = newMode;
     this._render();
   },
@@ -44,7 +42,6 @@ const EditorCode = {
     document.querySelectorAll('.mode-tab').forEach(t => {
       t.classList.toggle('active', t.dataset.mode === this.mode);
     });
-
     const visual  = document.getElementById('mode-visual');
     const json    = document.getElementById('mode-json');
     const css     = document.getElementById('mode-css');
@@ -52,23 +49,17 @@ const EditorCode = {
     const props   = document.querySelector('.props-panel');
 
     if (this.mode === 'visual') {
-      visual.style.display = 'flex';
-      json.style.display   = 'none';
-      css.style.display    = 'none';
+      visual.style.display = 'flex'; json.style.display = 'none'; css.style.display = 'none';
       if (sidebar) sidebar.style.display = '';
       if (props)   props.style.display   = '';
       Editor.render();
     } else if (this.mode === 'json') {
-      visual.style.display = 'none';
-      json.style.display   = 'flex';
-      css.style.display    = 'none';
+      visual.style.display = 'none'; json.style.display = 'flex'; css.style.display = 'none';
       if (sidebar) sidebar.style.display = 'none';
       if (props)   props.style.display   = 'none';
       this._renderJsonEditor();
     } else if (this.mode === 'css') {
-      visual.style.display = 'none';
-      json.style.display   = 'none';
-      css.style.display    = 'flex';
+      visual.style.display = 'none'; json.style.display = 'none'; css.style.display = 'flex';
       if (sidebar) sidebar.style.display = 'none';
       if (props)   props.style.display   = 'none';
       this._renderCssEditor();
@@ -80,10 +71,7 @@ const EditorCode = {
     const data = { blocks: Editor.blocks, settings: Editor.pageSettings };
     this.jsonText = JSON.stringify(data, null, 2);
     const ta = document.getElementById('json-editor');
-    if (ta) {
-      ta.value = this.jsonText;
-      ta.oninput = () => this._validateJson(ta.value);
-    }
+    if (ta) { ta.value = this.jsonText; ta.oninput = () => this._validateJson(ta.value); }
     this._validateJson(this.jsonText);
   },
 
@@ -91,7 +79,7 @@ const EditorCode = {
     const status = document.getElementById('json-status');
     try {
       const parsed = JSON.parse(text);
-      if (typeof parsed !== 'object' || parsed === null) throw new Error('Musi być obiektem lub tablicą');
+      if (typeof parsed !== 'object' || parsed === null) throw new Error('Musi być obiektem');
       this.jsonError = null;
       if (status) { status.textContent = '✓ Poprawny JSON'; status.className = 'code-status code-status-ok'; }
       return true;
@@ -117,12 +105,8 @@ const EditorCode = {
       else if (typeof parsed === 'object' && parsed !== null) { blocks = parsed.blocks || []; settings = parsed.settings || Editor.pageSettings; }
       else throw new Error('Nieprawidłowa struktura');
       if (!Array.isArray(blocks)) throw new Error('Pole "blocks" musi być tablicą');
-      Editor.blocks = blocks;
-      Editor.pageSettings = settings;
-      Editor.selectedId = null;
-      Editor._markDirty();
-      Editor._applyPageSettingsToEditor();
-      Editor._renderPageSettingsForm();
+      Editor.blocks = blocks; Editor.pageSettings = settings; Editor.selectedId = null;
+      Editor._markDirty(); Editor._applyPageSettingsToEditor(); Editor._renderPageSettingsForm();
       return true;
     } catch(e) {
       if (strict) Editor._toast('Błąd JSON: ' + e.message, 'err');
@@ -132,7 +116,6 @@ const EditorCode = {
 
   // ── CSS split-pane mode ────────────────────────────────────────────────────
   _renderCssEditor() {
-    // Snippets bar
     const snippetsBar = document.getElementById('css-snippets-bar');
     if (snippetsBar) {
       snippetsBar.innerHTML = `
@@ -143,7 +126,6 @@ const EditorCode = {
         <span class="css-snippets-hint">Kliknij blok w podglądzie →</span>
       `;
     }
-
     const ta = document.getElementById('css-editor');
     if (ta) {
       ta.value = this.cssText;
@@ -155,7 +137,6 @@ const EditorCode = {
         this._updateCssPreview();
       };
     }
-
     this._updateCssPreview();
     this._applyCssLivePreview();
   },
@@ -164,7 +145,6 @@ const EditorCode = {
     const ta = document.getElementById('css-editor');
     if (!ta) return;
     let code = this._snippets[idx].code;
-    // Jeśli jest wybrany blok w podglądzie — wstaw jego ID
     const bid = this._selectedPreviewBlock || Editor.selectedId;
     if (bid) code = code.replace(/\bID\b/g, bid);
     const pos = ta.selectionEnd;
@@ -182,15 +162,13 @@ const EditorCode = {
     const previewCanvas = document.getElementById('css-preview-canvas');
     if (!previewCanvas) return;
 
-    // Render bloków z data-bid wrapperami (bez trybu edycji)
-    const blocksHtml = (Editor.blocks || []).map(b =>
-      `<div data-bid="${b.id}" class="css-prev-block">${Renderer._inner(b, false)}</div>`
-    ).join('');
+    // Renderer.renderPreview rekurencyjnie opakowuje WSZYSTKIE bloki (łącznie z dziećmi)
+    const blocksHtml = Renderer.renderPreview(Editor.blocks || []);
 
     previewCanvas.innerHTML = blocksHtml ||
       '<div style="padding:2rem;text-align:center;color:#3d5468;font-style:italic;">Brak bloków — dodaj je w trybie Wizualny</div>';
 
-    // Dodaj click handlery do bloków w podglądzie
+    // Click handlery na wszystkich blokach (włącznie z zagnieżdżonymi)
     previewCanvas.querySelectorAll('.css-prev-block').forEach(el => {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -198,12 +176,8 @@ const EditorCode = {
       });
     });
 
-    // Przywróć podświetlenie wybranego
-    if (this._selectedPreviewBlock) {
-      this._highlightPreviewBlock(this._selectedPreviewBlock);
-    }
+    if (this._selectedPreviewBlock) this._highlightPreviewBlock(this._selectedPreviewBlock);
 
-    // Zastosuj CSS do podglądu
     let previewStyle = document.getElementById('css-preview-style');
     if (!previewStyle) {
       previewStyle = document.createElement('style');
@@ -213,7 +187,6 @@ const EditorCode = {
     previewStyle.textContent = this._scopeCssClient(this.cssText, '#css-preview-canvas');
   },
 
-  // Kliknięcie bloku w podglądzie — skocz do jego CSS lub wstaw szablon
   _focusBlockCss(blockId) {
     this._selectedPreviewBlock = blockId;
     this._highlightPreviewBlock(blockId);
@@ -225,15 +198,12 @@ const EditorCode = {
     const idx = ta.value.indexOf(searchStr);
 
     if (idx !== -1) {
-      // Znaleziono — przewiń i zaznacz
       ta.focus();
       ta.setSelectionRange(idx, idx + searchStr.length);
-      const lineH = 22;
       const lines = ta.value.substring(0, idx).split('\n');
-      ta.scrollTop = Math.max(0, (lines.length - 3)) * lineH;
-      Editor._toast(`Znaleziono styl bloku ${blockId}`, 'ok');
+      ta.scrollTop = Math.max(0, (lines.length - 3)) * 22;
+      Editor._toast(`Znaleziono styl bloku`, 'ok');
     } else {
-      // Nie ma — wstaw pusty szablon
       const snippet = `\n[data-bid="${blockId}"] {\n  \n}\n`;
       ta.value += snippet;
       const newIdx = ta.value.lastIndexOf(`[data-bid="${blockId}"]`);
@@ -245,7 +215,7 @@ const EditorCode = {
       Editor._markDirty(false);
       this._applyCssLivePreview();
       this._updateCssPreview();
-      Editor._toast(`Dodano szablon dla bloku ${blockId}`, 'ok');
+      Editor._toast(`Dodano szablon CSS dla bloku`, 'ok');
     }
   },
 
@@ -277,7 +247,6 @@ const EditorCode = {
     css = css.replace(/@import[^;]*;/gi, '/*x*/');
     css = css.replace(/expression\s*\(/gi, '/*x*/(');
     css = css.replace(/\/\*[\s\S]*?\*\//g, '');
-
     let result = '', i = 0, n = css.length;
     while (i < n) {
       while (i < n && /\s/.test(css[i])) { result += css[i]; i++; }
@@ -330,23 +299,18 @@ const EditorCode = {
 <pre>{
   "id": "b8x4k2m",
   "type": "heading",
-  "props": {
-    "content": "Mój nagłówek",
-    "level": 2,
-    "color": "#a8c8e0"
-  }
+  "props": { "content": "Mój nagłówek", "level": 2, "color": "#a8c8e0" }
 }</pre>
 <h3>Bloki z dziećmi</h3>
 <pre>{
-  "id": "b1",
-  "type": "container",
+  "id": "b1", "type": "container",
   "props": { "columns": 2, "gap": 16 },
   "children": [
     { "id": "b2", "type": "text", "props": { "content": "Lewa kolumna" } },
     { "id": "b3", "type": "text", "props": { "content": "Prawa kolumna" } }
   ]
 }</pre>
-<h3>Dostępne typy bloków</h3>
+<h3>Dostępne typy</h3>
 <ul>
   <li><code>container</code>, <code>cards</code>, <code>slider_v</code>, <code>slider_h</code> — układy</li>
   <li><code>richtext</code>, <code>text</code>, <code>heading</code>, <code>quote</code>, <code>badge</code> — treść</li>
@@ -357,27 +321,21 @@ const EditorCode = {
   _cssTutorialHtml() {
     return `
 <h3>Jak używać edytora CSS?</h3>
-<p>Po lewej piszesz CSS, po prawej widzisz efekt na żywo. <strong>Kliknij blok w podglądzie</strong> — edytor przeskoczy do jego stylu lub doda pusty szablon.</p>
-
+<p>Po lewej piszesz CSS, po prawej widzisz efekt na żywo. <strong>Kliknij dowolny blok w podglądzie</strong> — edytor przeskoczy do jego stylu lub automatycznie doda pusty szablon.</p>
 <h3>Jak celować w blok?</h3>
 <pre>[data-bid="twoje_id"] {
   background: linear-gradient(135deg, #2a1a3a, #0a0a1a);
   border-radius: 12px;
 }</pre>
-<p>ID bloku znajdziesz klikając go w podglądzie — zostanie zaznaczone w edytorze lub automatycznie wstawione.</p>
-
+<p>Możesz też klikać zagnieżdżone bloki (elementy w środku kontenerów) — każdy ma swój unikalny ID.</p>
 <h3>Przykład: animacja wejścia</h3>
 <pre>@keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 h1, h2 { animation: fadeIn 0.6s ease-out; }</pre>
-
 <h3>Czego nie wolno?</h3>
-<ul>
-  <li><code>position: fixed</code> — mogłoby przesłonić interfejs</li>
-  <li><code>@import</code>, <code>javascript:</code> — zablokowane ze względów bezpieczeństwa</li>
-</ul>`;
+<ul><li><code>position: fixed</code>, <code>@import</code>, <code>javascript:</code> — zablokowane</li></ul>`;
   },
 
   closeTutorial() {
