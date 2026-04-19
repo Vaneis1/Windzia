@@ -1,4 +1,4 @@
-"""Events routes — character events + guild timeline with tagging."""
+"""Events routes — character events + guild timeline."""
 from flask import Blueprint, request, jsonify
 from sqlalchemy.orm import selectinload
 
@@ -12,76 +12,17 @@ MAX_PARTICIPANTS = 10
 MAX_EVENTS = 200
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
 def _try_get_owner():
-    """Return current owner without raising if unauthenticated."""
     try:
         return get_current_owner()
     except Exception:
         return None
 
 
-def _owner_house_ids(owner):
-    ids = set()
-    for c in (owner.characters or []):
-        for h in (c.houses or []):
-            ids.add(h.id)
-    return ids
-
-
-def _visible_on_timeline(event, char_filter_id, house_filter_id):
-    """
-    Visibility hierarchy for guild timeline:
-      public   → always visible (no filter needed)
-      house    → visible only with house filter matching the event's character
-      personal → visible only with character filter matching owner or participant
-    Additional char/house filters further narrow results.
-    """
-    vis = event.visibility
-    char = event.character
-    if not char:
-        return False
-
-    # All related character IDs (owner + non-dismissed participants)
-    related_ids = {event.character_id}
-    for p in event.participants:
-        if not p.dismissed:
-            related_ids.add(p.character_id)
-
-    if vis == "public":
-        if char_filter_id and char_filter_id not in related_ids:
-            return False
-        if house_filter_id:
-            char_house_ids = {h.id for h in char.houses}
-            if house_filter_id not in char_house_ids:
-                return False
-        return True
-
-    elif vis == "house":
-        # Requires a filter to be visible
-        if char_filter_id:
-            return char_filter_id in related_ids
-        if house_filter_id:
-            char_house_ids = {h.id for h in char.houses}
-            return house_filter_id in char_house_ids
-        return False
-
-    elif vis == "personal":
-        # Only visible when filtering by a related character
-        if char_filter_id:
-            return char_filter_id in related_ids
-        return False
-
-    return False
-
-
 def _upsert_participants(event_obj, new_participant_ids, owner_char_id):
-    """Sync participants for an event, preserving dismissed status."""
-    new_set = set(new_participant_ids) - {owner_char_id}  # can't tag yourself
+    new_set = set(new_participant_ids) - {owner_char_id}
     existing = {p.character_id: p for p in event_obj.participants}
 
-    # Add new participants
     for cid in new_set:
         if cid not in existing:
             db.session.add(EventParticipant(
@@ -90,13 +31,12 @@ def _upsert_participants(event_obj, new_participant_ids, owner_char_id):
                 dismissed=False,
             ))
 
-    # Remove participants no longer in the list (only non-dismissed ones)
     for cid, p in existing.items():
         if cid not in new_set and not p.dismissed:
             db.session.delete(p)
 
 
-# ── Per-character events (editor + profile) ───────────────────────────────────
+# ── Per-character events ───────────────────────────────────────────────────────
 
 @events_bp.route("/characters/<int:cid>/events", methods=["GET"])
 def get_character_events(cid):
@@ -106,10 +46,7 @@ def get_character_events(cid):
 
     owner = _try_get_owner()
     is_owner = owner and (owner.role == "admin" or owner.id == char.owner_id)
-    owner_house_ids = _owner_house_ids(owner) if owner else set()
-    char_house_ids = {h.id for h in char.houses}
 
-    # 1. Own events (all, with participants)
     own_events = (
         Event.query
         .filter_by(character_id=cid)
@@ -121,7 +58,6 @@ def get_character_events(cid):
         .all()
     )
 
-    # 2. Shared events (char is a non-dismissed participant)
     shared_ids_q = (
         db.session.query(EventParticipant.event_id)
         .filter(
@@ -144,18 +80,24 @@ def get_character_events(cid):
     )
 
     result = []
-
     for e in own_events:
         d = e.to_dict(include_char=False)
         d["is_shared"] = False
         result.append(d)
 
+    owner_hids = set()
+    if owner:
+        for c in owner.characters:
+            for h in c.houses:
+                owner_hids.add(h.id)
+
+    char_house_ids = {h.id for h in char.houses}
+
     for e in shared_events:
-        # Visibility filter for non-owners
         if not is_owner:
             vis = e.visibility
             if vis == "personal":
-                continue  # personal events from others never shown on profile
+                continue
             if vis == "house":
                 e_house_ids = {h.id for h in (e.character.houses or [])}
                 if not (char_house_ids & e_house_ids):
@@ -171,7 +113,6 @@ def get_character_events(cid):
 @events_bp.route("/characters/<int:cid>/events", methods=["PUT"])
 @require_auth
 def sync_character_events(cid):
-    """Upsert all own events for a character (called from editor save)."""
     owner = get_current_owner()
     char = db.session.get(Character, cid)
     if not char:
@@ -186,7 +127,6 @@ def sync_character_events(cid):
     if len(events_data) > MAX_EVENTS:
         return jsonify({"error": f"Za dużo wydarzeń (max {MAX_EVENTS})"}), 400
 
-    # Load existing own events indexed by external_id (for upsert)
     existing_by_ext = {}
     events_without_ext = []
     for e in (
@@ -200,7 +140,6 @@ def sync_character_events(cid):
         else:
             events_without_ext.append(e)
 
-    # Delete old-format events (no external_id) — cleanup migration
     for e in events_without_ext:
         db.session.delete(e)
 
@@ -221,6 +160,7 @@ def sync_character_events(cid):
 
         date_val = str(event_data.get("date", ""))[:10] or None
         desc_val = str(event_data.get("description", ""))[:5000] or None
+        cat_val = str(event_data.get("category", ""))[:50] or None
 
         raw_pids = event_data.get("participant_ids", [])
         participant_ids = []
@@ -237,14 +177,13 @@ def sync_character_events(cid):
             incoming_ext_ids.add(ext_id)
 
         if ext_id and ext_id in existing_by_ext:
-            # Update existing event
             e = existing_by_ext[ext_id]
             e.date = date_val
             e.title = title
             e.description = desc_val
             e.visibility = vis
+            e.category = cat_val
         else:
-            # Create new event
             e = Event(
                 character_id=cid,
                 external_id=ext_id,
@@ -252,13 +191,13 @@ def sync_character_events(cid):
                 title=title,
                 description=desc_val,
                 visibility=vis,
+                category=cat_val,
             )
             db.session.add(e)
-            db.session.flush()  # get e.id
+            db.session.flush()
 
         _upsert_participants(e, participant_ids, cid)
 
-    # Delete events no longer in the incoming list
     for ext_id, e in existing_by_ext.items():
         if ext_id not in incoming_ext_ids:
             db.session.delete(e)
@@ -267,12 +206,11 @@ def sync_character_events(cid):
     return jsonify({"ok": True})
 
 
-# ── Dismiss (tagged character removes event from their profile) ────────────────
+# ── Dismiss ────────────────────────────────────────────────────────────────────
 
 @events_bp.route("/events/<int:eid>/participants/<int:cid>", methods=["DELETE"])
 @require_auth
 def dismiss_participant(eid, cid):
-    """Tagged character's owner dismisses the event from their profile."""
     owner = get_current_owner()
     char = db.session.get(Character, cid)
     if not char:
@@ -289,19 +227,14 @@ def dismiss_participant(eid, cid):
     return jsonify({"ok": True})
 
 
-# ── Guild timeline ─────────────────────────────────────────────────────────────
+# ── Guild timeline — zwraca WSZYSTKIE wydarzenia, filtry tylko zawężają ────────
 
 @events_bp.route("/events", methods=["GET"])
 @require_auth
 def get_timeline_events():
-    """
-    Guild timeline with visibility hierarchy:
-      public   → always visible
-      house    → only with house_id filter
-      personal → only with character_id filter (owner or tagged)
-    """
     char_filter_id = request.args.get("character_id", type=int)
     house_filter_id = request.args.get("house_id", type=int)
+    category_filter = request.args.get("category", "").strip()
     date_from = request.args.get("date_from", "")
     date_to = request.args.get("date_to", "")
 
@@ -313,7 +246,6 @@ def get_timeline_events():
     )
 
     if char_filter_id:
-        # Events where char is owner OR non-dismissed participant
         from sqlalchemy import or_
         participant_sub = (
             db.session.query(EventParticipant.event_id)
@@ -330,6 +262,19 @@ def get_timeline_events():
             )
         )
 
+    if house_filter_id:
+        from sqlalchemy import exists
+        char_in_house = (
+            db.session.query(Character.id)
+            .join(Character.houses)
+            .filter(db.text(f"houses.id = {house_filter_id}"))
+            .subquery()
+        )
+        query = query.filter(Event.character_id.in_(char_in_house))
+
+    if category_filter:
+        query = query.filter(Event.category == category_filter)
+
     if date_from:
         query = query.filter(Event.date >= date_from)
     if date_to:
@@ -339,8 +284,29 @@ def get_timeline_events():
 
     result = []
     for e in events:
-        if not _visible_on_timeline(e, char_filter_id, house_filter_id):
+        if not e.character:
             continue
         result.append(e.to_dict(include_char=True))
 
     return jsonify(result)
+
+
+# ── Categories list ────────────────────────────────────────────────────────────
+
+@events_bp.route("/events/categories", methods=["GET"])
+@require_auth
+def get_event_categories():
+    """Return all distinct categories used in events."""
+    from models import EVENT_CATEGORIES
+    # Get custom categories from DB too
+    rows = db.session.query(Event.category).filter(
+        Event.category.isnot(None),
+        Event.category != "",
+    ).distinct().all()
+    db_cats = {r[0] for r in rows if r[0]}
+    # Merge predefined + custom, predefined first
+    all_cats = list(EVENT_CATEGORIES)
+    for c in sorted(db_cats):
+        if c not in all_cats:
+            all_cats.append(c)
+    return jsonify(all_cats)
