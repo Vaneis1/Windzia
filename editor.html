@@ -236,6 +236,15 @@ details[open] .prop-section::after{content:'▾';}
 .css-snippet-btn{font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.05em;text-transform:uppercase;padding:3px 9px;border-radius:2px;border:1px solid var(--border);background:transparent;color:var(--text-d);cursor:pointer;white-space:nowrap;transition:all 0.12s;}
 .css-snippet-btn:hover{border-color:var(--accent);color:var(--accent-l);background:var(--accent-d);}
 .css-snippets-hint{font-size:0.62rem;color:var(--text-m);font-style:italic;margin-left:auto;white-space:nowrap;flex-shrink:0;}
+.css-prev-block {
+  cursor: pointer;
+  transition: outline 0.1s;
+  outline: 1px dashed transparent;
+  outline-offset: 2px;
+}
+.css-prev-block:hover {
+  outline: 1px dashed rgba(120,160,200,0.35);
+}
 </style>
 </head>
 <body>
@@ -247,8 +256,8 @@ details[open] .prop-section::after{content:'▾';}
   <div class="char-title" id="char-name-display">Ładowanie…</div>
   <div class="mode-tabs">
     <button class="mode-tab active" data-mode="visual" onclick="EditorCode.switchMode('visual')">⊞ Wizualny</button>
-    <button class="mode-tab" data-mode="json" onclick="EditorCode.switchMode('json')">{ } Struktura</button>
     <button class="mode-tab" data-mode="css" onclick="EditorCode.switchMode('css')">⌘ CSS</button>
+    <button class="mode-tab" data-mode="json" onclick="EditorCode.switchMode('json')">{ } Struktura</button>
   </div>
   <button id="undo-btn" class="tb-btn" title="Cofnij (Ctrl+Z)" onclick="Editor.undo()" disabled>↩</button>
   <button id="redo-btn" class="tb-btn" title="Ponów (Ctrl+Y)" onclick="Editor.redo()" disabled>↪</button>
