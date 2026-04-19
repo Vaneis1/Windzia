@@ -145,24 +145,28 @@ const MetaEditor = {
   },
   removeEvent(id) {
     if (!confirm('Usunąć wydarzenie?')) return;
-    this.data.events = this.data.events.filter(e => e.id !== id);
+    // Use loose match to handle both string and number IDs
+    this.data.events = this.data.events.filter(e => String(e.id) !== String(id));
     this._markDirty(); this.renderEvents();
   },
   updateEvent(id, key, value) {
-    const e = this.data.events.find(e => e.id === id);
+    // Use String() comparison — API returns numeric IDs, client uses string IDs
+    const e = this.data.events.find(e => String(e.id) === String(id));
     if (e) { e[key] = value; this._markDirty(); }
   },
+
   toggleParticipant(eventId, charId, checked) {
-    const e = this.data.events.find(e => e.id === eventId);
+    // String comparison to handle both API (numeric) and client (string) IDs
+    const e = this.data.events.find(e => String(e.id) === String(eventId));
     if (!e) return;
     if (!e.participant_ids) e.participant_ids = [];
+    const numId = Number(charId);
     if (checked) {
-      if (!e.participant_ids.includes(charId)) e.participant_ids.push(charId);
+      if (!e.participant_ids.includes(numId)) e.participant_ids.push(numId);
     } else {
-      e.participant_ids = e.participant_ids.filter(id => id !== charId);
+      e.participant_ids = e.participant_ids.filter(id => id !== numId);
     }
     this._markDirty();
-    // Re-render just participant section to reflect change
     this.renderEvents();
   },
 
@@ -201,6 +205,13 @@ const MetaEditor = {
     const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!m) return iso;
     return `${m[3]}.${m[2]}.${m[1]}`;
+  },
+
+  _visLabel(vis) {
+    if (vis === 'public')   return '🌐 Gildyjne';
+    if (vis === 'house')    return '⚜ Ród';
+    if (vis === 'personal') return '🔒 Osobiste';
+    return vis;
   },
 
   // ── Rendering ─────────────────────────────────────────────────────────────
@@ -273,7 +284,7 @@ const MetaEditor = {
           <button class="meta-add-btn" onclick="MetaEditor.addEvent()">＋ Dodaj wydarzenie</button>
         </div>
         <div class="meta-hint" style="margin-bottom:0.8rem;">
-          🌐 <strong>Publiczne</strong> — zawsze widoczne na osi czasu &nbsp;·&nbsp;
+          🌐 <strong>Gildyjne</strong> — zawsze widoczne na osi czasu &nbsp;·&nbsp;
           ⚜ <strong>Ród</strong> — widoczne przy filtrze rodu &nbsp;·&nbsp;
           🔒 <strong>Osobiste</strong> — widoczne przy filtrze postaci
         </div>
@@ -342,39 +353,37 @@ const MetaEditor = {
     }
 
     const sorted = [...this.data.events].sort((a, b) => (a.date||'').localeCompare(b.date||''));
-    const catOptions = ['', ...this._categories].map(c =>
-      `<option value="${this._esc(c)}">${c || '— brak kategorii —'}</option>`
-    ).join('');
 
     el.innerHTML = sorted.map(e => {
       const altDate = e.date && this.calendar?.enabled ? this.formatDate(e.date) : '';
       const vis = e.visibility || 'public';
-      const participantIds = e.participant_ids || [];
+      // Ensure participant_ids contains numbers for comparison
+      const participantIds = (e.participant_ids || []).map(Number);
 
-      // Participant chips
-      const selectedChars = this._allChars.filter(c => participantIds.includes(c.id));
-      const unselectedChars = this._allChars.filter(c => !participantIds.includes(c.id));
+      // Participant chips — selected chars first, then unselected
+      const selectedChars   = this._allChars.filter(c => participantIds.includes(Number(c.id)));
+      const unselectedChars = this._allChars.filter(c => !participantIds.includes(Number(c.id)));
 
       const selectedChips = selectedChars.map(c => `
         <button type="button" class="participant-chip participant-chip-on"
-          onclick="MetaEditor.toggleParticipant('${e.id}',${c.id},false)"
-          title="Usuń ${this._esc(c.name)}">
+          onclick="MetaEditor.toggleParticipant('${e.id}',${c.id},false)">
           ${this._esc(c.name)} ✕
         </button>`).join('');
 
       const unselectedChips = unselectedChars.map(c => `
         <button type="button" class="participant-chip participant-chip-off"
-          onclick="MetaEditor.toggleParticipant('${e.id}',${c.id},true)"
-          title="Dodaj ${this._esc(c.name)}">
+          onclick="MetaEditor.toggleParticipant('${e.id}',${c.id},true)">
           + ${this._esc(c.name)}
         </button>`).join('');
 
       const participantSection = this._allChars.length ? `
         <div class="participant-picker">
-          <div class="participant-picker-label">Uczestnicy:</div>
+          <div class="participant-picker-label">
+            Uczestnicy${participantIds.length ? ` (${participantIds.length})` : ''}:
+          </div>
           <div class="participant-chips">
-            ${selectedChips}
-            ${unselectedChips}
+            ${selectedChips || ''}
+            ${unselectedChips || ''}
           </div>
         </div>` : '';
 
@@ -407,7 +416,7 @@ const MetaEditor = {
             style="flex:1;background:var(--bg3,#1c2330);border:1px solid var(--border,rgba(120,160,200,0.2));
                    border-radius:3px;color:var(--text,#d8e4ee);font-family:'Crimson Pro',serif;
                    font-size:0.88rem;padding:6px 10px;outline:none;cursor:pointer;">
-            <option value="public"   ${vis==='public'   ?'selected':''}>🌐 Publiczne</option>
+            <option value="public"   ${vis==='public'   ?'selected':''}>🌐 Gildyjne</option>
             <option value="house"    ${vis==='house'    ?'selected':''}>⚜ Ród</option>
             <option value="personal" ${vis==='personal' ?'selected':''}>🔒 Osobiste</option>
           </select>
