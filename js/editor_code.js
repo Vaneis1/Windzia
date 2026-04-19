@@ -5,18 +5,17 @@ const EditorCode = {
   jsonText: '',
   cssText: '',
   jsonError: null,
+  _selectedPreviewBlock: null,
 
-  // CSS snippets — wstawiane do edytora
   _snippets: [
-    { label: 'gradient tła', code: '\n[data-bid="ID_BLOKU"] {\n  background: linear-gradient(\n    135deg,\n    #141920,\n    #1e3a5f\n  );\n}\n' },
-    { label: 'tło-obrazek', code: '\n[data-bid="ID_BLOKU"] {\n  background-image: url("ADRES_URL");\n  background-size: cover;\n  background-position: center;\n}\n' },
-    { label: 'ramka', code: '\n[data-bid="ID_BLOKU"] {\n  border: 1px solid #7ba7c4;\n  border-radius: 8px;\n}\n' },
-    { label: 'cień', code: '\n[data-bid="ID_BLOKU"] {\n  box-shadow: 0 4px 20px rgba(0,0,0,0.4);\n}\n' },
-    { label: 'zaokrąglenie', code: '\n[data-bid="ID_BLOKU"] {\n  border-radius: 12px;\n  overflow: hidden;\n}\n' },
-    { label: 'czcionka', code: '\n[data-bid="ID_BLOKU"] {\n  font-family: "Cinzel", serif;\n  color: #a8c8e0;\n  letter-spacing: 0.1em;\n}\n' },
-    { label: 'hover na obrazek', code: '\n[data-bid="ID_BLOKU"] img {\n  transition: transform 0.3s;\n}\n[data-bid="ID_BLOKU"] img:hover {\n  transform: scale(1.04);\n}\n' },
-    { label: 'animacja wejścia', code: '\n@keyframes fadeIn {\n  from { opacity: 0; transform: translateY(16px); }\n  to   { opacity: 1; transform: translateY(0); }\n}\n[data-bid="ID_BLOKU"] {\n  animation: fadeIn 0.5s ease-out;\n}\n' },
-    { label: 'tło strony', code: '\n/* Tło całej strony profilu */\nbody {\n  background: #0e1117;\n  background-image: url("ADRES_URL");\n  background-size: cover;\n  background-attachment: fixed;\n}\n' },
+    { label: 'gradient tła', code: '\n[data-bid="ID"] {\n  background: linear-gradient(\n    135deg,\n    #141920,\n    #1e3a5f\n  );\n}\n' },
+    { label: 'tło-obrazek', code: '\n[data-bid="ID"] {\n  background-image: url("ADRES_URL");\n  background-size: cover;\n  background-position: center;\n}\n' },
+    { label: 'ramka', code: '\n[data-bid="ID"] {\n  border: 1px solid #7ba7c4;\n  border-radius: 8px;\n}\n' },
+    { label: 'cień', code: '\n[data-bid="ID"] {\n  box-shadow: 0 4px 20px rgba(0,0,0,0.4);\n}\n' },
+    { label: 'zaokrąglenie', code: '\n[data-bid="ID"] {\n  border-radius: 12px;\n  overflow: hidden;\n}\n' },
+    { label: 'czcionka', code: '\n[data-bid="ID"] {\n  font-family: "Cinzel", serif;\n  color: #a8c8e0;\n  letter-spacing: 0.1em;\n}\n' },
+    { label: 'hover obrazek', code: '\n[data-bid="ID"] img {\n  transition: transform 0.3s;\n}\n[data-bid="ID"] img:hover {\n  transform: scale(1.04);\n}\n' },
+    { label: 'animacja wejścia', code: '\n@keyframes fadeIn {\n  from { opacity: 0; transform: translateY(16px); }\n  to   { opacity: 1; transform: translateY(0); }\n}\n[data-bid="ID"] {\n  animation: fadeIn 0.5s ease-out;\n}\n' },
   ],
 
   init() {
@@ -28,9 +27,7 @@ const EditorCode = {
 
     if (this.mode === 'json' && newMode !== 'json') {
       const ok = this._applyJsonText(false);
-      if (!ok && !confirm('JSON ma błąd — czy na pewno chcesz wyjść? Niezapisane zmiany przepadną.')) {
-        return;
-      }
+      if (!ok && !confirm('JSON ma błąd — czy na pewno chcesz wyjść? Niezapisane zmiany przepadną.')) return;
     }
     if (this.mode === 'css' && newMode !== 'css') {
       const ta = document.getElementById('css-editor');
@@ -48,9 +45,9 @@ const EditorCode = {
       t.classList.toggle('active', t.dataset.mode === this.mode);
     });
 
-    const visual = document.getElementById('mode-visual');
-    const json   = document.getElementById('mode-json');
-    const css    = document.getElementById('mode-css');
+    const visual  = document.getElementById('mode-visual');
+    const json    = document.getElementById('mode-json');
+    const css     = document.getElementById('mode-css');
     const sidebar = document.querySelector('.sidebar');
     const props   = document.querySelector('.props-panel');
 
@@ -139,17 +136,14 @@ const EditorCode = {
     const snippetsBar = document.getElementById('css-snippets-bar');
     if (snippetsBar) {
       snippetsBar.innerHTML = `
-        <span class="css-snippets-label">Wstaw snippet:</span>
+        <span class="css-snippets-label">Snippet:</span>
         ${this._snippets.map((s, i) => `
-          <button class="css-snippet-btn" onclick="EditorCode._insertSnippet(${i})"
-            title="${s.code.trim().slice(0, 80)}">
-            ${s.label}
-          </button>`).join('')}
-        <span class="css-snippets-hint">Zaznacz blok w wizualnym, by skopiować jego ID</span>
+          <button class="css-snippet-btn" onclick="EditorCode._insertSnippet(${i})">${s.label}</button>
+        `).join('')}
+        <span class="css-snippets-hint">Kliknij blok w podglądzie →</span>
       `;
     }
 
-    // Textarea
     const ta = document.getElementById('css-editor');
     if (ta) {
       ta.value = this.cssText;
@@ -162,7 +156,6 @@ const EditorCode = {
       };
     }
 
-    // Live preview
     this._updateCssPreview();
     this._applyCssLivePreview();
   },
@@ -170,17 +163,14 @@ const EditorCode = {
   _insertSnippet(idx) {
     const ta = document.getElementById('css-editor');
     if (!ta) return;
-
-    // Jeśli mamy zaznaczony blok, podmień ID_BLOKU
     let code = this._snippets[idx].code;
-    const selectedId = Editor.selectedId;
-    if (selectedId) code = code.replace(/ID_BLOKU/g, selectedId);
-
+    // Jeśli jest wybrany blok w podglądzie — wstaw jego ID
+    const bid = this._selectedPreviewBlock || Editor.selectedId;
+    if (bid) code = code.replace(/\bID\b/g, bid);
     const pos = ta.selectionEnd;
     ta.value = ta.value.slice(0, pos) + code + ta.value.slice(pos);
     ta.selectionStart = ta.selectionEnd = pos + code.length;
     ta.focus();
-
     this.cssText = ta.value;
     Editor.profileCss = ta.value;
     Editor._markDirty(false);
@@ -191,10 +181,29 @@ const EditorCode = {
   _updateCssPreview() {
     const previewCanvas = document.getElementById('css-preview-canvas');
     if (!previewCanvas) return;
-    // Render current blocks into preview
-    const html = Renderer.render(Editor.blocks, false);
-    previewCanvas.innerHTML = html || '<div style="padding:2rem;text-align:center;color:#3d5468;font-style:italic;">Brak bloków do podglądu</div>';
-    // Apply scoped CSS to preview
+
+    // Render bloków z data-bid wrapperami (bez trybu edycji)
+    const blocksHtml = (Editor.blocks || []).map(b =>
+      `<div data-bid="${b.id}" class="css-prev-block">${Renderer._inner(b, false)}</div>`
+    ).join('');
+
+    previewCanvas.innerHTML = blocksHtml ||
+      '<div style="padding:2rem;text-align:center;color:#3d5468;font-style:italic;">Brak bloków — dodaj je w trybie Wizualny</div>';
+
+    // Dodaj click handlery do bloków w podglądzie
+    previewCanvas.querySelectorAll('.css-prev-block').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        EditorCode._focusBlockCss(el.dataset.bid);
+      });
+    });
+
+    // Przywróć podświetlenie wybranego
+    if (this._selectedPreviewBlock) {
+      this._highlightPreviewBlock(this._selectedPreviewBlock);
+    }
+
+    // Zastosuj CSS do podglądu
     let previewStyle = document.getElementById('css-preview-style');
     if (!previewStyle) {
       previewStyle = document.createElement('style');
@@ -202,6 +211,54 @@ const EditorCode = {
       document.head.appendChild(previewStyle);
     }
     previewStyle.textContent = this._scopeCssClient(this.cssText, '#css-preview-canvas');
+  },
+
+  // Kliknięcie bloku w podglądzie — skocz do jego CSS lub wstaw szablon
+  _focusBlockCss(blockId) {
+    this._selectedPreviewBlock = blockId;
+    this._highlightPreviewBlock(blockId);
+
+    const ta = document.getElementById('css-editor');
+    if (!ta) return;
+
+    const searchStr = `[data-bid="${blockId}"]`;
+    const idx = ta.value.indexOf(searchStr);
+
+    if (idx !== -1) {
+      // Znaleziono — przewiń i zaznacz
+      ta.focus();
+      ta.setSelectionRange(idx, idx + searchStr.length);
+      const lineH = 22;
+      const lines = ta.value.substring(0, idx).split('\n');
+      ta.scrollTop = Math.max(0, (lines.length - 3)) * lineH;
+      Editor._toast(`Znaleziono styl bloku ${blockId}`, 'ok');
+    } else {
+      // Nie ma — wstaw pusty szablon
+      const snippet = `\n[data-bid="${blockId}"] {\n  \n}\n`;
+      ta.value += snippet;
+      const newIdx = ta.value.lastIndexOf(`[data-bid="${blockId}"]`);
+      ta.focus();
+      ta.setSelectionRange(newIdx, newIdx + searchStr.length);
+      ta.scrollTop = ta.scrollHeight;
+      this.cssText = ta.value;
+      Editor.profileCss = ta.value;
+      Editor._markDirty(false);
+      this._applyCssLivePreview();
+      this._updateCssPreview();
+      Editor._toast(`Dodano szablon dla bloku ${blockId}`, 'ok');
+    }
+  },
+
+  _highlightPreviewBlock(blockId) {
+    document.querySelectorAll('.css-prev-block').forEach(el => {
+      if (el.dataset.bid === blockId) {
+        el.style.outline = '2px solid var(--accent)';
+        el.style.outlineOffset = '2px';
+      } else {
+        el.style.outline = '';
+        el.style.outlineOffset = '';
+      }
+    });
   },
 
   _applyCssLivePreview() {
@@ -221,13 +278,10 @@ const EditorCode = {
     css = css.replace(/expression\s*\(/gi, '/*x*/(');
     css = css.replace(/\/\*[\s\S]*?\*\//g, '');
 
-    let result = '';
-    let i = 0, n = css.length;
-
+    let result = '', i = 0, n = css.length;
     while (i < n) {
       while (i < n && /\s/.test(css[i])) { result += css[i]; i++; }
       if (i >= n) break;
-
       if (css[i] === '@') {
         let end = i;
         while (end < n && css[end] !== '{' && css[end] !== ';') end++;
@@ -238,16 +292,12 @@ const EditorCode = {
           let depth = 1, j = end + 1;
           while (j < n && depth > 0) { if (css[j] === '{') depth++; else if (css[j] === '}') depth--; j++; }
           const inner = css.slice(end + 1, j - 1);
-          if (/@keyframes|@-webkit-keyframes|@font-face/i.test(header)) {
-            result += '{' + inner + '}';
-          } else {
-            result += '{' + this._scopeCssClient(inner, scope) + '}';
-          }
-          i = j;
-          continue;
+          result += /@keyframes|@-webkit-keyframes|@font-face/i.test(header)
+            ? '{' + inner + '}'
+            : '{' + this._scopeCssClient(inner, scope) + '}';
+          i = j; continue;
         }
       }
-
       const selStart = i;
       while (i < n && css[i] !== '{') i++;
       if (i >= n) { result += css.slice(selStart); break; }
@@ -255,8 +305,7 @@ const EditorCode = {
       const scoped = sel.split(',').map(s => s.trim()).filter(Boolean).map(s => `${scope} ${s}`).join(', ');
       let depth = 1, j = i + 1;
       while (j < n && depth > 0) { if (css[j] === '{') depth++; else if (css[j] === '}') depth--; j++; }
-      const body = css.slice(i + 1, j - 1);
-      result += `${scoped}{${body}}`;
+      result += `${scoped}{${css.slice(i + 1, j - 1)}}`;
       i = j;
     }
     return result;
@@ -276,7 +325,7 @@ const EditorCode = {
   _jsonTutorialHtml() {
     return `
 <h3>Czym jest JSON struktury?</h3>
-<p>To zapis tekstowy całego twojego profilu. Każdy blok który widzisz w trybie wizualnym to jeden obiekt w tym JSONie. Edycja kodu daje ci pełną kontrolę — możesz np. zduplikować całą sekcję, masowo zmienić kolor wszystkich nagłówków, lub ustawić właściwości których nie ma w panelu.</p>
+<p>To zapis tekstowy całego twojego profilu. Każdy blok który widzisz w trybie wizualnym to jeden obiekt w tym JSONie.</p>
 <h3>Struktura pojedynczego bloku</h3>
 <pre>{
   "id": "b8x4k2m",
@@ -299,48 +348,36 @@ const EditorCode = {
 }</pre>
 <h3>Dostępne typy bloków</h3>
 <ul>
-  <li><code>container</code> — kontener z kolumnami</li>
-  <li><code>cards</code> — siatka kart</li>
-  <li><code>slider_v</code>, <code>slider_h</code> — suwak pionowy/poziomy</li>
-  <li><code>richtext</code> — tekst sformatowany</li>
-  <li><code>text</code>, <code>heading</code>, <code>quote</code>, <code>badge</code> — tekstowe</li>
-  <li><code>image</code> — obraz</li>
-  <li><code>divider</code>, <code>spacer</code> — dekoracyjne</li>
-</ul>
-    `;
+  <li><code>container</code>, <code>cards</code>, <code>slider_v</code>, <code>slider_h</code> — układy</li>
+  <li><code>richtext</code>, <code>text</code>, <code>heading</code>, <code>quote</code>, <code>badge</code> — treść</li>
+  <li><code>image</code>, <code>divider</code>, <code>spacer</code> — media i dekoracje</li>
+</ul>`;
   },
 
   _cssTutorialHtml() {
     return `
 <h3>Jak używać edytora CSS?</h3>
-<p>Po lewej piszesz CSS, po prawej widzisz efekt w czasie rzeczywistym. Kliknij przycisk snippetu żeby wstawić gotowy kod — jeśli masz zaznaczony blok w trybie wizualnym, <code>ID_BLOKU</code> zostanie zastąpione automatycznie.</p>
+<p>Po lewej piszesz CSS, po prawej widzisz efekt na żywo. <strong>Kliknij blok w podglądzie</strong> — edytor przeskoczy do jego stylu lub doda pusty szablon.</p>
 
-<h3>Jak znaleźć ID bloku?</h3>
-<p>1. Wróć do trybu Wizualny. 2. Kliknij blok żeby go zaznaczyć. 3. Wróć do CSS i kliknij dowolny snippet — ID wstawi się samoczynnie.</p>
-<p>Możesz też znaleźć ID w trybie Struktura (JSON) — pole <code>"id"</code> każdego bloku.</p>
-
-<h3>Przykład: gradient tła bloku</h3>
+<h3>Jak celować w blok?</h3>
 <pre>[data-bid="twoje_id"] {
   background: linear-gradient(135deg, #2a1a3a, #0a0a1a);
   border-radius: 12px;
 }</pre>
+<p>ID bloku znajdziesz klikając go w podglądzie — zostanie zaznaczone w edytorze lub automatycznie wstawione.</p>
 
 <h3>Przykład: animacja wejścia</h3>
 <pre>@keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-h1, h2, h3 {
-  animation: fadeIn 0.6s ease-out;
-}</pre>
+h1, h2 { animation: fadeIn 0.6s ease-out; }</pre>
 
 <h3>Czego nie wolno?</h3>
 <ul>
   <li><code>position: fixed</code> — mogłoby przesłonić interfejs</li>
-  <li><code>@import</code>, <code>javascript:</code> — zablokowane</li>
-  <li>Twój CSS jest automatycznie zawężany do twojego profilu — nie wpływa na resztę</li>
-</ul>
-    `;
+  <li><code>@import</code>, <code>javascript:</code> — zablokowane ze względów bezpieczeństwa</li>
+</ul>`;
   },
 
   closeTutorial() {
