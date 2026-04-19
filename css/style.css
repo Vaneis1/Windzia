@@ -707,3 +707,49 @@ footer { margin-top: 3rem; text-align: center; font-size: 0.78rem; color: var(--
   flex-wrap: wrap;
   margin-left: auto;
 }
+
+/* ── Timeline card — redesigned layout ───────────────────────────────────── */
+ 
+/* Nadpisujemy poprzedni tl-event-header */
+.tl-event-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.tl-event-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.tl-event-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.tl-event-date-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.tl-event-badges {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.tl-event-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  color: var(--gold-l);
+  letter-spacing: 0.04em;
+  margin: 2px 0 6px;
+}
