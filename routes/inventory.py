@@ -12,12 +12,17 @@ from utils import get_current_owner, require_auth, match_item
 inventory_bp = Blueprint("inventory", __name__)
 
 SCAN_PROMPT = (
-    "This is a game inventory screenshot in Polish. "
-    "Extract every visible item and its quantity "
+    "This is a Polish fantasy game inventory screenshot. "
+    "Extract every visible item slot and its quantity "
     "(the small number badge on the top-left corner of each slot). "
     "Return ONLY a raw JSON array, no markdown, no explanation: "
     '[{"name":"Polish item name","quantity":number},...]. '
-    "If no badge is visible, quantity is 1. Include all visible sections."
+    "Rules: "
+    "1. Write the FULL Polish item name — never truncate or abbreviate. "
+    "2. Use correct Polish spelling with diacritics (ą ę ó ś ż ź ć ń ł). "
+    "3. If no number badge is visible, quantity is 1. "
+    "4. Include ALL visible slots, even if the name is hard to read — guess the full name. "
+    "5. Common item prefixes: Bryłka, Sztabka, Drewno, Oszlifowany/a, Nici, Tkanina, Narzędzia. "
 )
 
 
