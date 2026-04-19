@@ -11,19 +11,45 @@ from utils import get_current_owner, require_auth, match_item
 
 inventory_bp = Blueprint("inventory", __name__)
 
-SCAN_PROMPT = (
-    "This is a Polish fantasy game inventory screenshot. "
-    "Extract every visible item slot and its quantity "
-    "(the small number badge on the top-left corner of each slot). "
-    "Return ONLY a raw JSON array, no markdown, no explanation: "
-    '[{"name":"Polish item name","quantity":number},...]. '
-    "Rules: "
-    "1. Write the FULL Polish item name — never truncate or abbreviate. "
-    "2. Use correct Polish spelling with diacritics (ą ę ó ś ż ź ć ń ł). "
-    "3. If no number badge is visible, quantity is 1. "
-    "4. Include ALL visible slots, even if the name is hard to read — guess the full name. "
-    "5. Common item prefixes: Bryłka, Sztabka, Drewno, Oszlifowany/a, Nici, Tkanina, Narzędzia. "
-)
+
+def _build_scan_prompt() -> str:
+    """
+    Build scan prompt dynamically with all item names from DB.
+    Claude receives the full list and must pick from it — eliminates OCR text errors.
+    Falls back to generic prompt if DB is unavailable.
+    """
+    try:
+        names = [i.name for i in Item.query.order_by(Item.category, Item.name).all()]
+        names_str = "\n".join(f"- {n}" for n in names)
+    except Exception:
+        names_str = ""
+
+    if names_str:
+        return (
+            "This is a Polish fantasy game inventory screenshot.\n"
+            "Below is the COMPLETE list of all valid item names:\n"
+            f"{names_str}\n\n"
+            "Task: for each visible inventory slot, identify the item from the list above "
+            "and read its quantity badge (small number in the top-left corner of the slot).\n"
+            "Return ONLY a raw JSON array, no markdown, no explanation:\n"
+            '[{"name":"exact name from the list above","quantity":number},...]\n'
+            "Rules:\n"
+            "1. ONLY use names EXACTLY as written in the list — never invent or modify names.\n"
+            "2. Match by visual appearance — icon shape, color, and any readable text.\n"
+            "3. If no quantity badge is visible, quantity is 1.\n"
+            "4. Include ALL visible slots.\n"
+            "5. If unsure between similar items, pick the closest visual match from the list."
+        )
+    else:
+        return (
+            "This is a game inventory screenshot in Polish. "
+            "Extract every visible item and its quantity "
+            "(the small number badge on the top-left corner of each slot). "
+            "Return ONLY a raw JSON array, no markdown, no explanation: "
+            '[{"name":"Polish item name","quantity":number},...]. '
+            "Write the FULL Polish item name with correct diacritics (ą ę ó ś ż ź ć ń ł). "
+            "If no badge is visible, quantity is 1. Include all visible sections."
+        )
 
 
 def _parse_id_list(raw: str | None) -> list[int]:
@@ -46,13 +72,6 @@ def _build_inventory_response(
     only_with_data: bool = False,
     item_search: str = "",
 ) -> dict:
-    """Build inventory grid with optional filters.
-
-    Performance notes:
-    - All queries are parameterized
-    - Single inventory query for all (char_id, item_id) pairs in scope
-    - Filter character_ids upstream rather than client-side
-    """
     # ── Characters ────────────────────────────────────────────────────────────
     char_q = Character.query
     if owner.role != "admin":
@@ -72,14 +91,12 @@ def _build_inventory_response(
         Item.display_order.desc(), Item.category, Item.name
     ).all()
 
-    # Tag filter (post-query because it's JSON)
     if tags:
         items = [i for i in items if any(t in (i.tags or []) for t in tags)]
 
     char_ids = [c.id for c in chars]
     item_ids = [i.id for i in items]
 
-    # ── Inventory entries (single query) ──────────────────────────────────────
     entries = []
     if char_ids and item_ids:
         entries = (
@@ -95,7 +112,6 @@ def _build_inventory_response(
         (e.character_id, e.item_id): e.quantity for e in entries
     }
 
-    # Filter items: only those with data for these characters
     if only_with_data:
         items = [
             i for i in items
@@ -132,12 +148,11 @@ def get_inventory():
     tags_raw = request.args.get("tags", "").strip()
     chars_raw = request.args.get("characters", "").strip()
     only_with_data = request.args.get("only_with_data", "0") in ("1", "true", "True")
-    scope = request.args.get("scope", "").strip()  # "mine" forces own characters
+    scope = request.args.get("scope", "").strip()
 
     tags = [t.strip() for t in tags_raw.split(",") if t.strip()] if tags_raw else None
     character_ids = _parse_id_list(chars_raw) if chars_raw else None
 
-    # Scope=mine — restrict to own characters even for admin
     if scope == "mine" and owner.role == "admin":
         own_ids = [c.id for c in Character.query.filter_by(owner_id=owner.id).all()]
         if character_ids:
@@ -158,7 +173,6 @@ def get_inventory():
 @inventory_bp.route("/items/<int:item_id>/holders", methods=["GET"])
 @require_auth
 def item_holders(item_id):
-    """Return list of (character, quantity) for a given item, sorted descending."""
     owner = get_current_owner()
     item = db.session.get(Item, item_id)
     if not item:
@@ -193,7 +207,6 @@ def item_holders(item_id):
 @inventory_bp.route("/items/tags", methods=["GET"])
 @require_auth
 def all_tags():
-    """Return list of all distinct tags used across items."""
     items = Item.query.with_entities(Item.tags).all()
     tag_set = set()
     for (tags,) in items:
@@ -207,7 +220,6 @@ def all_tags():
 @inventory_bp.route("/search", methods=["GET"])
 @require_auth
 def global_search():
-    """Search across items and characters (for Cmd+K)."""
     owner = get_current_owner()
     q = request.args.get("q", "").strip().lower()
     if len(q) < 2:
@@ -215,7 +227,6 @@ def global_search():
 
     like = f"%{q}%"
 
-    # Items: name or alias
     item_results = (
         Item.query
         .filter(func.lower(Item.name).like(like))
@@ -224,7 +235,6 @@ def global_search():
         .all()
     )
 
-    # Characters: name (admin sees all, owner sees own)
     char_q = Character.query.filter(func.lower(Character.name).like(like))
     if owner.role != "admin":
         char_q = char_q.filter(Character.owner_id == owner.id)
@@ -267,6 +277,9 @@ def scan():
         if owner.role != "admin" and char.owner_id != owner.id:
             return jsonify({"error": "Brak uprawnień do tej postaci"}), 403
 
+    # Build prompt dynamically with current item list from DB
+    scan_prompt = _build_scan_prompt()
+
     raw_items: dict[str, int] = {}
     for img in images:
         mime = img.get("mime_type", "image/png")
@@ -284,16 +297,23 @@ def scan():
                 },
                 json={
                     "model": "claude-haiku-4-5-20251001",
-                    "max_tokens": 1500,
+                    "max_tokens": 2048,
                     "messages": [{
                         "role": "user",
                         "content": [
-                            {"type": "image", "source": {"type": "base64", "media_type": mime, "data": data}},
-                            {"type": "text", "text": SCAN_PROMPT},
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": mime,
+                                    "data": data,
+                                },
+                            },
+                            {"type": "text", "text": scan_prompt},
                         ],
                     }],
                 },
-                timeout=30,
+                timeout=45,
             )
             resp_data = response.json()
             if "error" in resp_data:
@@ -311,6 +331,7 @@ def scan():
                 qty = int(entry.get("quantity", 1))
                 if name:
                     raw_items[name] = raw_items.get(name, 0) + qty
+
         except (httpx.RequestError, json.JSONDecodeError, ValueError) as e:
             return jsonify({"error": f"Błąd skanowania: {str(e)}"}), 500
 
