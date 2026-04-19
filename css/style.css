@@ -388,7 +388,17 @@ footer { margin-top: 3rem; text-align: center; font-size: 0.78rem; color: var(--
 .tl-year-events::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:1px;background:var(--border);}
 .tl-event{position:relative;margin-bottom:12px;}
 .tl-event-dot{position:absolute;left:-24px;top:14px;width:11px;height:11px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);flex-shrink:0;}
-.tl-event-card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:12px 16px;transition:border-color 0.15s;}
+.tl-event-card{background: linear-gradient(135deg, var(--bg2), var(--bg3)); position: relative; overflow: hidden; border:1px solid var(--border);border-radius:6px;padding:12px 16px;transition:border-color 0.15s;}
+.tl-event-card::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  right: -15%;
+  width: 50%;
+  height: 200%;
+  background: radial-gradient(ellipse, var(--gold-d), transparent 70%);
+  pointer-events: none;
+}
 .tl-event-card:hover{border-color:var(--border-h);}
 .tl-event-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
 .tl-char-link{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text);transition:color 0.12s;}
