@@ -1,14 +1,28 @@
 // characters.js — Character CRUD and select population
 const Characters = {
+  _lastLoaded: 0,
+  _TTL: 5 * 60 * 1000, // 5 minut
+
+  async loadCached() {
+    if (Date.now() - this._lastLoaded < this._TTL) return;
+    await this.load();
+  },
+
   async load() {
     try {
       const chars = await API.get('/characters');
       if (!Array.isArray(chars)) return;
+      this._lastLoaded = Date.now();
       this._renderGrid(chars);
       this._populateSelects(chars);
     } catch (e) {
       console.error('loadCharacters:', e.message);
     }
+  },
+
+  // Wymuś odświeżenie (np. po dodaniu/usunięciu postaci)
+  invalidate() {
+    this._lastLoaded = 0;
   },
 
   _renderGrid(chars) {
@@ -92,6 +106,7 @@ const Characters = {
       const data = await API.put('/characters/' + id, { name });
       if (data.error) throw new Error(data.error);
       UI.ok('char-ok', 'char-err', `Zmieniono imię na „${name}".`);
+      this.invalidate();
       await this.load();
     } catch (e) {
       UI.err('char-ok', 'char-err', 'Błąd: ' + e.message);
@@ -119,6 +134,7 @@ const Characters = {
       if (data.error) throw new Error(data.error);
       if (input) input.value = '';
       UI.ok('char-ok', 'char-err', `Dodano „${name}".`);
+      this.invalidate();
       await this.load();
     } catch (e) {
       UI.err('char-ok', 'char-err', 'Błąd: ' + e.message);
@@ -130,6 +146,7 @@ const Characters = {
     try {
       const data = await API.delete('/characters/' + id);
       if (data.error) throw new Error(data.error);
+      this.invalidate();
       await this.load();
     } catch (e) {
       UI.err('char-ok', 'char-err', 'Błąd: ' + e.message);
