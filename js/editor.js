@@ -9,7 +9,8 @@ const Editor = {
   profileCss:'',
   meta:{},
   tabs:[],
-  activeTab:'info',
+  activeTab:'',       // ← puste na starcie (nie 'info')
+  _loadedProfile:null,
 
   async init(){
     const params=new URLSearchParams(window.location.search);
@@ -38,13 +39,21 @@ const Editor = {
         await MetaEditor.init();
         await MetaEditor.loadWithEvents(this.charId, this.meta);
       }
-      this._renderTabBar();
       document.getElementById('char-name-display').textContent=data.name;
       document.getElementById('toggle-public').checked=data.profile_public||false;
       document.getElementById('profile-link').href=`profile.html?id=${this.charId}`;
       this._applyPageSettingsToEditor();
       this._renderPageSettingsForm();
       this._pushHistory();
+
+      // Zapamiętaj stan zakładki Profil
+      this._loadedProfile = {
+        blocks: JSON.parse(JSON.stringify(this.blocks)),
+        pageSettings: { ...this.pageSettings },
+        profileCss: this.profileCss,
+      };
+
+      // activeTab jest puste — switchTab('info') nie zrobi early return
       this.switchTab('info');
     }catch(e){this._toast('Błąd: '+e.message,'err');}
   },
@@ -292,6 +301,8 @@ const Editor = {
     const canvas=document.getElementById('canvas');
     if(!canvas)return;
     canvas.innerHTML=Renderer.render(this.blocks,true)||`<div class="canvas-empty"><div style="font-size:2rem;margin-bottom:1rem;opacity:0.2">⊞</div><div>Kliknij <strong>＋ Dodaj</strong> aby rozpocząć</div></div>`;
+    // Odśwież podgląd CSS jeśli jest aktywny
+    if (typeof EditorCode !== 'undefined') EditorCode._updateCssPreview();
   },
 
   // ── Properties panel ─────────────────────────────────────────────────────
@@ -389,7 +400,6 @@ const Editor = {
       if(data.error)throw new Error(data.error);
       const metaRes = await this._api('PUT', `/characters/${this.charId}/meta`, this.meta);
       if (metaRes.error) throw new Error(metaRes.error);
-      // Sync events to dedicated table
       if (typeof MetaEditor !== 'undefined') {
         await MetaEditor.syncEvents(this.charId, this._api.bind(this));
       }
@@ -422,6 +432,7 @@ const Editor = {
     this.selectedId = null;
     const metaPanel = document.getElementById('meta-editor-wrap');
     const visualMode = document.getElementById('mode-visual');
+
     if (tabId === 'info') {
       this.activeTab = 'info';
       if (metaPanel) metaPanel.style.display = 'block';
@@ -432,12 +443,20 @@ const Editor = {
       if (props) props.style.display = 'none';
       const modeTabs = document.querySelector('.mode-tabs');
       if (modeTabs) modeTabs.style.display = 'none';
+      // Ukryj tryby code
+      const modeJson = document.getElementById('mode-json');
+      const modeCss = document.getElementById('mode-css');
+      if (modeJson) modeJson.style.display = 'none';
+      if (modeCss) modeCss.style.display = 'none';
     } else if (tabId === 'profile') {
       this.activeTab = 'profile';
       if (metaPanel) metaPanel.style.display = 'none';
-      this.blocks = this._loadedProfile?.blocks || this.blocks;
-      this.pageSettings = this._loadedProfile?.pageSettings || this.pageSettings;
-      this.profileCss = this._loadedProfile?.profileCss || this.profileCss;
+      // Przywróć dane profilu
+      if (this._loadedProfile) {
+        this.blocks = JSON.parse(JSON.stringify(this._loadedProfile.blocks));
+        this.pageSettings = { ...this._loadedProfile.pageSettings };
+        this.profileCss = this._loadedProfile.profileCss;
+      }
       if (typeof EditorCode !== 'undefined') EditorCode.cssText = this.profileCss;
       this._showVisualMode();
       this.render();
