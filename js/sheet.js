@@ -42,16 +42,17 @@ const Sheet = {
   },
 
   switchView(view) {
-    this.activeView = view;
-    document.querySelectorAll('.sheet-subtab').forEach(t => {
-      t.classList.toggle('active', t.dataset.view === view);
+     this.currentView = view;
+     ['scan', 'mine', 'item', 'matrix'].forEach(v => {   // ← dodaj 'scan'
+       const el = document.getElementById('sheet-view-' + v);
+       if (el) el.style.display = v === view ? '' : 'none';
     });
-    ['mine','item','matrix'].forEach(v => {
-      const el = document.getElementById('sheet-view-' + v);
-      if (el) el.style.display = v === view ? 'block' : 'none';
+     document.querySelectorAll('.sheet-subtab').forEach(el => {
+       el.classList.toggle('active', el.dataset.view === view);
     });
-    if (view === 'mine') this.loadMine();
-    if (view === 'item') this.renderItemView();
+    if (view === 'scan') Scan.initDropZone();
+    if (view === 'mine')   this.loadMine();
+    if (view === 'item')   this.initItemSearch();
     if (view === 'matrix') this.loadMatrix();
   },
 
