@@ -48,6 +48,15 @@ const Scan = {
   initDropZone() {
     const zone = document.getElementById('upload-zone');
     if (!zone) return;
+    if (zone._dropZoneInit) return; 
+    zone._dropZoneInit = true;      
+
+    zone.addEventListener('dragover', e => { ... });
+    zone.addEventListener('dragleave', () => ... );
+    zone.addEventListener('drop', e => { ... });
+
+    document.addEventListener('paste', e => { ... });
+  },
  
     zone.addEventListener('dragover', e => {
       e.preventDefault();
