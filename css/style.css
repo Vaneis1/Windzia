@@ -659,3 +659,51 @@ footer { margin-top: 3rem; text-align: center; font-size: 0.78rem; color: var(--
 .char-card:hover .char-rename-btn { opacity: 1; }
 .char-rename-btn:hover { color: var(--gold-l); background: transparent; border: none; }
 .char-name-wrap { display: flex; align-items: center; gap: 4px; }
+
+/* ── Participant search input ─────────────────────────────────────────────── */
+.participant-search {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: 'Crimson Pro', serif;
+  font-size: 0.88rem;
+  padding: 5px 10px;
+  outline: none;
+  margin-bottom: 8px;
+}
+.participant-search:focus { border-color: var(--gold); }
+.participant-search::placeholder { color: var(--text-m); }
+
+.participant-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 2px;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* ── Timeline card meta row (data + kategoria + widoczność) ─────────────────*/
+.tl-event-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 6px 0 4px;
+  flex-wrap: wrap;
+}
+.tl-event-date-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tl-event-badges {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
