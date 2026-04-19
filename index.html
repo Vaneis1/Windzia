@@ -131,52 +131,6 @@
     <div class="nav-tab admin-t" id="admin-nav-tab" style="display:none;" onclick="switchTab('admin')">⚙ Admin</div>
   </nav>
 
-  <!-- ── SCAN ────────────────────────────────────────────────────────────── -->
-  <div id="tab-scan" class="tab-content active">
-    <div class="section-label">Postać</div>
-    <div class="panel">
-      <div class="field">
-        <label>Wybierz postać</label>
-        <select id="char-select"><option value="">— wybierz —</option></select>
-      </div>
-    </div>
-    <div class="section-label">Zrzuty ekranu</div>
-    <div class="panel">
-      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
-        <input type="file" id="file-input" accept="image/*" multiple style="display:none"
-          onchange="Array.from(this.files).forEach(f => Scan.addImage(f)); this.value='';">
-        <p><strong>Kliknij, przeciągnij lub wklej</strong> zrzuty ekranu (Ctrl+V)</p>
-        <p style="font-size:0.82rem;margin-top:3px;">PNG, JPG, WebP · wiele plików naraz</p>
-      </div>
-      <div class="previews" id="previews"></div>
-    </div>
-    <div class="btn-row">
-      <button class="primary" id="scan-btn" onclick="Scan.run()" disabled>⟳ Skanuj inwentarz</button>
-      <button id="save-btn" onclick="Scan.save()" disabled>✓ Zapisz do bazy</button>
-      <button id="csv-btn"  onclick="Scan.copyCSV()" disabled>⎘ Kopiuj CSV</button>
-    </div>
-    <div class="status-bar"><div class="spinner" id="scan-spinner"></div><span id="scan-status"></span></div>
-    <div class="msg ok"  id="scan-ok"></div>
-    <div class="msg err" id="scan-err"></div>
-    <div id="scan-results" style="display:none; margin-top:1.2rem;">
-      <div class="section-label">Dopasowane</div>
-      <div class="panel" style="padding:0;">
-        <div class="results-hdr"><span>Przedmiot</span><span style="text-align:right;">Ilość</span><span>Kategoria</span></div>
-        <div id="results-body"></div>
-      </div>
-      <div id="unknown-wrap" style="display:none; margin-top:0.8rem;">
-        <div class="section-label">Nierozpoznane — pominięto</div>
-        <div class="panel" style="padding:0.7rem 1.2rem;">
-          <p class="hint" style="margin-bottom:0.6rem;">Nie znaleziono w bazie surowców. Admin może dodać aliasy.</p>
-          <div id="unknown-body"></div>
-        </div>
-      </div>
-      <div id="rescan-wrap" style="display:none;margin-top:0.8rem;">
-        <button class="warn-btn" onclick="Scan.rescan()">↺ Skanuj ponownie po dodaniu surowców</button>
-      </div>
-    </div>
-  </div>
-
   <!-- ── SHEET ──────────────────────────────────────────────────────────── -->
   <div id="tab-sheet" class="tab-content">
     <h1 class="page-title">◆ Surowce</h1>
