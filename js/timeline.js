@@ -15,11 +15,12 @@ const Timeline = {
     try {
       const token = localStorage.getItem('ww_token') || '';
       const headers = { 'Authorization': 'Bearer ' + token };
+      const proxyBase = (typeof Config !== 'undefined' ? Config.PROXY : '') || window.PROXY || '';
       const [calData, chars, houses, cats] = await Promise.all([
         API.get('/settings/calendar').catch(() => null),
         API.get('/characters').catch(() => []),
         API.get('/houses').catch(() => []),
-        fetch((window.PROXY||Config.PROXY) + '/events/categories', { headers })
+        fetch(proxyBase + '/events/categories', { headers })
           .then(r => r.json()).catch(() => []),
       ]);
       this.calendar = calData;
@@ -49,9 +50,7 @@ const Timeline = {
       const data = await API.get('/events?' + params.toString());
       if (!Array.isArray(data)) throw new Error(data?.error || 'Błąd serwera');
       this.events = data;
-      if (status) status.textContent = data.length
-        ? `${data.length} wydarzeń`
-        : '';
+      if (status) status.textContent = data.length ? `${data.length} wydarzeń` : '';
       this._render();
     } catch(e) {
       if (status) status.textContent = 'Błąd: ' + e.message;
@@ -60,8 +59,7 @@ const Timeline = {
 
   setFilter(key, value) {
     this.filters[key] = value;
-    // Update active state on chips
-    if (key === 'character_id' || key === 'house_id' || key === 'category') {
+    if (['character_id', 'house_id', 'category'].includes(key)) {
       this._updateChipState(key, value);
     }
     if (key === 'date_from' || key === 'date_to') {
@@ -117,7 +115,6 @@ const Timeline = {
     ];
 
     wrap.innerHTML = `
-      <!-- Postacie -->
       <div class="tl-filter-row">
         <div class="tl-filter-row-label">Postać</div>
         <div class="tl-chip-group tl-chip-scroll" data-filter="character_id">
@@ -130,7 +127,6 @@ const Timeline = {
         </div>
       </div>
 
-      <!-- Rody -->
       ${this.houses.length ? `
       <div class="tl-filter-row">
         <div class="tl-filter-row-label">Ród</div>
@@ -138,14 +134,13 @@ const Timeline = {
           ${houseChips.map(h => `
             <button class="tl-chip${h.value === this.filters.house_id ? ' active' : ''}"
               data-value="${this._esc(h.value)}"
-              style="${h.value && h.color ? `--chip-color:${h.color}` : ''}"
+              ${h.value && h.color ? `style="--chip-color:${h.color}"` : ''}
               onclick="Timeline.setFilter('house_id','${this._esc(h.value)}')">
               ${this._esc(h.label)}
             </button>`).join('')}
         </div>
       </div>` : ''}
 
-      <!-- Kategorie -->
       ${this.categories.length ? `
       <div class="tl-filter-row">
         <div class="tl-filter-row-label">Typ</div>
@@ -159,7 +154,6 @@ const Timeline = {
         </div>
       </div>` : ''}
 
-      <!-- Daty -->
       <div class="tl-filter-row">
         <div class="tl-filter-row-label">Daty</div>
         <div class="tl-date-range">
@@ -175,14 +169,20 @@ const Timeline = {
               onchange="Timeline.setFilter('date_to',this.value)">
             <span id="tl-date-to-display" class="tl-date-alt-display"></span>
           </div>
-          <button class="tl-clear-btn" onclick="Timeline.clearFilters()" title="Wyczyść filtry">✕</button>
+          <button class="tl-clear-btn" onclick="Timeline.clearFilters()" title="Wyczyść filtry">✕ Wyczyść</button>
         </div>
       </div>
     `;
 
-    // Init alt date displays
     if (this.filters.date_from) this._updateDateDisplay('date_from', this.filters.date_from);
     if (this.filters.date_to)   this._updateDateDisplay('date_to',   this.filters.date_to);
+  },
+
+  _visLabel(vis) {
+    if (vis === 'public')   return 'Gildyjne';
+    if (vis === 'house')    return 'Ród';
+    if (vis === 'personal') return 'Osobiste';
+    return '';
   },
 
   _render() {
@@ -258,10 +258,14 @@ const Timeline = {
         }).join('')}
       </div>` : '';
 
+    // Category badge
     const catBadge = e.category
       ? `<span class="tl-cat-badge">${this._esc(e.category)}</span>` : '';
 
-    const visIcon = e.visibility === 'house' ? '⚜' : e.visibility === 'personal' ? '🔒' : '';
+    // Visibility badge — only for non-public
+    const visBadge = e.visibility && e.visibility !== 'public'
+      ? `<span class="tl-vis-badge">${e.visibility === 'house' ? '⚜ Ród' : '🔒 Osobiste'}</span>`
+      : '';
 
     return `<div class="tl-event">
       <div class="tl-event-dot"></div>
@@ -269,10 +273,11 @@ const Timeline = {
         <div class="tl-event-header">
           <a href="profile.html?id=${e.character_id}" class="tl-char-link">
             ${avatar}
-            <span class="tl-char-name">${this._esc(e.character_name||'')}${visIcon ? ' ' + visIcon : ''}</span>
+            <span class="tl-char-name">${this._esc(e.character_name||'')}</span>
           </a>
           ${houseBadges ? `<div class="tl-house-badges">${houseBadges}</div>` : ''}
           ${catBadge}
+          ${visBadge}
         </div>
         ${participantsHtml}
         <div class="tl-event-date">
