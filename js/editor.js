@@ -7,10 +7,9 @@ const Editor = {
   copiedStyle:null,
   pageSettings:{ bg_color:'', bg_image:'', bg_size:'cover', bg_position:'center', max_width:'900px' },
   profileCss:'',
-  // Tabs system
-  meta:{}, // predefined Info tab data
-  tabs:[], // [{ id, name, blocks_data: {blocks, settings}, css }]
-  activeTab:'info', // 'info' | tab.id
+  meta:{},
+  tabs:[],
+  activeTab:'info',
 
   async init(){
     const params=new URLSearchParams(window.location.search);
@@ -24,7 +23,6 @@ const Editor = {
       const data=await this._api('GET',`/characters/${this.charId}/profile`);
       if(data.error)throw new Error(data.error);
       this.charName=data.name;
-      // Handle both old (array) and new (object with blocks+settings) format
       const pb=data.profile_blocks;
       if(pb&&!Array.isArray(pb)&&pb.blocks){
         this.blocks=pb.blocks||[];
@@ -38,7 +36,7 @@ const Editor = {
       this.tabs = data.tabs || [];
       if (typeof MetaEditor !== 'undefined') {
         await MetaEditor.init();
-        MetaEditor.load(this.meta);
+        await MetaEditor.loadWithEvents(this.charId, this.meta);
       }
       this._renderTabBar();
       document.getElementById('char-name-display').textContent=data.name;
@@ -94,7 +92,6 @@ const Editor = {
     const prevId = this.selectedId;
     this.selectedId = id;
     this.addTarget = id;
-    // For richtext blocks (current or previous), re-render that single block to show/hide toolbar
     const newBlock = id ? findBlock(this.blocks, id) : null;
     const prevBlock = prevId ? findBlock(this.blocks, prevId) : null;
     if (prevBlock?.type === 'richtext') this._rerenderBlock(prevId);
@@ -141,15 +138,13 @@ const Editor = {
       : null;
     if (!el) return;
     el.focus();
-    // Restore saved selection if current selection is empty
     const sel = window.getSelection();
     if (this._savedRange && (!sel || sel.isCollapsed)) {
       sel.removeAllRanges();
       sel.addRange(this._savedRange);
     }
-    if (!sel || sel.isCollapsed) return; // nothing selected
+    if (!sel || sel.isCollapsed) return;
     if (value === 'inherit' || value === 'transparent') {
-      // Wrap in span and remove color via style
       document.execCommand('removeFormat');
     } else {
       document.execCommand(cmd, false, value);
@@ -158,9 +153,8 @@ const Editor = {
     this._richtextBlur(this.selectedId, html);
   },
   _richtextInput(id,html){
-    // Update state without re-rendering (preserves cursor)
     this.blocks=updateBlockProps(this.blocks,id,{content:html});
-    this._markDirty(false); // mark dirty but don't push history on every keystroke
+    this._markDirty(false);
   },
   _richtextBlur(id,html){
     this.blocks=updateBlockProps(this.blocks,id,{content:html});
@@ -227,7 +221,6 @@ const Editor = {
     const block=findBlock(this.blocks,id);
     if(!block)return;
     if(block.type!==this.copiedStyle.type){this._toast('Bloki muszą być tego samego typu','err');return;}
-    // Don't copy content, only visual props
     const contentKeys=['content','children','id'];
     const stylePropsToPaste=Object.fromEntries(Object.entries(this.copiedStyle.props).filter(([k])=>!contentKeys.includes(k)));
     this.blocks=updateBlockProps(this.blocks,id,stylePropsToPaste);
@@ -278,7 +271,6 @@ const Editor = {
   },
   applyTheme(theme){
     this.updatePageSetting('bg_color',theme.bg);
-    // Apply theme colors to all heading blocks
     this.blocks=this._applyThemeToBlocks(this.blocks,theme);
     this._markDirty();this.render();this._renderProps();
     this._toast('Zastosowano motyw: '+theme.name,'ok');
@@ -337,7 +329,6 @@ const Editor = {
     }
     if(block.type==='slider_v'){html+=section('Rozmiar',row('Szerokość',txt('width','100%'))+row('Wysokość',txt('height','400px'),'px, vh…')+row('Odstęp (px)',num('gap',0,100,4))+row('Padding (px)',num('padding',0,100,4))+row('Kolor tła',clr('bg_color','transparent')));}
     if(block.type==='slider_h'){html+=section('Rozmiar',row('Wysokość',txt('height','220px'))+row('Szer. elementu',txt('item_width','240px'))+row('Odstęp (px)',num('gap',0,100,4))+row('Padding (px)',num('padding',0,100,4))+row('Kolor tła',clr('bg_color','transparent')));}
-
     if(block.type==='richtext'){
       html+=section('Styl bazowy',row('Kolor',clr('color','#d8e4ee'))+row('Rozmiar (rem)',num('font_size',0.5,6,0.05))+row('Czcionka',sel('font_family',[['Crimson Pro, serif','Crimson Pro'],['Cinzel, serif','Cinzel'],['sans-serif','Sans-serif'],['monospace','Monospace']]))+row('Interlinia',num('line_height',1,5,0.05))+row('Padding (px)',num('padding',0,100,4)));
       html+=`<div class="prop-hint" style="margin:8px 14px;padding:8px;background:rgba(120,160,200,0.08);border-radius:3px;border:1px solid rgba(120,160,200,0.15);">💡 Zaznacz tekst w bloku i użyj paska narzędzi który pojawi się na górze</div>`;
@@ -383,36 +374,30 @@ const Editor = {
     const btn=document.getElementById('save-btn');
     try{
       if(btn){btn.textContent='Zapisywanie...';btn.disabled=true;}
-      // Sync CSS from textarea if in CSS mode
       if (typeof EditorCode !== 'undefined' && EditorCode.mode === 'css') {
         const ta = document.getElementById('css-editor');
         if (ta) { EditorCode.cssText = ta.value; this.profileCss = ta.value; }
       }
-      // Save active tab content first
       this._captureActiveTabState();
-      // Sync meta from MetaEditor
       if (typeof MetaEditor !== 'undefined') {
         this.meta = MetaEditor.getData();
       }
-      // Save profile (first tab + main settings)
       const data=await this._api('PUT',`/characters/${this.charId}/profile`,{
         profile_blocks:{blocks:this.blocks,settings:this.pageSettings},
         profile_css: this.profileCss || '',
         profile_public:pub,
       });
       if(data.error)throw new Error(data.error);
-      // Save meta
       const metaRes = await this._api('PUT', `/characters/${this.charId}/meta`, this.meta);
       if (metaRes.error) throw new Error(metaRes.error);
-      // Save tabs
+      // Sync events to dedicated table
+      if (typeof MetaEditor !== 'undefined') {
+        await MetaEditor.syncEvents(this.charId, this._api.bind(this));
+      }
       const tabsRes = await this._api('PUT', `/characters/${this.charId}/tabs`, { tabs: this.tabs });
       if (tabsRes.error) throw new Error(tabsRes.error);
-      if (tabsRes.warnings?.length) {
-        this._toast('Zapisano z ostrzeżeniami: ' + tabsRes.warnings[0], 'err');
-      }
-      if (data.warnings && data.warnings.length) {
-        this._toast('Zapisano z ostrzeżeniami CSS: ' + data.warnings[0], 'err');
-      }
+      if (tabsRes.warnings?.length) this._toast('Zapisano z ostrzeżeniami: ' + tabsRes.warnings[0], 'err');
+      if (data.warnings?.length) this._toast('Zapisano z ostrzeżeniami CSS: ' + data.warnings[0], 'err');
       this.dirty=false;
       if(btn){btn.classList.remove('dirty');btn.textContent='Zapisano ✓';btn.disabled=false;}
       setTimeout(()=>{if(btn&&!this.dirty)btn.textContent='Zapisz';},2500);
@@ -436,10 +421,8 @@ const Editor = {
     if (tabId === this.activeTab) return;
     this._captureActiveTabState();
     this.selectedId = null;
-
     const metaPanel = document.getElementById('meta-editor-wrap');
     const visualMode = document.getElementById('mode-visual');
-
     if (tabId === 'info') {
       this.activeTab = 'info';
       if (metaPanel) metaPanel.style.display = 'block';
@@ -448,7 +431,6 @@ const Editor = {
       const props = document.querySelector('.props-panel');
       if (sidebar) sidebar.style.display = 'none';
       if (props) props.style.display = 'none';
-      // Hide mode tabs (only relevant for visual mode)
       const modeTabs = document.querySelector('.mode-tabs');
       if (modeTabs) modeTabs.style.display = 'none';
     } else if (tabId === 'profile') {
@@ -463,7 +445,6 @@ const Editor = {
       this._applyPageSettingsToEditor();
       this._renderPageSettingsForm();
     } else {
-      // Custom tab
       const tab = this.tabs.find(t => t.id === tabId);
       if (!tab) return;
       this.activeTab = tabId;
@@ -493,10 +474,7 @@ const Editor = {
   },
 
   addTab() {
-    if (this.tabs.length >= 9) {
-      this._toast('Osiągnięto limit 10 zakładek (Info + 9 własnych)', 'err');
-      return;
-    }
+    if (this.tabs.length >= 9) { this._toast('Osiągnięto limit 10 zakładek (Info + 9 własnych)', 'err'); return; }
     const name = prompt('Nazwa nowej zakładki:', 'Nowa zakładka');
     if (!name || !name.trim()) return;
     const newTab = {
@@ -527,11 +505,8 @@ const Editor = {
     if (!confirm(`Usunąć zakładkę „${tab.name}" i całą jej zawartość?`)) return;
     this.tabs = this.tabs.filter(t => t.id !== tabId);
     this._markDirty();
-    if (this.activeTab === tabId) {
-      this.switchTab('profile');
-    } else {
-      this._renderTabBar();
-    }
+    if (this.activeTab === tabId) this.switchTab('profile');
+    else this._renderTabBar();
   },
 
   moveTab(tabId, dir) {
@@ -552,7 +527,7 @@ const Editor = {
       { id: 'profile', name: '✦ Profil', fixed: true },
       ...this.tabs.map(t => ({ id: t.id, name: t.name, fixed: false })),
     ];
-    bar.innerHTML = tabs.map((t, i) => {
+    bar.innerHTML = tabs.map((t) => {
       const active = this.activeTab === t.id ? ' active' : '';
       const customIdx = t.fixed ? -1 : this.tabs.findIndex(x => x.id === t.id);
       const controls = t.fixed ? '' : `
