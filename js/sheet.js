@@ -30,8 +30,14 @@ const Sheet = {
 
   // ── Init / view switch ────────────────────────────────────────────────────
   async init() {
-    await this.loadTags();
-    this.switchView('mine');
+    const loggedIn = await Auth.init();
+    if (loggedIn) {
+      this._showShell();
+      Scan.initDropZone();
+      await Characters.load(); // ← dodaj
+      const lastTab = localStorage.getItem('ww_last_tab') || 'gallery';
+      this.navTo(lastTab);
+    }
   },
 
   async loadTags() {
