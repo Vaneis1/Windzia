@@ -13,7 +13,6 @@ const Houses = {
     return this.all;
   },
 
-  // ── Admin tab ─────────────────────────────────────────────────────────────
   async renderAdminTab() {
     const wrap = document.getElementById('atab-houses');
     if (!wrap) return;
@@ -132,7 +131,6 @@ const Houses = {
     }
   },
 
-  // ── Character house picker modal ──────────────────────────────────────────
   async openModal(charId, currentIds) {
     this._modalCharId = charId;
     await this.loadAll();
