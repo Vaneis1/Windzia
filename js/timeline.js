@@ -7,9 +7,20 @@ const Timeline = {
   calendar: null,
   filters: { character_id: '', house_id: '', category: '', date_from: '', date_to: '' },
   _initialized: false,
+  _lastLoaded: 0,
+  _TTL: 3 * 60 * 1000, // 3 minuty
+
+  async initCached() {
+    if (!this._initialized) {
+      await this.init();
+      return;
+    }
+    // Już zainicjalizowany — odśwież dane tylko jeśli stare
+    if (Date.now() - this._lastLoaded < this._TTL) return;
+    await this.load();
+  },
 
   async init() {
-    if (this._initialized) { await this.load(); return; }
     this._initialized = true;
 
     try {
@@ -50,6 +61,7 @@ const Timeline = {
       const data = await API.get('/events?' + params.toString());
       if (!Array.isArray(data)) throw new Error(data?.error || 'Błąd serwera');
       this.events = data;
+      this._lastLoaded = Date.now();
       if (status) status.textContent = data.length ? `${data.length} wydarzeń` : '';
       this._render();
     } catch(e) {
@@ -258,8 +270,6 @@ const Timeline = {
     return `<div class="tl-event">
       <div class="tl-event-dot"></div>
       <div class="tl-event-card">
-
-        <!-- Nagłówek: postać po lewej, data po prawej -->
         <div class="tl-event-header">
           <div class="tl-event-header-left">
             <a href="profile.html?id=${e.character_id}" class="tl-char-link">
@@ -279,14 +289,8 @@ const Timeline = {
             </div>
           </div>
         </div>
-
-        <!-- Tytuł -->
         <div class="tl-event-title">${this._esc(e.title)}</div>
-
-        <!-- Opis -->
         ${e.description ? `<div class="tl-event-desc">${this._esc(e.description)}</div>` : ''}
-
-        <!-- Uczestnicy -->
         ${participantsHtml}
       </div>
     </div>`;
