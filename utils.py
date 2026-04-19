@@ -66,10 +66,8 @@ def _normalize(s: str) -> str:
     - collapse whitespace
     """
     s = s.strip().rstrip(".…").strip().lower()
-    # Remove diacritics via Unicode decomposition
     s = unicodedata.normalize("NFD", s)
     s = "".join(c for c in s if unicodedata.category(c) != "Mn")
-    # Collapse multiple spaces
     s = " ".join(s.split())
     return s
 
@@ -83,7 +81,6 @@ def _levenshtein(a: str, b: str) -> int:
     if len(b) == 0:
         return len(a)
 
-    # Use two-row DP for memory efficiency
     prev = list(range(len(b) + 1))
     curr = [0] * (len(b) + 1)
 
@@ -92,9 +89,9 @@ def _levenshtein(a: str, b: str) -> int:
         for j, cb in enumerate(b, 1):
             cost = 0 if ca == cb else 1
             curr[j] = min(
-                prev[j] + 1,       # deletion
-                curr[j - 1] + 1,   # insertion
-                prev[j - 1] + cost # substitution
+                prev[j] + 1,
+                curr[j - 1] + 1,
+                prev[j - 1] + cost,
             )
         prev, curr = curr, prev
 
@@ -102,10 +99,7 @@ def _levenshtein(a: str, b: str) -> int:
 
 
 def _similarity(a: str, b: str) -> float:
-    """
-    Return similarity ratio 0–1 based on Levenshtein distance.
-    1.0 = identical, 0.0 = completely different.
-    """
+    """Return similarity ratio 0–1 based on Levenshtein distance."""
     if not a or not b:
         return 0.0
     dist = _levenshtein(a, b)
@@ -129,10 +123,9 @@ def match_item(raw_name: str, all_items: list[Item] | None = None) -> Item | Non
     Stages (first match wins):
     1. Exact match on normalized name/aliases
     2. Prefix match — handles truncated OCR names like "Bryłka zło..."
-       (raw is prefix of item name, or item name is prefix of raw)
-    3. Levenshtein similarity ≥ 0.72 on full name
-    4. Levenshtein similarity ≥ 0.65 on prefix of item name (same length as raw)
-       — handles "Druuno bukowo" → "Drewno bukowe"
+    3. Levenshtein similarity >= 0.72 on full name
+    4. Levenshtein similarity >= 0.65 on prefix of item name (same length as raw)
+       — handles "Druuno bukowo" -> "Drewno bukowe"
     """
     n = _normalize(raw_name)
     if not n or len(n) < 2:
@@ -147,15 +140,13 @@ def match_item(raw_name: str, all_items: list[Item] | None = None) -> Item | Non
             return item
 
     # ── Stage 2: Prefix match ─────────────────────────────────────────────────
-    # Raw name is a prefix of item name (truncated OCR)
-    # or item name is a prefix of raw (OCR added noise at end)
     for item in all_items:
         for t in _all_targets(item):
             if len(t) >= 5 and len(n) >= 5:
                 if t.startswith(n) or n.startswith(t):
                     return item
 
-    # ── Stage 3: Full Levenshtein similarity ≥ 0.72 ──────────────────────────
+    # ── Stage 3: Full Levenshtein similarity >= 0.72 ─────────────────────────
     if len(n) >= 4:
         best_item = None
         best_score = 0.72
@@ -171,8 +162,6 @@ def match_item(raw_name: str, all_items: list[Item] | None = None) -> Item | Non
             return best_item
 
     # ── Stage 4: Prefix Levenshtein — truncated names with OCR errors ─────────
-    # Compare raw against the first len(raw) chars of each item name
-    # Handles: "Druuno buko" → "Drewno buko..." → "Drewno bukowe"
     if len(n) >= 6:
         best_item = None
         best_score = 0.65
@@ -180,9 +169,7 @@ def match_item(raw_name: str, all_items: list[Item] | None = None) -> Item | Non
         for item in all_items:
             for t in _all_targets(item):
                 if len(t) < len(n) - 3:
-                    # Item name too short to be a credible truncated match
                     continue
-                # Compare against prefix of same length
                 prefix = t[:len(n)]
                 score = _similarity(n, prefix)
                 if score > best_score:
