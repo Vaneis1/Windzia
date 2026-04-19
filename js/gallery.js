@@ -35,10 +35,16 @@ const Gallery = {
     const wrap = document.getElementById('gallery-hero-wrap');
     if (!wrap) return;
     const withQuoteAndAvatar = this.data.find(c => c.featured_quote && c.avatar_url);
-    const withQuote = this.data.find(c => c.featured_quote);
-    const hero = withQuoteAndAvatar || withQuote || this.data[0];
-    if (!hero) { wrap.innerHTML = ''; return; }
+    // Kandydaci: postaci publiczne z cytatem i awatarem, lub z samym cytatem
+    const candidates = this.data.filter(c => c.featured_quote && c.avatar_url && c.profile_public);
+    const fallback   = this.data.filter(c => c.featured_quote && c.profile_public);
+    const pool = candidates.length ? candidates : (fallback.length ? fallback : this.data);
 
+    // Seed z daty — zmienia się codziennie, stabilny w ciągu dnia
+    const today = new Date();
+    const seed  = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    const idx   = seed % pool.length;
+    const hero  = pool[idx];
     const avatar = hero.avatar_url
       ? `<img class="hero-avatar" src="${this._esc(hero.avatar_url)}" alt="${this._esc(hero.name)}">`
       : `<div class="hero-avatar hero-avatar-placeholder">${(hero.name[0] || '?').toUpperCase()}</div>`;
