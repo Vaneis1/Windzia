@@ -228,19 +228,16 @@ const Timeline = {
     const altDate = this._formatAltDate(e.date);
     const plainDate = this._formatPlainDate(e.date);
 
-    // Avatar + name
     const avatar = e.character_avatar
       ? `<img class="tl-avatar" src="${this._esc(e.character_avatar)}" alt="">`
       : `<div class="tl-avatar tl-avatar-placeholder">${(e.character_name?.[0]||'?').toUpperCase()}</div>`;
 
-    // House badges
     const houseBadges = (e.houses || []).map(h =>
       `<span class="tl-house-badge" style="color:${h.color};border-color:${h.color};">
         ${h.heraldry ? h.heraldry + ' ' : ''}${this._esc(h.name)}
       </span>`
     ).join('');
 
-    // Participants
     const participants = e.participants_detail || [];
     const participantsHtml = participants.length ? `
       <div class="tl-participants">
@@ -253,7 +250,6 @@ const Timeline = {
         }).join('')}
       </div>` : '';
 
-    // Meta row: category + visibility
     const catBadge = e.category
       ? `<span class="tl-cat-badge">${this._esc(e.category)}</span>` : '';
     const visBadge = e.visibility && e.visibility !== 'public'
@@ -263,34 +259,34 @@ const Timeline = {
       <div class="tl-event-dot"></div>
       <div class="tl-event-card">
 
-        <!-- Wiersz 1: postać + rody -->
+        <!-- Nagłówek: postać po lewej, data po prawej -->
         <div class="tl-event-header">
-          <a href="profile.html?id=${e.character_id}" class="tl-char-link">
-            ${avatar}
-            <span class="tl-char-name">${this._esc(e.character_name||'')}</span>
-          </a>
-          ${houseBadges ? `<div class="tl-house-badges">${houseBadges}</div>` : ''}
+          <div class="tl-event-header-left">
+            <a href="profile.html?id=${e.character_id}" class="tl-char-link">
+              ${avatar}
+              <span class="tl-char-name">${this._esc(e.character_name||'')}</span>
+            </a>
+            ${houseBadges ? `<div class="tl-house-badges">${houseBadges}</div>` : ''}
+          </div>
+          <div class="tl-event-header-right">
+            <div class="tl-event-date-wrap">
+              ${altDate ? `<span class="tl-date-alt">${this._esc(altDate)}</span>` : ''}
+              <span class="tl-date-plain">${this._esc(plainDate)}</span>
+            </div>
+            <div class="tl-event-badges">
+              ${catBadge}
+              ${visBadge}
+            </div>
+          </div>
         </div>
 
-        <!-- Wiersz 2: data + kategoria + widoczność -->
-        <div class="tl-event-meta-row">
-          <div class="tl-event-date-wrap">
-            ${altDate ? `<span class="tl-date-alt">${this._esc(altDate)}</span>` : ''}
-            <span class="tl-date-plain">${this._esc(plainDate)}</span>
-          </div>
-          <div class="tl-event-badges">
-            ${catBadge}
-            ${visBadge}
-          </div>
-        </div>
-
-        <!-- Wiersz 3: tytuł -->
+        <!-- Tytuł -->
         <div class="tl-event-title">${this._esc(e.title)}</div>
 
-        <!-- Wiersz 4: opis -->
+        <!-- Opis -->
         ${e.description ? `<div class="tl-event-desc">${this._esc(e.description)}</div>` : ''}
 
-        <!-- Wiersz 5: uczestnicy -->
+        <!-- Uczestnicy -->
         ${participantsHtml}
       </div>
     </div>`;
