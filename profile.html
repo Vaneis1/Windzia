@@ -59,9 +59,9 @@ body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,se
 .event-desc{font-size:0.92rem;color:var(--text);margin-top:6px;white-space:pre-wrap;}
 .event-from{font-size:0.78rem;color:var(--text-m);font-style:italic;margin-bottom:4px;}
 .event-participants{font-size:0.82rem;color:var(--text-d);margin-top:6px;}
+.event-cat{display:inline-block;font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.07em;padding:1px 8px;border-radius:8px;border:1px solid rgba(120,160,200,0.3);color:var(--accent-l);background:var(--accent-d);margin-bottom:6px;}
 .event-dismiss-btn{float:right;font-size:0.68rem;font-family:'Cinzel',serif;letter-spacing:0.06em;text-transform:uppercase;background:transparent;border:1px solid var(--border);border-radius:3px;color:var(--text-m);cursor:pointer;padding:3px 8px;transition:all 0.12s;}
 .event-dismiss-btn:hover{border-color:rgba(190,80,80,0.4);color:rgba(210,128,128,0.9);background:rgba(190,80,80,0.08);}
-
 .empty-section{padding:1.4rem;text-align:center;color:var(--text-m);font-style:italic;font-size:0.9rem;}
 
 @media (max-width: 600px){
@@ -85,6 +85,7 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 let calendar = null;
 let _currentCharId = null;
 let _isOwner = false;
+let _metaEvents = []; // fallback: events from meta.events (old system)
 
 function formatAltDate(iso) {
   if (!iso || !calendar?.enabled) return '';
@@ -166,6 +167,18 @@ function renderInfoTab(data) {
         ${h.description ? `<div class="hook-desc">${esc(h.description)}</div>` : ''}
       </div>`).join('')}` : '';
 
+  // Store meta.events as fallback for loadProfileEvents
+  _metaEvents = (meta.events || []).map(e => ({
+    id: 'meta_' + (e.id || Math.random()),
+    date: e.date || '',
+    title: e.title || '',
+    description: e.description || '',
+    visibility: e.visibility || 'public',
+    category: e.category || '',
+    is_shared: false,
+    _from_meta: true,
+  }));
+
   const hasAnything = fields.length || meta.bio || quotes.length || hooks.length;
   return (hasAnything ? fieldsHtml + bioHtml + quotesHtml + hooksHtml : '') +
     `<div id="profile-events-wrap"></div>`;
@@ -175,60 +188,77 @@ async function loadProfileEvents(charId, isOwner) {
   const wrap = document.getElementById('profile-events-wrap');
   if (!wrap) return;
 
+  let apiEvents = [];
   try {
     const token = localStorage.getItem('ww_token') || '';
     const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
     const res = await fetch(window.PROXY + '/characters/' + charId + '/events', { headers });
-    const events = await res.json();
-    if (!Array.isArray(events) || !events.length) return;
-
-    const sorted = [...events].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-
-    const cardsHtml = sorted.map(e => {
-      const altDate = formatAltDate(e.date);
-      const plainDate = formatPlainDate(e.date);
-      const isShared = !!e.is_shared;
-
-      const dateHtml = `<div class="event-date">
-        ${altDate ? `<span class="event-date-alt">${esc(altDate)}</span>` : ''}
-        <span style="color:var(--text-m);font-size:0.78rem;">${esc(plainDate)}</span>
-        ${isOwner && e.visibility !== 'public'
-          ? `<span style="opacity:0.5;font-size:0.8rem;">${e.visibility === 'house' ? '⚜ Ród' : '🔒 Osobiste'}</span>`
-          : ''}
-      </div>`;
-
-      const fromHtml = isShared
-        ? `<div class="event-from">Wydarzenie dodane przez: <strong>${esc(e.character_name || '')}</strong></div>`
-        : '';
-
-      // Participants (non-owner view)
-      const participants = e.participants_detail || [];
-      const participantsHtml = !isShared && participants.length
-        ? `<div class="event-participants">z udziałem: ${participants.map(p => esc(p.name)).join(', ')}</div>`
-        : '';
-
-      const dismissBtn = isShared && isOwner
-        ? `<button class="event-dismiss-btn"
-            onclick="dismissEvent(${e.id},${charId})"
-            title="Usuń z profilu tej postaci">✕ Usuń z profilu</button>`
-        : '';
-
-      return `<div class="event-card${isShared ? ' shared' : ''}">
-        ${dismissBtn}
-        ${fromHtml}
-        ${dateHtml}
-        <div class="event-title">${esc(e.title || 'Wydarzenie')}</div>
-        ${e.description ? `<div class="event-desc">${esc(e.description)}</div>` : ''}
-        ${participantsHtml}
-      </div>`;
-    }).join('');
-
-    wrap.innerHTML = `
-      <div class="info-section-title">Oś czasu</div>
-      <div class="timeline">${cardsHtml}</div>`;
+    const data = await res.json();
+    if (Array.isArray(data)) apiEvents = data;
   } catch(e) {
-    console.error('loadProfileEvents:', e.message);
+    console.error('loadProfileEvents API error:', e.message);
   }
+
+  // Merge: API events take priority. Use meta.events only for IDs not in API.
+  // API events have numeric IDs; meta events have string IDs starting with 'meta_'
+  let events = [...apiEvents];
+
+  // If API returned nothing, fall back to meta.events
+  if (apiEvents.length === 0 && _metaEvents.length > 0) {
+    events = _metaEvents;
+  }
+
+  if (!events.length) return;
+
+  // Sort by date
+  const sorted = [...events].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  const cardsHtml = sorted.map(e => {
+    const altDate = formatAltDate(e.date);
+    const plainDate = formatPlainDate(e.date);
+    const isShared = !!e.is_shared;
+
+    const catHtml = e.category
+      ? `<div class="event-cat">${esc(e.category)}</div>` : '';
+
+    const dateHtml = `<div class="event-date">
+      ${altDate ? `<span class="event-date-alt">${esc(altDate)}</span>` : ''}
+      <span style="color:var(--text-m);font-size:0.78rem;">${esc(plainDate)}</span>
+      ${isOwner && e.visibility && e.visibility !== 'public'
+        ? `<span style="opacity:0.5;font-size:0.8rem;">${e.visibility === 'house' ? '⚜ Ród' : '🔒 Osobiste'}</span>`
+        : ''}
+    </div>`;
+
+    const fromHtml = isShared && e.character_name
+      ? `<div class="event-from">Wydarzenie dodane przez: <strong>${esc(e.character_name)}</strong></div>`
+      : '';
+
+    const participants = e.participants_detail || [];
+    const participantsHtml = !isShared && participants.length
+      ? `<div class="event-participants">z udziałem: ${participants.map(p => esc(p.name)).join(', ')}</div>`
+      : '';
+
+    // Dismiss button only for shared events viewed by owner, and only for real API events
+    const dismissBtn = isShared && isOwner && !e._from_meta
+      ? `<button class="event-dismiss-btn"
+          onclick="dismissEvent(${e.id},${charId})"
+          title="Usuń z profilu tej postaci">✕ Usuń z profilu</button>`
+      : '';
+
+    return `<div class="event-card${isShared ? ' shared' : ''}">
+      ${dismissBtn}
+      ${catHtml}
+      ${fromHtml}
+      ${dateHtml}
+      <div class="event-title">${esc(e.title || 'Wydarzenie')}</div>
+      ${e.description ? `<div class="event-desc">${esc(e.description)}</div>` : ''}
+      ${participantsHtml}
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="info-section-title">Oś czasu</div>
+    <div class="timeline">${cardsHtml}</div>`;
 }
 
 async function dismissEvent(eventId, charId) {
@@ -286,7 +316,8 @@ function showTab(tabId) {
     loadProfileEvents(_currentCharId, _isOwner);
   } else if (tabId === 'profile') {
     content.innerHTML = renderVisualTab(
-      { blocks: currentData.profile_blocks?.blocks || currentData.profile_blocks, settings: currentData.profile_blocks?.settings },
+      { blocks: currentData.profile_blocks?.blocks || currentData.profile_blocks,
+        settings: currentData.profile_blocks?.settings },
       currentData.profile_css
     );
     if (currentData.profile_css) loadCss(`/characters/${currentData.id}/profile/css`);
