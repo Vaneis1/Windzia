@@ -16,9 +16,7 @@ const Characters = {
     if (!el) return;
     el.innerHTML = '';
     if (!chars.length) {
-      el.innerHTML =
-        '<p style="color:var(--text-m);font-style:italic;padding:0.5rem;">' +
-        'Brak postaci. Dodaj pierwszą poniżej.</p>';
+      el.innerHTML = '<p style="color:var(--text-m);font-style:italic;padding:0.5rem;">Brak postaci. Dodaj pierwszą poniżej.</p>';
       return;
     }
     chars.forEach(c => {
