@@ -7,6 +7,7 @@ const App = {
     if (loggedIn) {
       this._showShell();
       Scan.initDropZone();
+      await Characters.load();
       const lastTab = localStorage.getItem('ww_last_tab') || 'gallery';
       this.navTo(lastTab);
     }
