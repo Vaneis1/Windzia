@@ -1,6 +1,5 @@
 """Profile routes — visual profile + metadata + tabs + gallery."""
 from flask import Blueprint, request, jsonify
-from sqlalchemy import or_
 
 from models import db, Character, Owner, AppSettings
 from utils import get_current_owner, require_auth, require_role
@@ -9,7 +8,6 @@ from json_validator import validate_profile_blocks
 
 profiles_bp = Blueprint("profiles", __name__)
 
-# Limits
 MAX_TABS = 10
 MAX_TAB_NAME_LENGTH = 50
 MAX_BIO_LENGTH = 5000
@@ -17,8 +15,6 @@ MAX_QUOTES = 50
 MAX_HOOKS = 30
 MAX_EVENTS = 200
 
-
-# ── Visual profile (legacy: first tab) ────────────────────────────────────────
 
 @profiles_bp.route("/characters/<int:cid>/profile", methods=["GET"])
 def get_profile(cid):
@@ -89,15 +85,20 @@ def get_profile_css(cid):
     return sanitized, 200, {"Content-Type": "text/css; charset=utf-8"}
 
 
-# ── Character metadata (Info tab — predefined) ────────────────────────────────
-
 def _validate_meta(meta: dict) -> tuple[bool, str | None]:
     if not isinstance(meta, dict):
         return False, "meta musi być obiektem"
 
-    for key in ("avatar_url", "age", "location", "bio"):
+    for key in ("avatar_url", "age", "birthday", "location", "bio"):
         if key in meta and meta[key] is not None and not isinstance(meta[key], str):
             return False, f"Pole {key} musi być tekstem"
+
+    birthday = meta.get("birthday", "")
+    if birthday:
+        import re
+        if not re.match(r'^\d{4}-\d{2}-\d{2}$', birthday):
+            return False, "Data urodzin musi być w formacie YYYY-MM-DD"
+
     if len(meta.get("bio") or "") > MAX_BIO_LENGTH:
         return False, f"Bio za długie (max {MAX_BIO_LENGTH} znaków)"
 
@@ -117,18 +118,6 @@ def _validate_meta(meta: dict) -> tuple[bool, str | None]:
         return False, "story_hooks musi być tablicą"
     if len(hooks) > MAX_HOOKS:
         return False, f"Za dużo wątków (max {MAX_HOOKS})"
-
-    events = meta.get("events", [])
-    if not isinstance(events, list):
-        return False, "events musi być tablicą"
-    if len(events) > MAX_EVENTS:
-        return False, f"Za dużo wydarzeń (max {MAX_EVENTS})"
-    for e in events:
-        if not isinstance(e, dict):
-            return False, "Każde wydarzenie musi być obiektem"
-        date = e.get("date", "")
-        if date and not isinstance(date, str):
-            return False, "Data wydarzenia musi być tekstem (YYYY-MM-DD)"
 
     return True, None
 
@@ -156,8 +145,8 @@ def save_meta(cid):
     if not ok:
         return jsonify({"error": err}), 400
 
-    # Usuń stare pole house jeśli zostało w danych
     body.pop("house", None)
+    body.pop("events", None)
 
     char.meta = body
     if "avatar_url" in body:
@@ -165,8 +154,6 @@ def save_meta(cid):
     db.session.commit()
     return jsonify({"ok": True})
 
-
-# ── Custom tabs ───────────────────────────────────────────────────────────────
 
 def _validate_tabs(tabs: list) -> tuple[bool, str | None, int]:
     if not isinstance(tabs, list):
@@ -184,15 +171,11 @@ def _validate_tabs(tabs: list) -> tuple[bool, str | None, int]:
             return False, f"Zakładka #{i+1} nie ma nazwy", total_size
         if len(name) > MAX_TAB_NAME_LENGTH:
             return False, f"Nazwa zakładki #{i+1} za długa", total_size
-
         blocks_payload = tab.get("blocks_data", {"blocks": [], "settings": {}})
         ok, err = validate_profile_blocks(blocks_payload)
         if not ok:
             return False, f"Zakładka „{name}\": {err}", total_size
-
-        tab_json = _json.dumps(tab)
-        size = len(tab_json.encode('utf-8'))
-        total_size += size
+        total_size += len(_json.dumps(tab).encode('utf-8'))
 
     return True, None, total_size
 
@@ -222,7 +205,6 @@ def save_tabs(cid):
         return jsonify({"error": err}), 400
 
     char.tabs = tabs
-
     warnings = []
     for tab in tabs:
         if tab.get("css"):
@@ -237,8 +219,6 @@ def save_tabs(cid):
         response["warnings"] = warnings
     return jsonify(response)
 
-
-# ── Gallery ───────────────────────────────────────────────────────────────────
 
 @profiles_bp.route("/gallery", methods=["GET"])
 @require_auth
@@ -267,6 +247,7 @@ def gallery():
             "owner_display": (c.owner.display_name or c.owner.username) if c.owner else "",
             "owner_username": c.owner.username if c.owner else "",
             "age": meta.get("age", ""),
+            "birthday": meta.get("birthday", ""),
             "houses": [h.to_dict() for h in (c.houses or [])],
             "location": meta.get("location", ""),
             "featured_quote": featured_quote,
@@ -274,8 +255,6 @@ def gallery():
         })
     return jsonify(out)
 
-
-# ── Calendar settings ─────────────────────────────────────────────────────────
 
 DEFAULT_CALENDAR = {
     "enabled": False,
@@ -288,21 +267,18 @@ DEFAULT_CALENDAR = {
 
 @profiles_bp.route("/settings/calendar", methods=["GET"])
 def get_calendar():
-    cal = AppSettings.get("calendar", DEFAULT_CALENDAR)
-    return jsonify(cal)
+    return jsonify(AppSettings.get("calendar", DEFAULT_CALENDAR))
 
 
 @profiles_bp.route("/settings/calendar", methods=["PUT"])
 @require_role("admin")
 def save_calendar():
     body = request.get_json(silent=True) or {}
-
     months = body.get("month_names", DEFAULT_CALENDAR["month_names"])
     if not isinstance(months, list) or len(months) != 12:
         return jsonify({"error": "month_names musi mieć dokładnie 12 nazw"}), 400
     if not all(isinstance(m, str) and len(m) <= 50 for m in months):
         return jsonify({"error": "Każda nazwa miesiąca to tekst max 50 znaków"}), 400
-
     try:
         offset = int(body.get("year_offset", 0))
     except (ValueError, TypeError):
