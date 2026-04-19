@@ -285,32 +285,9 @@
   <div id="tab-timeline" class="tab-content">
     <h1 class="page-title">⧗ Oś czasu gildii</h1>
     <p class="page-subtitle">Wspólna historia i ważne zdarzenia</p>
-    <div class="tl-filters">
-      <div class="tl-filter-group">
-        <div class="tl-filter-label">Postać</div>
-        <select id="tl-filter-char" onchange="Timeline.setFilter('character_id',this.value)">
-          <option value="">Wszystkie postacie</option>
-        </select>
-      </div>
-      <div class="tl-filter-group">
-        <div class="tl-filter-label">Ród</div>
-        <select id="tl-filter-house" onchange="Timeline.setFilter('house_id',this.value)">
-          <option value="">Wszystkie rody</option>
-        </select>
-      </div>
-      <div class="tl-filter-group">
-        <div class="tl-filter-label">Data od</div>
-        <input type="date" id="tl-filter-from" onchange="Timeline.setFilter('date_from',this.value)">
-      </div>
-      <div class="tl-filter-group">
-        <div class="tl-filter-label">Data do</div>
-        <input type="date" id="tl-filter-to" onchange="Timeline.setFilter('date_to',this.value)">
-      </div>
-      <div class="tl-filter-actions">
-        <button onclick="Timeline.clearFilters()">✕ Wyczyść</button>
-        <button onclick="Timeline.load()">↺ Odśwież</button>
-      </div>
-    </div>
+ 
+    <div id="timeline-filters"></div>
+ 
     <div class="status-bar"><span id="timeline-status"></span></div>
     <div id="timeline-events"></div>
   </div>
