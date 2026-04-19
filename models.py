@@ -76,7 +76,11 @@ class Character(db.Model):
         lazy="select",
     )
     char_events = db.relationship(
-        "Event", back_populates="character", cascade="all, delete-orphan", lazy="select"
+        "Event",
+        foreign_keys="Event.character_id",
+        back_populates="character",
+        cascade="all, delete-orphan",
+        lazy="select",
     )
 
     def to_dict(self, include_owner=True):
@@ -126,6 +130,7 @@ class Event(db.Model):
     __tablename__ = "events"
 
     id = db.Column(db.Integer, primary_key=True)
+    external_id = db.Column(db.String(30), nullable=True, index=True)  # client-side ID for upsert
     character_id = db.Column(
         db.Integer,
         db.ForeignKey("characters.id", ondelete="CASCADE"),
@@ -137,16 +142,29 @@ class Event(db.Model):
     visibility = db.Column(db.String(10), default="public", nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    character = db.relationship("Character", back_populates="char_events")
+    character = db.relationship(
+        "Character",
+        foreign_keys=[character_id],
+        back_populates="char_events",
+    )
+    participants = db.relationship(
+        "EventParticipant",
+        back_populates="event",
+        cascade="all, delete-orphan",
+        lazy="select",
+    )
 
     def to_dict(self, include_char=False):
+        non_dismissed = [p for p in self.participants if not p.dismissed]
         d = {
             "id": self.id,
+            "external_id": self.external_id or "",
             "character_id": self.character_id,
             "date": self.date or "",
             "title": self.title,
             "description": self.description or "",
             "visibility": self.visibility,
+            "participant_ids": [p.character_id for p in non_dismissed],
         }
         if include_char and self.character:
             c = self.character
@@ -156,7 +174,39 @@ class Event(db.Model):
                 (c.owner.display_name or c.owner.username) if c.owner else ""
             )
             d["houses"] = [h.to_dict() for h in (c.houses or [])]
+            d["participants_detail"] = [
+                {
+                    "character_id": p.character_id,
+                    "name": p.participant_char.name if p.participant_char else "",
+                    "avatar": p.participant_char.avatar_url if p.participant_char else None,
+                }
+                for p in non_dismissed
+                if p.participant_char
+            ]
         return d
+
+
+class EventParticipant(db.Model):
+    __tablename__ = "event_participants"
+
+    event_id = db.Column(
+        db.Integer,
+        db.ForeignKey("events.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    character_id = db.Column(
+        db.Integer,
+        db.ForeignKey("characters.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    dismissed = db.Column(db.Boolean, default=False, nullable=False)
+
+    event = db.relationship("Event", back_populates="participants")
+    participant_char = db.relationship(
+        "Character",
+        foreign_keys=[character_id],
+        lazy="select",
+    )
 
 
 class Item(db.Model):
