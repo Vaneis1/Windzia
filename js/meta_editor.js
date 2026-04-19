@@ -6,6 +6,7 @@ const MetaEditor = {
   _allChars: [],
   _sharedEvents: [],
   _categories: [],
+  _participantSearch: {}, // { eventId: searchQuery }
 
   async init() {
     try {
@@ -144,19 +145,14 @@ const MetaEditor = {
     this._markDirty(); this.renderEvents();
   },
   removeEvent(id) {
-    if (!confirm('Usunąć wydarzenie?')) return;
-    // Use loose match to handle both string and number IDs
     this.data.events = this.data.events.filter(e => String(e.id) !== String(id));
     this._markDirty(); this.renderEvents();
   },
   updateEvent(id, key, value) {
-    // Use String() comparison — API returns numeric IDs, client uses string IDs
     const e = this.data.events.find(e => String(e.id) === String(id));
     if (e) { e[key] = value; this._markDirty(); }
   },
-
   toggleParticipant(eventId, charId, checked) {
-    // String comparison to handle both API (numeric) and client (string) IDs
     const e = this.data.events.find(e => String(e.id) === String(eventId));
     if (!e) return;
     if (!e.participant_ids) e.participant_ids = [];
@@ -167,7 +163,66 @@ const MetaEditor = {
       e.participant_ids = e.participant_ids.filter(id => id !== numId);
     }
     this._markDirty();
-    this.renderEvents();
+    // Re-render only participant section to preserve search query
+    this._rerenderParticipants(eventId);
+  },
+
+  setParticipantSearch(eventId, query) {
+    this._participantSearch[String(eventId)] = query.toLowerCase();
+    this._rerenderParticipants(eventId);
+  },
+
+  _rerenderParticipants(eventId) {
+    const container = document.getElementById('participants-' + eventId);
+    if (!container) return;
+    const e = this.data.events.find(e => String(e.id) === String(eventId));
+    if (!e) return;
+    container.innerHTML = this._buildParticipantPicker(e);
+  },
+
+  _buildParticipantPicker(e) {
+    if (!this._allChars.length) return '';
+    const participantIds = (e.participant_ids || []).map(Number);
+    const searchQ = (this._participantSearch[String(e.id)] || '').toLowerCase();
+
+    const selected   = this._allChars.filter(c => participantIds.includes(Number(c.id)));
+    const unselected = this._allChars.filter(c =>
+      !participantIds.includes(Number(c.id)) &&
+      (!searchQ || c.name.toLowerCase().includes(searchQ))
+    );
+
+    const selectedChips = selected.map(c => `
+      <button type="button" class="participant-chip participant-chip-on"
+        onclick="MetaEditor.toggleParticipant('${e.id}',${c.id},false)"
+        title="Usuń ${this._esc(c.name)}">
+        ${this._esc(c.name)} ✕
+      </button>`).join('');
+
+    const unselectedChips = unselected.map(c => `
+      <button type="button" class="participant-chip participant-chip-off"
+        onclick="MetaEditor.toggleParticipant('${e.id}',${c.id},true)"
+        title="Dodaj ${this._esc(c.name)}">
+        + ${this._esc(c.name)}
+      </button>`).join('');
+
+    const showSearch = this._allChars.length > 6;
+    const searchHtml = showSearch ? `
+      <input type="text" class="participant-search" placeholder="Szukaj postaci..."
+        value="${this._esc(this._participantSearch[String(e.id)] || '')}"
+        oninput="MetaEditor.setParticipantSearch('${e.id}',this.value)"
+        onclick="event.stopPropagation()">` : '';
+
+    return `
+      <div class="participant-picker-label">
+        Uczestnicy${selected.length ? ` <span style="color:var(--gold);">(${selected.length})</span>` : ''}:
+      </div>
+      ${searchHtml}
+      <div class="participant-chips">
+        ${selectedChips}
+        ${unselected.length ? `<div class="participant-divider"></div>` : ''}
+        ${unselectedChips}
+        ${!unselected.length && searchQ ? `<span style="font-size:0.82rem;color:var(--text-m);font-style:italic;">Brak wyników dla „${this._esc(searchQ)}"</span>` : ''}
+      </div>`;
   },
 
   async dismissSharedEvent(eventId, charId) {
@@ -181,8 +236,9 @@ const MetaEditor = {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       this._sharedEvents = this._sharedEvents.filter(e => e.id !== eventId);
-      this.renderEvents();
       this.renderSharedEvents();
+      const section = document.getElementById('meta-shared-section');
+      if (section) section.style.display = this._sharedEvents.length ? '' : 'none';
     } catch(e) {
       alert('Błąd: ' + e.message);
     }
@@ -205,13 +261,6 @@ const MetaEditor = {
     const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (!m) return iso;
     return `${m[3]}.${m[2]}.${m[1]}`;
-  },
-
-  _visLabel(vis) {
-    if (vis === 'public')   return '🌐 Gildyjne';
-    if (vis === 'house')    return '⚜ Ród';
-    if (vis === 'personal') return '🔒 Osobiste';
-    return vis;
   },
 
   // ── Rendering ─────────────────────────────────────────────────────────────
@@ -357,35 +406,7 @@ const MetaEditor = {
     el.innerHTML = sorted.map(e => {
       const altDate = e.date && this.calendar?.enabled ? this.formatDate(e.date) : '';
       const vis = e.visibility || 'public';
-      // Ensure participant_ids contains numbers for comparison
-      const participantIds = (e.participant_ids || []).map(Number);
-
-      // Participant chips — selected chars first, then unselected
-      const selectedChars   = this._allChars.filter(c => participantIds.includes(Number(c.id)));
-      const unselectedChars = this._allChars.filter(c => !participantIds.includes(Number(c.id)));
-
-      const selectedChips = selectedChars.map(c => `
-        <button type="button" class="participant-chip participant-chip-on"
-          onclick="MetaEditor.toggleParticipant('${e.id}',${c.id},false)">
-          ${this._esc(c.name)} ✕
-        </button>`).join('');
-
-      const unselectedChips = unselectedChars.map(c => `
-        <button type="button" class="participant-chip participant-chip-off"
-          onclick="MetaEditor.toggleParticipant('${e.id}',${c.id},true)">
-          + ${this._esc(c.name)}
-        </button>`).join('');
-
-      const participantSection = this._allChars.length ? `
-        <div class="participant-picker">
-          <div class="participant-picker-label">
-            Uczestnicy${participantIds.length ? ` (${participantIds.length})` : ''}:
-          </div>
-          <div class="participant-chips">
-            ${selectedChips || ''}
-            ${unselectedChips || ''}
-          </div>
-        </div>` : '';
+      const visLabel = vis === 'public' ? '🌐 Gildyjne' : vis === 'house' ? '⚜ Ród' : '🔒 Osobiste';
 
       return `
       <div class="meta-item">
@@ -421,7 +442,10 @@ const MetaEditor = {
             <option value="personal" ${vis==='personal' ?'selected':''}>🔒 Osobiste</option>
           </select>
         </div>
-        ${participantSection}
+        ${this._allChars.length ? `
+        <div class="participant-picker" id="participants-${e.id}">
+          ${this._buildParticipantPicker(e)}
+        </div>` : ''}
         <textarea rows="3" placeholder="Opis wydarzenia..."
           oninput="MetaEditor.updateEvent('${e.id}','description',this.value)">${this._esc(e.description||'')}</textarea>
       </div>`;
