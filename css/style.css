@@ -168,13 +168,14 @@ tbody td.num { text-align: right; color: var(--gold-l); font-weight: 300; }
 .empty-row td { text-align: center; color: var(--text-m); font-style: italic; padding: 2rem; }
 
 /* ── Characters ───────────────────────────────────────────────────────────── */
-.char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-bottom: 1rem; }
-.char-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; }
+.char-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 1rem; }
+.char-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .char-name { font-size: 1rem; }
 .char-owner { font-size: 0.78rem; color: var(--text-m); font-style: italic; }
 .add-row { display: flex; gap: 8px; margin-top: 0.5rem; }
 .add-row input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; color: var(--text); font-family: 'Crimson Pro', serif; font-size: 0.95rem; padding: 7px 11px; outline: none; }
 .add-row input:focus { border-color: var(--gold); }
+.char-card > div:last-child { flex-shrink: 0; }
 
 /* ── Admin ────────────────────────────────────────────────────────────────── */
 .admin-label { font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 0.15em; color: var(--warn-t); text-transform: uppercase; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 10px; }
