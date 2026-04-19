@@ -126,11 +126,18 @@ class House(db.Model):
         }
 
 
+# Predefiniowane kategorie wydarzeń (można rozszerzyć)
+EVENT_CATEGORIES = [
+    "Bitwa", "Podróż", "Spotkanie", "Odkrycie", "Ceremonia",
+    "Tragedia", "Triumf", "Misja", "Intryga", "Inne",
+]
+
+
 class Event(db.Model):
     __tablename__ = "events"
 
     id = db.Column(db.Integer, primary_key=True)
-    external_id = db.Column(db.String(30), nullable=True, index=True)  # client-side ID for upsert
+    external_id = db.Column(db.String(30), nullable=True, index=True)
     character_id = db.Column(
         db.Integer,
         db.ForeignKey("characters.id", ondelete="CASCADE"),
@@ -140,6 +147,7 @@ class Event(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     visibility = db.Column(db.String(10), default="public", nullable=False)
+    category = db.Column(db.String(50), nullable=True)      # np. "Bitwa", "Podróż"
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     character = db.relationship(
@@ -164,6 +172,7 @@ class Event(db.Model):
             "title": self.title,
             "description": self.description or "",
             "visibility": self.visibility,
+            "category": self.category or "",
             "participant_ids": [p.character_id for p in non_dismissed],
         }
         if include_char and self.character:
