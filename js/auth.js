@@ -1,6 +1,5 @@
 // auth.js — Login, logout, password reset.
 const Auth = {
-  // ── View switching ───────────────────────────────────────────────────────
   showLogin() {
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app-screen').style.display = 'none';
@@ -35,7 +34,6 @@ const Auth = {
     document.getElementById('forgot-form').style.display = 'none';
   },
 
-  // ── Actions ──────────────────────────────────────────────────────────────
   async login() {
     const email = document.getElementById('login-email').value.trim();
     const pwd = document.getElementById('login-pwd').value;
@@ -87,9 +85,8 @@ const Auth = {
     }
   },
 
-  // ── Init ─────────────────────────────────────────────────────────────────
   async init() {
-    // Ukryj oba ekrany na czas sprawdzania tokenu — eliminuje mignięcie
+    // Ukryj oba ekrany — eliminuje mignięcie przy odświeżeniu
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-screen').style.display = 'none';
 
@@ -110,9 +107,7 @@ const Auth = {
           this.showApp();
           return true;
         }
-      } catch (e) {
-        // Token nieważny — pokaż login
-      }
+      } catch (e) {}
     }
 
     this.showLogin();
