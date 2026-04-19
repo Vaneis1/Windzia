@@ -482,11 +482,32 @@
     <div class="modal-box" style="max-width:520px;">
       <div class="modal-title" id="item-edit-title">Edytuj surowiec</div>
       <input type="hidden" id="item-edit-id">
-      <div class="field"><label>Aliasy (oddzielone przecinkami)</label><input type="text" id="item-edit-aliases"></div>
-      <div class="field" style="margin-top:0.8rem;"><label>Tagi (oddzielone przecinkami)</label><input type="text" id="item-edit-tags" placeholder="np. craft-broń, pochodzenie-las"></div>
+      <div class="field">
+        <label>Kategoria</label>
+        <input type="text" id="item-edit-category" placeholder="np. METALE">
+      </div>
+      <div class="field" style="margin-top:0.8rem;">
+        <label>Opis</label>
+        <textarea id="item-edit-description" rows="3" placeholder="Opis surowca..."></textarea>
+      </div>
+      <div class="field" style="margin-top:0.8rem;">
+        <label>Aliasy (oddzielone przecinkami)</label>
+        <input type="text" id="item-edit-aliases">
+      </div>
+      <div class="field" style="margin-top:0.8rem;">
+        <label>Tagi (oddzielone przecinkami)</label>
+        <input type="text" id="item-edit-tags" placeholder="np. craft-broń, pochodzenie-las">
+      </div>
       <div class="row2" style="margin-top:0.8rem;">
-        <div class="field"><label>Kolejność wyświetlania</label><input type="number" id="item-edit-order" placeholder="0"><p class="hint">Wyższe = wyżej na liście</p></div>
-        <div class="field"><label>Jednostka</label><input type="text" id="item-edit-unit" placeholder="np. szt., kg"></div>
+        <div class="field">
+          <label>Kolejność wyświetlania</label>
+          <input type="number" id="item-edit-order" placeholder="0">
+          <p class="hint">Wyższe = wyżej na liście</p>
+        </div>
+        <div class="field">
+          <label>Jednostka</label>
+          <input type="text" id="item-edit-unit" placeholder="np. szt., kg">
+        </div>
       </div>
       <div class="modal-actions">
         <button onclick="Admin.closeItemEdit()">Anuluj</button>
