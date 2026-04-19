@@ -3,6 +3,16 @@ const Gallery = {
   data: [],
   searchQuery: '',
   filter: 'all',
+  _lastLoaded: 0,
+  _TTL: 5 * 60 * 1000, // 5 minut
+
+  async loadCached() {
+    if (Date.now() - this._lastLoaded < this._TTL) {
+      this.render(); // przerysuj z cache
+      return;
+    }
+    await this.load();
+  },
 
   async load() {
     const status = document.getElementById('gallery-status');
@@ -11,6 +21,7 @@ const Gallery = {
       const data = await API.get('/gallery');
       if (!Array.isArray(data)) throw new Error('Błąd serwera');
       this.data = data;
+      this._lastLoaded = Date.now();
       this.render();
       if (status) status.textContent = '';
     } catch (e) {
@@ -34,17 +45,21 @@ const Gallery = {
   renderHero() {
     const wrap = document.getElementById('gallery-hero-wrap');
     if (!wrap) return;
-    const withQuoteAndAvatar = this.data.find(c => c.featured_quote && c.avatar_url);
-    // Kandydaci: postaci publiczne z cytatem i awatarem, lub z samym cytatem
+
+    // Kandydaci: publiczne postaci z cytatem i awatarem
     const candidates = this.data.filter(c => c.featured_quote && c.avatar_url && c.profile_public);
     const fallback   = this.data.filter(c => c.featured_quote && c.profile_public);
     const pool = candidates.length ? candidates : (fallback.length ? fallback : this.data);
 
-    // Seed z daty — zmienia się codziennie, stabilny w ciągu dnia
+    if (!pool.length) { wrap.innerHTML = ''; return; }
+
+    // Seed dzienny — zmienia się każdego dnia
     const today = new Date();
     const seed  = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-    const idx   = seed % pool.length;
-    const hero  = pool[idx];
+    const hero  = pool[seed % pool.length];
+
+    if (!hero) { wrap.innerHTML = ''; return; }
+
     const avatar = hero.avatar_url
       ? `<img class="hero-avatar" src="${this._esc(hero.avatar_url)}" alt="${this._esc(hero.name)}">`
       : `<div class="hero-avatar hero-avatar-placeholder">${(hero.name[0] || '?').toUpperCase()}</div>`;
