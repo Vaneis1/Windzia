@@ -763,3 +763,22 @@ footer { margin-top: 3rem; text-align: center; font-size: 0.78rem; color: var(--
   letter-spacing: 0.04em;
   margin: 12px 0 6px;
 }
+
+/* ── Ładny scrollbar w suwaku pionowym profilu ───────────────────────────── */
+.profile-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120,160,200,0.3) transparent;
+}
+.profile-container::-webkit-scrollbar {
+  width: 4px;
+}
+.profile-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.profile-container::-webkit-scrollbar-thumb {
+  background: rgba(120,160,200,0.3);
+  border-radius: 4px;
+}
+.profile-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(120,160,200,0.55);
+}
