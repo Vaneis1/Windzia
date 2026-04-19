@@ -243,18 +243,22 @@
 
   <!-- ── CHARACTERS ──────────────────────────────────────────────────────── -->
   <div id="tab-chars" class="tab-content">
-    <div class="section-label">Moje postacie</div>
-    <div class="panel">
-      <div class="char-grid" id="char-grid"></div>
-      <div class="add-row">
-        <input type="text" id="new-char-input" placeholder="Nazwa nowej postaci..."
-          onkeydown="if(event.key==='Enter') Characters.add()">
-        <button class="primary" onclick="Characters.add()">+ Dodaj</button>
-      </div>
-      <div class="msg ok"  id="char-ok"></div>
-      <div class="msg err" id="char-err"></div>
+  <h1 class="page-title">⚔ Postacie</h1>
+
+  <div class="panel" style="margin-bottom:1rem;">
+    <div class="section-label" style="margin-bottom:0.8rem;">Dodaj postać</div>
+    <div class="add-row">
+      <input type="text" id="new-char-input" placeholder="Nazwa nowej postaci..."
+        onkeydown="if(event.key==='Enter') Characters.add()">
+      <button class="primary" onclick="Characters.add()">+ Dodaj</button>
     </div>
+    <div class="msg ok"  id="char-ok"></div>
+    <div class="msg err" id="char-err"></div>
   </div>
+
+  <div class="section-label">Lista postaci</div>
+  <div class="char-grid" id="char-grid"></div>
+</div>
 
   <!-- ── GALLERY ─────────────────────────────────────────────────────────── -->
   <div id="tab-gallery" class="tab-content">
