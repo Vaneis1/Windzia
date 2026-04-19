@@ -41,6 +41,7 @@ const App = {
     }
   },
 
+  // ── Drawer ────────────────────────────────────────────────────────────────
   toggleDrawer() {
     const drawer = document.getElementById('drawer');
     if (drawer.classList.contains('open')) this.closeDrawer();
@@ -55,6 +56,7 @@ const App = {
     document.getElementById('drawer-overlay')?.classList.remove('open');
   },
 
+  // ── Navigation ────────────────────────────────────────────────────────────
   navTo(tab) {
     this.closeDrawer();
     this.switchTab(tab);
@@ -68,7 +70,8 @@ const App = {
   },
 
   switchTab(name) {
-    const tabNames = ['scan', 'sheet', 'chars', 'gallery', 'timeline', 'admin'];
+    // 'scan' usunięte — Skanuj jest teraz subtabem Surowców
+    const tabNames = ['sheet', 'chars', 'gallery', 'timeline', 'admin'];
     tabNames.forEach(t => {
       document.getElementById('tab-' + t)?.classList.toggle('active', t === name);
     });
@@ -86,6 +89,7 @@ const App = {
     if (name === 'timeline') Timeline.init();
   },
 
+  // ── Header search ─────────────────────────────────────────────────────────
   headerSearch(q) {
     clearTimeout(this.searchTimer);
     const results = document.getElementById('header-search-results');
