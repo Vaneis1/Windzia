@@ -7,7 +7,11 @@ const App = {
     if (loggedIn) {
       this._showShell();
       Scan.initDropZone();
-      await Characters.load();
+      // Równoległe ładowanie danych startowych
+      await Promise.all([
+        Characters.load(),
+        Gallery.load(),
+      ]);
       const lastTab = localStorage.getItem('ww_last_tab') || 'gallery';
       this.navTo(lastTab);
     }
@@ -16,7 +20,10 @@ const App = {
   async onLogin() {
     this._showShell();
     Scan.initDropZone();
-    await Characters.load();
+    await Promise.all([
+      Characters.load(),
+      Gallery.load(),
+    ]);
     localStorage.setItem('ww_last_tab', 'gallery');
     this.navTo('gallery');
   },
@@ -71,7 +78,6 @@ const App = {
   },
 
   switchTab(name) {
-    // 'scan' usunięte — Skanuj jest teraz subtabem Surowców
     const tabNames = ['sheet', 'chars', 'gallery', 'timeline', 'admin'];
     tabNames.forEach(t => {
       document.getElementById('tab-' + t)?.classList.toggle('active', t === name);
@@ -83,11 +89,12 @@ const App = {
       el.classList.toggle('active', el.dataset.tab === name);
     });
 
+    // Używamy loadCached() dla zakładek które mają dane startowe
     if (name === 'sheet')    Sheet.init();
-    if (name === 'chars')    Characters.load();
-    if (name === 'gallery')  Gallery.load();
+    if (name === 'chars')    Characters.loadCached();
+    if (name === 'gallery')  Gallery.loadCached();
     if (name === 'admin')    Admin.load();
-    if (name === 'timeline') Timeline.init();
+    if (name === 'timeline') Timeline.initCached();
   },
 
   // ── Header search ─────────────────────────────────────────────────────────
