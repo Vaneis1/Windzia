@@ -116,7 +116,6 @@ const Admin = {
 
       const cats = [...new Set(items.map(i => i.category))].sort();
 
-      // Populate filter select
       const filterSel = document.getElementById('item-cat-filter');
       if (filterSel) {
         filterSel.innerHTML = '<option value="">Wszystkie kategorie</option>';
@@ -127,7 +126,6 @@ const Admin = {
         });
       }
 
-      // Populate new item category select
       const catSel = document.getElementById('new-item-cat-select');
       if (catSel) {
         catSel.innerHTML = '<option value="">— wybierz kategorię —</option>';
@@ -146,10 +144,11 @@ const Admin = {
   _renderItems() {
     const query = (document.getElementById('item-search')?.value || '').toLowerCase();
     const cat = document.getElementById('item-cat-filter')?.value || '';
-    let items = State.allItemsAdmin;
+    let items = State.allItemsAdmin || [];
     if (query) items = items.filter(i =>
       i.name.toLowerCase().includes(query) ||
-      (i.aliases || []).some(a => a.toLowerCase().includes(query))
+      (i.aliases || []).some(a => a.toLowerCase().includes(query)) ||
+      (i.description || '').toLowerCase().includes(query)
     );
     if (cat) items = items.filter(i => i.category === cat);
 
@@ -167,21 +166,19 @@ const Admin = {
       row.className = 'item-row';
       const aliases = (item.aliases || []).join(', ') || '—';
       const tags = (item.tags || []).map(t => '#' + t).join(' ') || '—';
-      const unit = item.unit ? ' · jednostka: ' + item.unit : '';
+      const unit = item.unit ? ' · ' + item.unit : '';
+      const desc = item.description
+        ? `<div class="item-cat" style="margin-top:2px;font-style:normal;color:var(--text-d);">${item.description.slice(0, 80)}${item.description.length > 80 ? '…' : ''}</div>`
+        : '';
       row.innerHTML = `
         <div class="item-info">
-          <div>${item.name}</div>
-          <div class="item-cat">${item.category} · aliasy: ${aliases} · tagi: ${tags}${unit}</div>
+          <div>${item.name} <span style="font-size:0.72rem;color:var(--text-m);">[${item.category}]</span></div>
+          ${desc}
+          <div class="item-cat">aliasy: ${aliases} · tagi: ${tags}${unit}</div>
         </div>
         <div class="item-actions">
-          <button class="sm warn-btn"
-            onclick="Admin.editItem(${item.id})">
-            Edytuj
-          </button>
-          <button class="danger sm"
-            onclick="Admin.deleteItem(${item.id}, '${item.name.replace(/'/g,"\\'")}')">
-            Usuń
-          </button>
+          <button class="sm warn-btn" onclick="Admin.editItem(${item.id})">Edytuj</button>
+          <button class="danger sm" onclick="Admin.deleteItem(${item.id}, '${item.name.replace(/'/g,"\\'")}')">Usuń</button>
         </div>`;
       el.appendChild(row);
     });
@@ -203,7 +200,7 @@ const Admin = {
   },
 
   editItem(id) {
-    const item = State.allItemsAdmin.find(i => i.id === id);
+    const item = (State.allItemsAdmin || []).find(i => i.id === id);
     if (!item) return;
     const overlay = document.getElementById('item-edit-overlay');
     document.getElementById('item-edit-title').textContent = 'Edytuj: ' + item.name;
@@ -212,6 +209,8 @@ const Admin = {
     document.getElementById('item-edit-tags').value = (item.tags || []).join(', ');
     document.getElementById('item-edit-order').value = item.display_order || 0;
     document.getElementById('item-edit-unit').value = item.unit || '';
+    document.getElementById('item-edit-category').value = item.category || '';
+    document.getElementById('item-edit-description').value = item.description || '';
     overlay.classList.add('open');
   },
 
@@ -225,8 +224,10 @@ const Admin = {
     const tags = document.getElementById('item-edit-tags').value.split(',').map(t => t.trim()).filter(Boolean);
     const display_order = parseInt(document.getElementById('item-edit-order').value) || 0;
     const unit = document.getElementById('item-edit-unit').value.trim();
+    const category = document.getElementById('item-edit-category').value.trim();
+    const description = document.getElementById('item-edit-description').value.trim();
     try {
-      const data = await API.put('/items/' + id, { aliases, tags, display_order, unit });
+      const data = await API.put('/items/' + id, { aliases, tags, display_order, unit, category, description });
       if (data.error) throw new Error(data.error);
       this._ok('Zaktualizowano surowiec.');
       this.closeItemEdit();
@@ -251,9 +252,7 @@ const Admin = {
       document.getElementById('new-item-aliases').value = '';
       if (document.getElementById('new-item-tags')) document.getElementById('new-item-tags').value = '';
       if (document.getElementById('new-item-unit')) document.getElementById('new-item-unit').value = '';
-      if (document.getElementById('new-item-cat-custom')) {
-        document.getElementById('new-item-cat-custom').value = '';
-      }
+      if (document.getElementById('new-item-cat-custom')) document.getElementById('new-item-cat-custom').value = '';
       await this.loadItems();
     } catch (e) { this._err('Błąd: ' + e.message); }
   },
@@ -278,7 +277,6 @@ const Admin = {
     try {
       const data = await API.get('/inventory');
       if (data.error) throw new Error(data.error);
-      const chars = data.characters || [];
       const items = data.items || [];
       const charItems = items.filter(i => (i.quantities[String(cid)] || 0) > 0);
 
@@ -389,10 +387,8 @@ const Admin = {
     try {
       const data = await API.put('/auth/profile', { display_name, display_role });
       if (data.error) throw new Error(data.error);
-      // Update local state
       State.currentUser.display_name = data.display_name;
       State.currentUser.display_role = data.display_role;
-      // Update header display
       const ud = document.getElementById('user-display');
       if (ud) ud.textContent = data.display_name +
         (State.currentUser.role === 'admin' ? ` (${data.display_role})` : '');
