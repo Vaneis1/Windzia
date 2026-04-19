@@ -2,7 +2,7 @@
 const Gallery = {
   data: [],
   searchQuery: '',
-  filter: 'all', // 'all' | 'mine' | 'public'
+  filter: 'all',
 
   async load() {
     const status = document.getElementById('gallery-status');
@@ -113,8 +113,7 @@ const Gallery = {
         : '';
 
       const privacyBadge = !c.profile_public
-        ? `<div class="gal-privacy" title="Profil prywatny">🔒</div>`
-        : '';
+        ? `<div class="gal-privacy" title="Profil prywatny">🔒</div>` : '';
 
       return `<a href="profile.html?id=${c.id}" class="gal-card">
         ${privacyBadge}
