@@ -45,8 +45,7 @@ const Editor = {
       this._applyPageSettingsToEditor();
       this._renderPageSettingsForm();
       this._pushHistory();
-      this.render();
-      this._renderProps();
+      this.switchTab('info');
     }catch(e){this._toast('Błąd: '+e.message,'err');}
   },
 
