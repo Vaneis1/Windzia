@@ -408,7 +408,18 @@ const Editor = {
       if (tabsRes.warnings?.length) this._toast('Zapisano z ostrzeżeniami: ' + tabsRes.warnings[0], 'err');
       if (data.warnings?.length) this._toast('Zapisano z ostrzeżeniami CSS: ' + data.warnings[0], 'err');
       this.dirty=false;
+      // Keep _loadedProfile in sync so switching back to 'profile' tab
+      // restores the just-saved state, not the pre-save snapshot.
+      if (this.activeTab === 'profile') {
+        this._loadedProfile = {
+          blocks: JSON.parse(JSON.stringify(this.blocks)),
+          pageSettings: { ...this.pageSettings },
+          profileCss: this.profileCss,
+        };
+      }
       if(btn){btn.classList.remove('dirty');btn.textContent='Zapisano ✓';btn.disabled=false;}
+      // Avatar or profile visibility may have changed — bust gallery cache.
+      if (typeof Gallery !== 'undefined') Gallery.invalidate();
       setTimeout(()=>{if(btn&&!this.dirty)btn.textContent='Zapisz';},2500);
     }catch(e){
       if(btn){btn.textContent='Zapisz';btn.disabled=false;}
