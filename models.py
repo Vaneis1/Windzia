@@ -288,3 +288,99 @@ class AppSettings(db.Model):
         else:
             db.session.add(cls(key=key, value=value))
         db.session.commit()
+
+
+# ── Sessions ──────────────────────────────────────────────────────────────────
+
+VALID_SESSION_STATUSES = ["recruiting", "ongoing", "ended"]
+VALID_SESSION_RISKS    = ["low", "moderate", "high", "extreme"]
+VALID_SESSION_SCOPES   = ["intimate", "local", "global"]
+
+
+class Campaign(db.Model):
+    __tablename__ = "campaigns"
+
+    id          = db.Column(db.Integer, primary_key=True)
+    name        = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    status      = db.Column(db.String(20), default="active", nullable=False)  # active / ended
+    created_by  = db.Column(db.Integer, db.ForeignKey("owners.id"), nullable=True)
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
+
+    sessions = db.relationship(
+        "Session", backref="campaign", cascade="all, delete-orphan", lazy="select"
+    )
+
+    def to_dict(self):
+        return {
+            "id":          self.id,
+            "name":        self.name,
+            "description": self.description or "",
+            "status":      self.status,
+            "created_by":  self.created_by,
+            "created_at":  self.created_at.isoformat() if self.created_at else "",
+        }
+
+
+class Session(db.Model):
+    __tablename__ = "sessions"
+
+    id          = db.Column(db.Integer, primary_key=True)
+    campaign_id = db.Column(db.Integer, db.ForeignKey("campaigns.id", ondelete="SET NULL"), nullable=True)
+    title       = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    date_start  = db.Column(db.String(10), nullable=True)   # YYYY-MM-DD
+    date_end    = db.Column(db.String(10), nullable=True)
+    status      = db.Column(db.String(20), default="recruiting", nullable=False)
+    risk        = db.Column(db.String(20), default="low", nullable=False)
+    scope       = db.Column(db.String(20), default="local", nullable=False)
+    created_by  = db.Column(db.Integer, db.ForeignKey("owners.id"), nullable=True)
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
+
+    creator = db.relationship("Owner", foreign_keys=[created_by], lazy="select")
+    participants = db.relationship(
+        "SessionParticipant", backref="session",
+        cascade="all, delete-orphan", lazy="select"
+    )
+
+    def to_dict(self):
+        chars = [p for p in self.participants if p.character_id]
+        npcs  = [p.npc_name for p in self.participants if p.npc_name]
+        return {
+            "id":          self.id,
+            "campaign_id": self.campaign_id,
+            "campaign_name": self.campaign.name if self.campaign else "",
+            "title":       self.title,
+            "description": self.description or "",
+            "date_start":  self.date_start or "",
+            "date_end":    self.date_end or "",
+            "status":      self.status,
+            "risk":        self.risk,
+            "scope":       self.scope,
+            "created_by":  self.created_by,
+            "creator_display": (
+                (self.creator.display_name or self.creator.username)
+                if self.creator else ""
+            ),
+            "created_at":  self.created_at.isoformat() if self.created_at else "",
+            "character_participants": [
+                {
+                    "character_id": p.character_id,
+                    "name": p.character.name if p.character else "",
+                    "avatar": p.character.avatar_url if p.character else None,
+                }
+                for p in chars if p.character
+            ],
+            "npc_participants": npcs,
+        }
+
+
+class SessionParticipant(db.Model):
+    __tablename__ = "session_participants"
+
+    id           = db.Column(db.Integer, primary_key=True)
+    session_id   = db.Column(db.Integer, db.ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False)
+    character_id = db.Column(db.Integer, db.ForeignKey("characters.id", ondelete="CASCADE"), nullable=True)
+    npc_name     = db.Column(db.String(200), nullable=True)
+
+    character = db.relationship("Character", foreign_keys=[character_id], lazy="select")
