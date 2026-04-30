@@ -1,11 +1,15 @@
 // admin.js — Admin panel: owners, items, inventory editing, profile settings.
 const Admin = {
   activeTab: 'owners',
+  _lastLoaded: 0,
+  _TTL: 5 * 60 * 1000, // 5 minut
 
   async load() {
     if (State.currentUser?.role !== 'admin') return;
+    if (Date.now() - this._lastLoaded < this._TTL) return;
     await Promise.all([this.loadOwners(), this.loadItems()]);
     await Characters.load();
+    this._lastLoaded = Date.now();
   },
 
   switchTab(name) {
@@ -18,7 +22,7 @@ const Admin = {
     });
   },
 
-  _ok(msg) {
+  _invalidate() { this._lastLoaded = 0; },
     const el = document.getElementById('admin-ok');
     if (!el) return;
     el.textContent = msg; el.style.display = 'block';
