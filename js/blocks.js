@@ -74,36 +74,23 @@ function duplicateBlock(blocks,id){ function dc(b){return{...b,id:genId(),props:
 
 // ── Renderer ──────────────────────────────────────────────────────────────────
 const Renderer = {
-  // _previewMode: gdy true, każdy blok dostaje data-bid wrapper (do CSS edytora)
-  _previewMode: false,
-
-  render(blocks, em=false) {
-    return (blocks||[]).map(b=>this.block(b,em)).join('');
+  render(blocks, em=false, preview=false) {
+    return (blocks||[]).map(b=>this.block(b,em,preview)).join('');
   },
 
   // Renderuje bloki z data-bid wrapperami dla edytora CSS (rekurencyjnie)
   renderPreview(blocks) {
-    this._previewMode = true;
-    const html = (blocks||[]).map(b => this._previewBlock(b)).join('');
-    this._previewMode = false;
-    return html;
-  },
-
-  _previewBlock(b) {
-    const inner = this._inner(b, false);
-    return `<div data-bid="${b.id}" class="css-prev-block">${inner}</div>`;
+    return this.render(blocks||[], false, true);
   },
 
   // Pomocnik — zwraca bloki dzieci odpowiednią metodą
-  _renderChildren(children, em) {
-    if (this._previewMode) {
-      return (children||[]).map(b => this._previewBlock(b)).join('');
-    }
-    return this.render(children||[], em);
+  _renderChildren(children, em, preview=false) {
+    return this.render(children||[], em, preview);
   },
 
-  block(b,em){
-    const inner=this._inner(b,em);
+  block(b,em,preview=false){
+    const inner=this._inner(b,em,preview);
+    if(preview)return `<div data-bid="${b.id}" class="css-prev-block">${inner}</div>`;
     if(!em)return inner;
     const sel=typeof Editor!=='undefined'&&Editor.selectedId===b.id;
     return `<div class="eb${sel?' eb-sel':''}" data-bid="${b.id}" onclick="event.stopPropagation();Editor.select('${b.id}')">
@@ -117,12 +104,12 @@ const Renderer = {
       </div>${inner}</div>`;
   },
 
-  _inner(b,em){
+  _inner(b,em,preview=false){
     switch(b.type){
-      case 'container': return this.container(b,em);
-      case 'cards':     return this.cards(b,em);
-      case 'slider_v':  return this.slider_v(b,em);
-      case 'slider_h':  return this.slider_h(b,em);
+      case 'container': return this.container(b,em,preview);
+      case 'cards':     return this.cards(b,em,preview);
+      case 'slider_v':  return this.slider_v(b,em,preview);
+      case 'slider_h':  return this.slider_h(b,em,preview);
       case 'richtext':  return this.richtext(b,em);
       case 'text':      return this.text(b);
       case 'heading':   return this.heading(b);
@@ -135,24 +122,23 @@ const Renderer = {
     }
   },
 
-  container(b,em){
+  container(b,em,preview=false){
     const p=b.props||{};const cols=Math.max(1,parseInt(p.columns)||1);
     const gridCols=p.column_template||`repeat(${cols},1fr)`;
     const s=[p.bg_color?`background-color:${p.bg_color}`:'',p.bg_image?`background-image:url('${p.bg_image}');background-size:${p.bg_size||'cover'};background-position:${p.bg_position||'center'}`:'',`border:${p.border_width||0}px ${p.border_style||'solid'} ${p.border_width>0?(p.border_color||'transparent'):'transparent'}`,`border-radius:${p.border_radius||0}px`,`padding:${p.padding!==undefined?p.padding:16}px`,p.width&&p.width!=='100%'?`width:${p.width}`:'width:100%',p.height&&p.height!=='auto'?`height:${p.height}`:'',p.min_height>0?`min-height:${p.min_height}px`:'',p.overflow&&p.overflow!=='visible'?`overflow:${p.overflow}`:'','box-sizing:border-box'].filter(Boolean).join(';');
     const g=cols>1||p.column_template?`display:grid;grid-template-columns:${gridCols};gap:${p.gap||16}px;align-items:${p.align_items||'start'}`:'';
-    // Użyj _renderChildren — respektuje tryb podglądu
-    const ch=this._renderChildren(b.children||[], em);
+    const ch=this._renderChildren(b.children||[], em, preview);
     const add=em?`<div class="eb-add-child" onclick="event.stopPropagation();Editor.addBlock('${b.id}')">＋ Dodaj blok tutaj</div>`:'';
     return`<div style="${s}${g?';'+g:''}" class="profile-container">${ch}${add}</div>`;
   },
 
-  cards(b,em){
+  cards(b,em,preview=false){
     const p=b.props||{};const cols=Math.max(1,parseInt(p.columns)||3);
     const wrapStyle=`display:grid;grid-template-columns:repeat(${cols},1fr);gap:${p.gap||16}px;width:${p.width||'100%'};padding:${p.padding||0}px;box-sizing:border-box`;
     const cardStyle=`background:${p.card_bg||'rgba(120,160,200,0.05)'};border:1px solid ${p.card_border||'rgba(120,160,200,0.18)'};border-radius:${p.card_radius||8}px;padding:${p.card_padding||16}px;box-sizing:border-box`;
     const children=(b.children||[]).map(child=>{
-      if(this._previewMode){
-        return`<div data-bid="${child.id}" class="css-prev-block" style="${cardStyle}">${this._inner(child,false)}</div>`;
+      if(preview){
+        return`<div data-bid="${child.id}" class="css-prev-block" style="${cardStyle}">${this._inner(child,false,false)}</div>`;
       }
       if(em){const sel=typeof Editor!=='undefined'&&Editor.selectedId===child.id;
         return`<div class="eb${sel?' eb-sel':''} cards-cell" data-bid="${child.id}" style="${cardStyle}" onclick="event.stopPropagation();Editor.select('${child.id}')"><div class="eb-bar"><span class="eb-type">${BlockDefs[child.type]?.icon||''} ${BlockDefs[child.type]?.label||child.type}</span><button class="eb-btn" onclick="event.stopPropagation();Editor.move('${child.id}','up')">←</button><button class="eb-btn" onclick="event.stopPropagation();Editor.move('${child.id}','down')">→</button><button class="eb-btn eb-del" onclick="event.stopPropagation();Editor.remove('${child.id}')">✕</button></div>${this._inner(child,em)}</div>`;}
@@ -162,20 +148,20 @@ const Renderer = {
     return`<div style="${wrapStyle}">${children}${add}</div>`;
   },
 
-  slider_v(b,em){
+  slider_v(b,em,preview=false){
     const p=b.props||{};
     const s=`width:${p.width||'100%'};height:${p.height||'400px'};overflow-y:auto;display:flex;flex-direction:column;gap:${p.gap||12}px;${p.bg_color?'background:'+p.bg_color+';':''}padding:${p.padding||0}px;box-sizing:border-box;scrollbar-width:thin;scrollbar-color:rgba(120,160,200,0.3) transparent`;
-    const ch=this._renderChildren(b.children||[], em);
+    const ch=this._renderChildren(b.children||[], em, preview);
     const add=em?`<div class="eb-add-child" onclick="event.stopPropagation();Editor.addBlock('${b.id}')">＋ Dodaj blok</div>`:'';
     return`<div style="${s}">${ch}${add}</div>`;
   },
 
-  slider_h(b,em){
+  slider_h(b,em,preview=false){
     const p=b.props||{};
     const s=`display:flex;overflow-x:auto;height:${p.height||'220px'};gap:${p.gap||12}px;${p.bg_color?'background:'+p.bg_color+';':''}padding:${p.padding||0}px;box-sizing:border-box;scrollbar-width:thin;align-items:stretch`;
     const items=(b.children||[]).map(c=>{
       const inner=this._inner(c,false);
-      if(this._previewMode){
+      if(preview){
         return`<div data-bid="${c.id}" class="css-prev-block" style="flex:0 0 ${p.item_width||'240px'};height:100%;box-sizing:border-box;">${inner}</div>`;
       }
       if(em){const sel=typeof Editor!=='undefined'&&Editor.selectedId===c.id;return`<div class="eb${sel?' eb-sel':''}" data-bid="${c.id}" style="flex:0 0 ${p.item_width||'240px'};height:100%;box-sizing:border-box;" onclick="event.stopPropagation();Editor.select('${c.id}')"><div class="eb-bar"><span class="eb-type">${BlockDefs[c.type]?.icon||''} ${BlockDefs[c.type]?.label||c.type}</span><button class="eb-btn" onclick="event.stopPropagation();Editor.move('${c.id}','up')">←</button><button class="eb-btn" onclick="event.stopPropagation();Editor.move('${c.id}','down')">→</button><button class="eb-btn eb-del" onclick="event.stopPropagation();Editor.remove('${c.id}')">✕</button></div>${inner}</div>`;}
