@@ -75,6 +75,7 @@
     <div class="top-nav-link" data-tab="chars"    onclick="App.navTo('chars')">⚔ Postacie</div>
     <div class="top-nav-link" data-tab="sheet"    onclick="App.navTo('sheet')">◆ Surowce</div>
     <div class="top-nav-link" data-tab="timeline" onclick="App.navTo('timeline')">⧗ Oś czasu</div>
+    <div class="top-nav-link" data-tab="sessions" onclick="App.navTo('sessions')">⚔ Sesjownik</div>
     <div class="top-nav-link admin-t" id="top-admin-link" style="display:none;"
       data-tab="admin" onclick="App.navTo('admin')">⚙ Admin</div>
   </nav>
@@ -99,6 +100,7 @@
     <div class="drawer-link" data-tab="chars"    onclick="App.navTo('chars')"><span class="drawer-link-icon">⚔</span> Postacie</div>
     <div class="drawer-link" data-tab="sheet"    onclick="App.navTo('sheet')"><span class="drawer-link-icon">◆</span> Surowce</div>
     <div class="drawer-link" data-tab="timeline" onclick="App.navTo('timeline')"><span class="drawer-link-icon">⧗</span> Oś czasu</div>
+    <div class="drawer-link" data-tab="sessions" onclick="App.navTo('sessions')"><span class="drawer-link-icon">⚔</span> Sesjownik</div>
     <div class="drawer-link admin-t" id="drawer-admin-link" style="display:none;"
       data-tab="admin" onclick="App.navTo('admin')"><span class="drawer-link-icon">⚙</span> Admin</div>
   </nav>
@@ -111,6 +113,7 @@
 <div class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none;">
   <button data-tab="chars"    onclick="App.navTo('chars')"><span class="mn-icon">⚔</span><span>Postacie</span></button>
   <button data-tab="timeline" onclick="App.navTo('timeline')"><span class="mn-icon">⧗</span><span>Oś czasu</span></button>
+  <button data-tab="sessions" onclick="App.navTo('sessions')"><span class="mn-icon">⚔</span><span>Sesje</span></button>
   <button data-tab="sheet"    onclick="App.navTo('sheet')"><span class="mn-icon">◆</span><span>Surowce</span></button>
 </div>
 
@@ -526,5 +529,106 @@
 <script src="js/admin.js"></script>
 <script src="js/app.js"></script>
 
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: SESSIONS                                                           -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-sessions" class="tab-content">
+    <div class="tl-header" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+      <div>
+        <h2 style="margin:0;font-family:'Cinzel',serif;font-size:1.1rem;letter-spacing:0.06em;">⚔ Sesjownik</h2>
+        <span id="sessions-status" style="font-size:0.8rem;color:var(--text-m);"></span>
+      </div>
+      <button class="primary" onclick="Sessions.openModal()">＋ Nowa sesja</button>
+    </div>
+
+    <div id="sessions-list"></div>
+  </div>
+
+  <!-- ── Sessions modal ──────────────────────────────────────────────────── -->
+  <div id="sess-modal-overlay" class="modal-overlay" onclick="if(event.target===this)Sessions.closeModal()">
+    <div class="modal-box" style="max-width:580px;max-height:90vh;overflow-y:auto;">
+      <div class="modal-title" id="sess-modal-title">Nowa sesja</div>
+
+      <div class="field">
+        <label>Tytuł *</label>
+        <input type="text" id="sess-f-title" placeholder="Nazwa sesji">
+      </div>
+
+      <div class="field" style="margin-top:0.8rem;">
+        <label>Opis</label>
+        <textarea id="sess-f-desc" rows="3" placeholder="Krótki opis sesji..."></textarea>
+      </div>
+
+      <div class="field" style="margin-top:0.8rem;">
+        <label>Kampania</label>
+        <select id="sess-f-campaign" onchange="Sessions.toggleNewCampaign()">
+          <option value="">— bez kampanii —</option>
+          <option value="__new__">＋ Nowa kampania...</option>
+        </select>
+      </div>
+      <div id="sess-new-campaign-wrap" style="display:none;margin-top:0.5rem;">
+        <input type="text" id="sess-f-new-campaign" placeholder="Nazwa nowej kampanii">
+      </div>
+
+      <div class="row2" style="margin-top:0.8rem;">
+        <div class="field">
+          <label>Data startu</label>
+          <input type="date" id="sess-f-date-start">
+        </div>
+        <div class="field">
+          <label>Data końca</label>
+          <input type="date" id="sess-f-date-end">
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:0.8rem;">
+        <label>Status</label>
+        <div class="chip-picker">
+          <button class="sess-chip sess-chip-recruiting active" data-chip-group="sess-status" data-chip-value="recruiting" onclick="Sessions.toggleChip('sess-status','recruiting')">Nabór</button>
+          <button class="sess-chip sess-chip-ongoing" data-chip-group="sess-status" data-chip-value="ongoing" onclick="Sessions.toggleChip('sess-status','ongoing')">W trakcie</button>
+          <button class="sess-chip sess-chip-ended" data-chip-group="sess-status" data-chip-value="ended" onclick="Sessions.toggleChip('sess-status','ended')">Zakończona</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:0.8rem;">
+        <label>Ryzyko</label>
+        <div class="chip-picker">
+          <button class="sess-chip sess-risk-low active" data-chip-group="sess-risk" data-chip-value="low" onclick="Sessions.toggleChip('sess-risk','low')">Niskie</button>
+          <button class="sess-chip sess-risk-moderate" data-chip-group="sess-risk" data-chip-value="moderate" onclick="Sessions.toggleChip('sess-risk','moderate')">Umiarkowane</button>
+          <button class="sess-chip sess-risk-high" data-chip-group="sess-risk" data-chip-value="high" onclick="Sessions.toggleChip('sess-risk','high')">Wysokie</button>
+          <button class="sess-chip sess-risk-extreme" data-chip-group="sess-risk" data-chip-value="extreme" onclick="Sessions.toggleChip('sess-risk','extreme')">Ekstremalne</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:0.8rem;">
+        <label>Zasięg</label>
+        <div class="chip-picker">
+          <button class="sess-chip sess-chip-scope active" data-chip-group="sess-scope" data-chip-value="intimate" onclick="Sessions.toggleChip('sess-scope','intimate')">Intymna</button>
+          <button class="sess-chip sess-chip-scope" data-chip-group="sess-scope" data-chip-value="local" onclick="Sessions.toggleChip('sess-scope','local')">Lokalna</button>
+          <button class="sess-chip sess-chip-scope" data-chip-group="sess-scope" data-chip-value="global" onclick="Sessions.toggleChip('sess-scope','global')">Globalna</button>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:0.8rem;">
+        <label>Postacie uczestniczące</label>
+        <div id="sess-char-picker" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;padding:0.4rem;"></div>
+      </div>
+
+      <div class="field" style="margin-top:0.8rem;">
+        <label>NPC (oddzielone przecinkami)</label>
+        <input type="text" id="sess-f-npcs" placeholder="np. Stary Bartold, Kapitan Mara">
+      </div>
+
+      <div class="msg err" id="sess-modal-err" style="margin-top:0.8rem;"></div>
+
+      <div class="modal-actions">
+        <button onclick="Sessions.closeModal()">Anuluj</button>
+        <button class="primary" id="sess-save-btn" onclick="Sessions.save()">Zapisz</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/sessions.js"></script>
 </body>
 </html>
