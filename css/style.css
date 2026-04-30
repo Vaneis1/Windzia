@@ -782,3 +782,61 @@ footer { margin-top: 3rem; text-align: center; font-size: 0.78rem; color: var(--
 .profile-container::-webkit-scrollbar-thumb:hover {
   background: rgba(120,160,200,0.55);
 }
+
+/* ── Sessions ──────────────────────────────────────────────────────────────── */
+.sess-group         { margin-bottom: 2rem; }
+.sess-group-label   { font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 0.12em;
+                      text-transform: uppercase; color: var(--text-m); margin-bottom: 0.8rem;
+                      padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+
+.sess-card          { background: var(--bg-panel); border: 1px solid var(--border);
+                      border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 0.8rem; }
+.sess-card-header   { display: flex; align-items: flex-start; justify-content: space-between;
+                      gap: 0.8rem; flex-wrap: wrap; }
+.sess-card-title    { font-family: 'Cinzel', serif; font-size: 0.95rem; letter-spacing: 0.04em;
+                      color: var(--text-l); flex: 1; }
+.sess-card-chips    { display: flex; gap: 0.4rem; flex-wrap: wrap; flex-shrink: 0; }
+.sess-card-meta     { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap;
+                      margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-m); }
+.sess-card-desc     { margin-top: 0.6rem; font-size: 0.88rem; color: var(--text-d);
+                      line-height: 1.5; }
+.sess-card-footer   { display: flex; align-items: center; justify-content: space-between;
+                      margin-top: 0.8rem; padding-top: 0.6rem;
+                      border-top: 1px solid rgba(133,214,242,0.07); }
+.sess-card-actions  { display: flex; gap: 0.5rem; }
+.sess-creator       { font-size: 0.75rem; color: var(--text-m); }
+.sess-date          { font-size: 0.8rem; }
+.sess-campaign-badge { font-size: 0.78rem; color: var(--gold-l);
+                       background: rgba(210,160,60,0.1); border: 1px solid rgba(210,160,60,0.25);
+                       border-radius: 4px; padding: 1px 8px; }
+.sess-participants  { display: flex; align-items: center; gap: 0.5rem;
+                      margin-top: 0.6rem; flex-wrap: wrap; }
+.sess-participants-inner { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.sess-npc-badge     { font-size: 0.75rem; color: var(--text-m); background: var(--bg-alt);
+                      border: 1px solid var(--border); border-radius: 12px; padding: 1px 10px; }
+
+/* Status chips */
+.sess-chip          { font-size: 0.72rem; font-family: 'Cinzel', serif; letter-spacing: 0.04em;
+                      border-radius: 12px; padding: 2px 10px;
+                      border: 1px solid currentColor; cursor: default; }
+button.sess-chip    { cursor: pointer; transition: opacity 0.15s; }
+button.sess-chip:not(.active) { opacity: 0.45; }
+button.sess-chip.active { opacity: 1; }
+
+.sess-chip-recruiting { color: #7ba7c4; border-color: rgba(123,167,196,0.5);
+                        background: rgba(123,167,196,0.1); }
+.sess-chip-ongoing    { color: #7bc47f; border-color: rgba(90,170,90,0.5);
+                        background: rgba(90,170,90,0.1); }
+.sess-chip-ended      { color: var(--text-m); border-color: var(--border);
+                        background: transparent; }
+.sess-chip-scope      { color: var(--text-d); border-color: var(--border);
+                        background: transparent; }
+
+/* Risk chips */
+.sess-risk-low      { color: #7bc47f; border-color: rgba(90,170,90,0.5); background: rgba(90,170,90,0.08); }
+.sess-risk-moderate { color: #d4c847; border-color: rgba(210,200,60,0.5); background: rgba(210,200,60,0.08); }
+.sess-risk-high     { color: #d4a847; border-color: rgba(210,160,60,0.5); background: rgba(210,160,60,0.08); }
+.sess-risk-extreme  { color: #d46060; border-color: rgba(200,70,70,0.5); background: rgba(200,70,70,0.08); }
+
+/* Modal chip picker */
+.chip-picker        { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.4rem; }
