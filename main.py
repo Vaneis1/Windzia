@@ -17,6 +17,7 @@ from routes.admin import admin_bp
 from routes.profiles import profiles_bp
 from routes.houses import houses_bp
 from routes.events import events_bp
+from routes.sessions import sessions_bp
 
 
 def _run_migrations(app):
@@ -65,6 +66,7 @@ def create_app() -> Flask:
     app.register_blueprint(profiles_bp)
     app.register_blueprint(houses_bp)
     app.register_blueprint(events_bp)
+    app.register_blueprint(sessions_bp)
 
     from flask import jsonify
 
