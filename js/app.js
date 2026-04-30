@@ -90,7 +90,7 @@ const App = {
     });
 
     // Używamy loadCached() dla zakładek które mają dane startowe
-    if (name === 'sheet')    Sheet.init();
+    if (name === 'sheet')    Sheet.loadCached();
     if (name === 'chars')    Characters.loadCached();
     if (name === 'gallery')  Gallery.loadCached();
     if (name === 'admin')    Admin.load();
