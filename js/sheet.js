@@ -29,9 +29,17 @@ const Sheet = {
   matrixVisibleCount: 50,
 
   // ── Init / view switch ────────────────────────────────────────────────────
-  async init() {
-    await this.loadTags();
-    this.switchView('mine');
+  // loadCached: loads tags once (TTL 5 min) then switches to mine view.
+  // Called from App.switchTab — Sheet is a view module, not an app module.
+  _lastTagsLoaded: 0,
+  _tagsTTL: 5 * 60 * 1000,
+
+  async loadCached() {
+    if (Date.now() - this._lastTagsLoaded >= this._tagsTTL) {
+      await this.loadTags();
+      this._lastTagsLoaded = Date.now();
+    }
+    this.switchView(this.currentView || 'mine');
   },
 
   async loadTags() {
