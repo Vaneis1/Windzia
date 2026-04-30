@@ -228,6 +228,7 @@ class Item(db.Model):
     tags = db.Column(db.JSON, default=list)
     display_order = db.Column(db.Integer, default=0, nullable=False)
     unit = db.Column(db.String(20), nullable=True)
+    description = db.Column(db.Text, nullable=True)
     meta = db.Column(db.JSON, default=dict)
 
     inventory_entries = db.relationship(
@@ -243,6 +244,7 @@ class Item(db.Model):
             "tags": self.tags or [],
             "display_order": self.display_order or 0,
             "unit": self.unit,
+            "description": self.description or "",
             "meta": self.meta or {},
         }
 
