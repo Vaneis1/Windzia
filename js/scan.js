@@ -1,6 +1,20 @@
-// scan.js — Image upload, scanning, and result display.
+// scan.js — Image OCR scanning and text paste parser.
 const Scan = {
-  // ── Image management ─────────────────────────────────────────────────────
+
+  // ── Tab switching ─────────────────────────────────────────────────────────
+  _scanTab: 'ocr',   // 'ocr' | 'paste'
+
+  switchScanTab(tab) {
+    this._scanTab = tab;
+    ['ocr', 'paste'].forEach(t => {
+      const el = document.getElementById('scan-tab-' + t);
+      if (el) el.style.display = t === tab ? '' : 'none';
+      const btn = document.querySelector(`[data-scan-tab="${t}"]`);
+      if (btn) btn.classList.toggle('active', t === tab);
+    });
+  },
+
+  // ── OCR: Image management ─────────────────────────────────────────────────
   addImage(file) {
     const mime = file.type || 'image/png';
     const reader = new FileReader();
@@ -48,7 +62,7 @@ const Scan = {
   initDropZone() {
     const zone = document.getElementById('upload-zone');
     if (!zone) return;
-    if (zone._dropZoneInit) return; // zapobiega wielokrotnemu dodaniu listenerów
+    if (zone._dropZoneInit) return;
     zone._dropZoneInit = true;
 
     zone.addEventListener('dragover', e => {
@@ -65,6 +79,8 @@ const Scan = {
     });
 
     document.addEventListener('paste', e => {
+      // Only intercept image paste when OCR tab is active
+      if (this._scanTab !== 'ocr') return;
       const scanView = document.getElementById('sheet-view-scan');
       if (!scanView || scanView.style.display === 'none') return;
       Array.from(e.clipboardData.items)
@@ -73,7 +89,7 @@ const Scan = {
     });
   },
 
-  // ── Scanning ─────────────────────────────────────────────────────────────
+  // ── OCR: Scanning ─────────────────────────────────────────────────────────
   async run() {
     if (!State.images.length) return;
     const charId = document.getElementById('char-select')?.value;
@@ -99,7 +115,7 @@ const Scan = {
 
       State.scanMatched = data.matched || [];
       State.scanUnmatched = data.unmatched || [];
-      this._renderResults();
+      this._renderResults('scan-results', 'results-body', 'unknown-wrap', 'unknown-body', 'rescan-wrap');
       UI.enable('save-btn', 'csv-btn');
       UI.setStatus('scan-status', 'scan-spinner',
         State.scanMatched.length + ' dopasowanych · ' +
@@ -150,7 +166,6 @@ const Scan = {
   },
 
   copyCSV() {
-    const charName = document.getElementById('char-select')?.selectedOptions[0]?.text || 'Ilość';
     let csv = 'Przedmiot,Kategoria,Ilość\n';
     State.scanMatched.forEach(i => {
       csv += `"${i.name}","${i.category}",${i.quantity}\n`;
@@ -160,13 +175,133 @@ const Scan = {
     );
   },
 
-  _renderResults() {
-    const body = document.getElementById('results-body');
-    const unknownBody = document.getElementById('unknown-body');
+  // ── Paste: text parser ────────────────────────────────────────────────────
+  // State for paste tab (separate from OCR state)
+  _pasteMatched: [],
+  _pasteUnmatched: [],
+
+  /**
+   * Parse raw kf2.pl inventory text.
+   * Format repeats every 3 lines: name → qty → name(duplicate).
+   * Returns [{name, qty}] with duplicates already summed.
+   */
+  _parseRawText(text) {
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const acc = {};
+    let i = 0;
+    while (i < lines.length) {
+      const name = lines[i];
+      const qty = parseInt(lines[i + 1], 10);
+      if (!isNaN(qty) && qty > 0) {
+        acc[name] = (acc[name] || 0) + qty;
+        i += 3;  // name, qty, duplicate name
+      } else {
+        i += 1;  // unexpected line — skip
+      }
+    }
+    return Object.entries(acc).map(([name, qty]) => ({ name, qty }));
+  },
+
+  async runPaste() {
+    const textarea = document.getElementById('paste-textarea');
+    const text = textarea?.value?.trim();
+    if (!text) {
+      UI.err('paste-ok', 'paste-err', 'Wklej tekst ekwipunku z kf2.pl.');
+      return;
+    }
+
+    const charId = document.getElementById('char-select')?.value;
+    if (!charId) {
+      UI.err('paste-ok', 'paste-err', 'Wybierz postać.');
+      return;
+    }
+
+    const items = this._parseRawText(text);
+    if (!items.length) {
+      UI.err('paste-ok', 'paste-err', 'Nie udało się rozpoznać formatu. Upewnij się że zaznaczyłeś całą stronę ekwipunku (Ctrl+A).');
+      return;
+    }
+
+    UI.disable('paste-load-btn');
+    UI.clearMsg('paste-ok', 'paste-err');
+    UI.setStatus('paste-status', 'paste-spinner', 'Dopasowywanie ' + items.length + ' surowców...', true);
+    UI.hide('paste-results');
+
+    try {
+      const data = await API.post('/paste', {
+        character_id: parseInt(charId),
+        items,
+      });
+      if (data.error) throw new Error(data.error);
+
+      this._pasteMatched = data.matched || [];
+      this._pasteUnmatched = data.unmatched || [];
+      this._renderResults('paste-results', 'paste-results-body', 'paste-unknown-wrap', 'paste-unknown-body', null);
+      UI.enable('paste-save-btn', 'paste-csv-btn');
+      UI.setStatus('paste-status', 'paste-spinner',
+        this._pasteMatched.length + ' dopasowanych · ' +
+        this._pasteUnmatched.length + ' pominięto.');
+    } catch (e) {
+      UI.err('paste-ok', 'paste-err', 'Błąd: ' + e.message);
+      UI.setStatus('paste-status', 'paste-spinner', '');
+    } finally {
+      UI.enable('paste-load-btn');
+    }
+  },
+
+  async savePaste() {
+    const charId = document.getElementById('char-select')?.value;
+    if (!charId || !this._pasteMatched.length) {
+      UI.err('paste-ok', 'paste-err', 'Brak danych do zapisania.');
+      return;
+    }
+
+    const textarea = document.getElementById('paste-textarea');
+    const items = this._parseRawText(textarea?.value || '');
+
+    UI.disable('paste-save-btn');
+    UI.setStatus('paste-status', 'paste-spinner', 'Zapisywanie...', true);
+
+    try {
+      const data = await API.post('/paste', {
+        character_id: parseInt(charId),
+        items,
+        save: true,
+      });
+      if (data.error) throw new Error(data.error);
+      UI.setStatus('paste-status', 'paste-spinner', '');
+      UI.ok('paste-ok', 'paste-err',
+        'Zapisano ' + this._pasteMatched.length + ' przedmiotów.');
+    } catch (e) {
+      UI.err('paste-ok', 'paste-err', 'Błąd: ' + e.message);
+      UI.setStatus('paste-status', 'paste-spinner', '');
+    } finally {
+      UI.enable('paste-save-btn');
+    }
+  },
+
+  copyPasteCSV() {
+    let csv = 'Przedmiot,Kategoria,Ilość\n';
+    this._pasteMatched.forEach(i => {
+      csv += `"${i.name}","${i.category}",${i.quantity}\n`;
+    });
+    navigator.clipboard.writeText(csv).then(() =>
+      UI.ok('paste-ok', 'paste-err', 'CSV skopiowano do schowka.')
+    );
+  },
+
+  // ── Shared results renderer ───────────────────────────────────────────────
+  // Used by both OCR and paste tabs — just pass different element IDs.
+  _renderResults(resultsId, bodyId, unknownWrapId, unknownBodyId, rescanWrapId) {
+    const matched   = resultsId === 'scan-results' ? State.scanMatched   : this._pasteMatched;
+    const unmatched = resultsId === 'scan-results' ? State.scanUnmatched : this._pasteUnmatched;
+
+    const body = document.getElementById(bodyId);
+    const unknownBody = document.getElementById(unknownBodyId);
     if (!body || !unknownBody) return;
 
     body.innerHTML = '';
-    State.scanMatched.forEach(item => {
+    matched.forEach(item => {
       const row = document.createElement('div');
       row.className = 'result-row';
       row.innerHTML = `
@@ -181,11 +316,11 @@ const Scan = {
       body.appendChild(row);
     });
 
-    UI.show('scan-results');
+    UI.show(resultsId);
 
-    if (State.scanUnmatched.length) {
+    if (unmatched.length) {
       unknownBody.innerHTML = '';
-      State.scanUnmatched.forEach(item => {
+      unmatched.forEach(item => {
         const row = document.createElement('div');
         row.style.cssText =
           'display:flex;justify-content:space-between;padding:5px 0;' +
@@ -195,11 +330,13 @@ const Scan = {
           `<span style="color:var(--gold-l);margin-left:1rem;">${item.quantity}</span>`;
         unknownBody.appendChild(row);
       });
-      UI.show('unknown-wrap');
-      UI.show('rescan-wrap');
+      UI.show(unknownWrapId);
     } else {
-      UI.hide('unknown-wrap');
-      UI.hide('rescan-wrap');
+      UI.hide(unknownWrapId);
+    }
+
+    if (rescanWrapId) {
+      unmatched.length ? UI.show(rescanWrapId) : UI.hide(rescanWrapId);
     }
   },
 };
