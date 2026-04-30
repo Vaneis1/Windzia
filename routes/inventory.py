@@ -389,6 +389,83 @@ def scan():
     return jsonify({"matched": matched, "unmatched": unmatched})
 
 
+@inventory_bp.route("/paste", methods=["POST"])
+@require_auth
+def paste():
+    """
+    Parse pasted inventory text from kf2.pl.
+    Format: name\nqty\nname(duplicate)\n... — repeating triplets.
+    Duplicates across categories are summed before matching.
+    """
+    owner = get_current_owner()
+    body = request.get_json(silent=True) or {}
+    character_id = body.get("character_id")
+    raw_items: list[dict] = body.get("items", [])   # [{name, qty}]
+    save = body.get("save", False)
+
+    if not raw_items:
+        return jsonify({"error": "Brak surowców do dopasowania"}), 400
+
+    char = None
+    if character_id:
+        char = db.session.get(Character, int(character_id))
+        if not char:
+            return jsonify({"error": "Nie znaleziono postaci"}), 404
+        if owner.role != "admin" and char.owner_id != owner.id:
+            return jsonify({"error": "Brak uprawnień do tej postaci"}), 403
+
+    # Deduplicate: sum quantities for same name (can appear in multiple categories)
+    deduped: dict[str, int] = {}
+    for entry in raw_items:
+        name = str(entry.get("name", "")).strip()
+        qty = int(entry.get("qty", 0))
+        if name and qty > 0:
+            deduped[name] = deduped.get(name, 0) + qty
+
+    all_items = Item.query.all()
+    matched: list[dict] = []
+    unmatched: list[dict] = []
+    matched_ids: set[int] = set()
+
+    for raw_name, qty in deduped.items():
+        item = match_item(raw_name, all_items)
+        if item:
+            if item.id in matched_ids:
+                for m in matched:
+                    if m["item_id"] == item.id:
+                        m["quantity"] += qty
+                        break
+            else:
+                matched_ids.add(item.id)
+                matched.append({
+                    "item_id": item.id,
+                    "name": item.name,
+                    "category": item.category,
+                    "raw_name": raw_name,
+                    "quantity": qty,
+                })
+        else:
+            unmatched.append({"raw_name": raw_name, "quantity": qty})
+
+    if save and char:
+        for m in matched:
+            entry = Inventory.query.filter_by(
+                character_id=char.id, item_id=m["item_id"]
+            ).first()
+            if entry:
+                entry.quantity = m["quantity"]
+            else:
+                db.session.add(Inventory(
+                    character_id=char.id,
+                    item_id=m["item_id"],
+                    quantity=m["quantity"],
+                ))
+        db.session.commit()
+
+    return jsonify({"matched": matched, "unmatched": unmatched})
+
+
+
 @inventory_bp.route("/export", methods=["GET"])
 @require_auth
 def export_csv():
