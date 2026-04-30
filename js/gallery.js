@@ -14,6 +14,11 @@ const Gallery = {
     await this.load();
   },
 
+  // Bust the cache — call after avatar/profile save so next loadCached() re-fetches.
+  invalidate() {
+    this._lastLoaded = 0;
+  },
+
   async load() {
     const status = document.getElementById('gallery-status');
     if (status) status.textContent = 'Ładowanie...';
