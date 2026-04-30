@@ -78,7 +78,7 @@ const App = {
   },
 
   switchTab(name) {
-    const tabNames = ['sheet', 'chars', 'gallery', 'timeline', 'admin'];
+    const tabNames = ['sheet', 'chars', 'gallery', 'timeline', 'sessions', 'admin'];
     tabNames.forEach(t => {
       document.getElementById('tab-' + t)?.classList.toggle('active', t === name);
     });
@@ -95,6 +95,7 @@ const App = {
     if (name === 'gallery')  Gallery.loadCached();
     if (name === 'admin')    Admin.load();
     if (name === 'timeline') Timeline.initCached();
+    if (name === 'sessions') Sessions.loadCached();
   },
 
   // ── Header search ─────────────────────────────────────────────────────────
