@@ -1,6 +1,7 @@
-// Prosty service worker: aplikacja działa także bez internetu.
-const CACHE = 'szczesliwy-dzien-v4';
-const FILES = ['./', 'index.html', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+// Service worker: aplikacja działa bez internetu i obsługuje kliknięcia w powiadomienia.
+const CACHE = 'szczesliwy-dzien-v5';
+const FILES = ['./', 'index.html', 'style.css', 'app.js', 'pet.js', 'manifest.json',
+  'icon.svg', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
@@ -27,4 +28,13 @@ self.addEventListener('fetch', e => {
       })
       .catch(() => caches.match(e.request).then(r => r || caches.match('index.html')))
   );
+});
+
+// Stuknięcie w powiadomienie otwiera aplikację.
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    const open = list.find(c => 'focus' in c);
+    return open ? open.focus() : self.clients.openWindow('./');
+  }));
 });

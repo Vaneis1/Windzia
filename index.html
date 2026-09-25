@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#ff7a9c">
+<meta name="theme-color" content="#f7f3f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111013" media="(prefers-color-scheme: dark)">
 <title>Szczęśliwy Dzień</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -14,264 +15,55 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #fff6f1; --bg2: #ffeef3; --card: #ffffff; --text: #3b2f35; --muted: #8f7d85;
-    --accent: #ff7a9c; --accent2: #ffb86b; --accent3: #9b8cff; --soft: #ffe4eb; --line: #f3dde4;
-    --m1: #8aa4ff; --m2: #a9b8d6; --m3: #ffd166; --m4: #ffae6b; --m5: #ff7a9c;
-    --shadow: 0 6px 24px rgba(180, 90, 120, .10);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1c171b; --bg2: #251d23; --card: #2a2228; --text: #f6ebf0; --muted: #b9a7b0;
-      --soft: #3b2c35; --line: #3a2e36; --shadow: 0 6px 24px rgba(0, 0, 0, .35);
-    }
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; }
-  body {
-    background: linear-gradient(180deg, var(--bg2), var(--bg) 320px);
-    background-color: var(--bg); color: var(--text); min-height: 100vh;
-    font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.5;
-  }
-  main { max-width: 680px; margin: 0 auto; padding: 20px 16px 110px; }
-  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-  h1 { font-size: 1.7rem; margin: 0; font-weight: 800; }
-  h2 { font-size: 1.1rem; margin: 0 0 12px; font-weight: 800; }
-  .sub { color: var(--muted); margin: 2px 0 0; }
-  .streak {
-    background: var(--card); box-shadow: var(--shadow); border-radius: 16px;
-    padding: 8px 12px; text-align: center; min-width: 76px;
-  }
-  .streak b { font-size: 1.4rem; display: block; line-height: 1.1; }
-  .streak small { color: var(--muted); font-size: .72rem; }
-  .card {
-    background: var(--card); border-radius: 22px; padding: 18px;
-    margin-bottom: 14px; box-shadow: var(--shadow);
-  }
-  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .between { justify-content: space-between; }
-  button {
-    font: inherit; font-weight: 700; background: var(--accent); color: #fff; border: 0;
-    border-radius: 999px; padding: 10px 18px; cursor: pointer; transition: transform .1s;
-  }
-  button:active { transform: scale(.96); }
-  button.ghost { background: var(--soft); color: var(--text); }
-  button.small { padding: 6px 12px; font-size: .9rem; }
-  button:disabled { opacity: .5; }
-  input[type=text], textarea {
-    font: inherit; width: 100%; padding: 11px 14px; border-radius: 14px;
-    border: 1.5px solid var(--line); background: var(--bg); color: var(--text); outline: none;
-  }
-  input[type=text]:focus, textarea:focus { border-color: var(--accent); }
-  textarea { resize: vertical; min-height: 70px; }
-  .muted { color: var(--muted); }
-  .hidden { display: none !important; }
-
-  /* nawigacja */
-  nav {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
-    background: var(--card); box-shadow: 0 -4px 20px rgba(0,0,0,.08);
-    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
-  }
-  nav .inner { max-width: 680px; margin: 0 auto; display: flex; }
-  nav button {
-    flex: 1; background: none; color: var(--muted); border-radius: 14px;
-    padding: 6px 2px; font-size: .72rem; display: flex; flex-direction: column; align-items: center; gap: 2px;
-  }
-  nav button span { font-size: 1.35rem; filter: grayscale(.7); transition: filter .2s, transform .2s; }
-  nav button.on { color: var(--accent); background: var(--soft); }
-  nav button.on span { filter: none; transform: translateY(-2px); }
-  .view { animation: fade .3s ease; }
-  @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
-
-  /* nastrój */
-  .moods { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-  .moods button {
-    background: var(--soft); font-size: 1.8rem; padding: 10px 0; border-radius: 16px;
-    display: flex; flex-direction: column; align-items: center; color: var(--text);
-  }
-  .moods button small { font-size: .65rem; font-weight: 600; color: var(--muted); }
-  .moods button.on { background: var(--accent); }
-  .moods button.on small { color: #fff; }
-  .reply { margin: 12px 0 0; min-height: 1.5em; }
-
-  /* afirmacja */
-  .affirm {
-    background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
-  }
-  .affirm p { font-size: 1.25rem; font-weight: 800; margin: 4px 0 14px; min-height: 2.6em; }
-  .affirm button { background: rgba(255,255,255,.25); }
-
-  /* zadania */
-  .task {
-    display: flex; align-items: center; gap: 12px; padding: 10px 4px;
-    border-bottom: 1px dashed var(--line); cursor: pointer;
-  }
-  .task:last-child { border-bottom: 0; }
-  .check {
-    width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--accent);
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; font-size: .9rem;
-  }
-  .task.done .check { background: var(--accent); }
-  .task.done .t { text-decoration: line-through; color: var(--muted); }
-
-  /* woda */
-  .glasses { display: flex; gap: 6px; flex-wrap: wrap; }
-  .glass {
-    width: 32px; height: 40px; border: 2px solid var(--m1); border-radius: 4px 4px 10px 10px;
-    background: transparent; padding: 0; position: relative; overflow: hidden;
-  }
-  .glass::after {
-    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 0;
-    background: var(--m1); transition: height .3s;
-  }
-  .glass.full::after { height: 80%; }
-
-  /* słoik */
-  .jarwrap { display: flex; justify-content: center; margin: 4px 0 12px; }
-  .jar { width: 170px; height: 200px; }
-  .memory {
-    background: var(--soft); border-radius: 16px; padding: 14px; margin-top: 12px;
-    font-size: 1.05rem; animation: pop .4s ease;
-  }
-  @keyframes pop { from { transform: scale(.9); opacity: 0; } }
-  .list { list-style: none; padding: 0; margin: 10px 0 0; }
-  .list li { padding: 10px 0; border-bottom: 1px dashed var(--line); display: flex; gap: 10px; }
-  .list li:last-child { border-bottom: 0; }
-  .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
-  .list small { color: var(--muted); display: block; }
-  .x { background: none; color: var(--muted); padding: 0 6px; margin-left: auto; font-size: 1.1rem; }
-
-  /* nawyki */
-  .habit { padding: 12px 0; border-bottom: 1px dashed var(--line); }
-  .habit:last-child { border-bottom: 0; }
-  .habit .name { font-weight: 800; }
-  .week { display: flex; gap: 6px; margin-top: 8px; }
-  .day {
-    flex: 1; text-align: center; font-size: .7rem; color: var(--muted);
-  }
-  .day i {
-    display: block; height: 28px; border-radius: 9px; background: var(--soft); margin-top: 3px;
-  }
-  .day.on i { background: var(--accent3); }
-  .day.today i { outline: 2px solid var(--accent3); outline-offset: 1px; }
-  .flame { color: var(--accent2); font-weight: 800; font-size: .9rem; }
-
-  /* oddech */
-  .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .modes button { background: var(--soft); color: var(--text); border-radius: 16px; padding: 10px 4px; font-size: .85rem; }
-  .modes button.on { background: var(--accent3); color: #fff; }
-  .modes small { display: block; font-weight: 600; opacity: .8; }
-  .stage { height: 260px; display: flex; align-items: center; justify-content: center; position: relative; }
-  .orb {
-    width: 220px; height: 220px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #fff8, transparent 40%),
-                radial-gradient(circle, var(--accent3), var(--accent));
-    transform: scale(.45); transition-property: transform; transition-timing-function: ease-in-out;
-    box-shadow: 0 0 60px color-mix(in srgb, var(--accent3) 50%, transparent);
-  }
-  .orbtext {
-    position: absolute; text-align: center; color: #fff; font-weight: 800; font-size: 1.2rem;
-    text-shadow: 0 1px 6px rgba(0,0,0,.25);
-  }
-  .orbtext b { display: block; font-size: 2rem; }
-
-  /* postępy */
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .stat { background: var(--soft); border-radius: 16px; padding: 12px 8px; text-align: center; }
-  .stat b { font-size: 1.5rem; display: block; }
-  .stat small { color: var(--muted); font-size: .75rem; }
-  .chart { width: 100%; height: auto; display: block; }
-  .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); margin-top: 8px; }
-  .legend span { display: inline-flex; align-items: center; gap: 4px; }
-
-  /* pupil */
-  .petbox { position: relative; display: flex; justify-content: center; height: 240px; }
-  .petbox svg { width: 230px; height: 230px; cursor: pointer; transform-origin: 50% 90%;
-    animation: bounce 2.6s ease-in-out infinite; }
-  .petbox.sleep svg { animation: breathe 4s ease-in-out infinite; }
-  .petbox svg.jiggle { animation: jiggle .5s ease; }
-  @keyframes bounce { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-8px) scale(.98, 1.02); } }
-  @keyframes breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.02, .98); } }
-  @keyframes jiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-6deg) scale(1.05); } 75% { transform: rotate(6deg) scale(1.05); } }
-  .float { position: absolute; font-size: 1.6rem; pointer-events: none; animation: up 1.4s ease-out forwards; }
-  @keyframes up { to { transform: translateY(-110px); opacity: 0; } }
-  .bubble {
-    background: var(--soft); border-radius: 18px; padding: 10px 14px; text-align: center;
-    font-weight: 700; margin: 0 0 6px; position: relative; min-height: 2.8em;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .bubble::after {
-    content: ""; position: absolute; bottom: -8px; left: 50%; margin-left: -8px;
-    border: 8px solid transparent; border-top-color: var(--soft); border-bottom: 0;
-  }
-  .petname { text-align: center; margin: 0; font-size: 1.3rem; font-weight: 800; }
-  .petlvl { text-align: center; color: var(--muted); margin: 0 0 12px; font-size: .9rem; }
-  .bar { margin: 8px 0; }
-  .bar .row { font-size: .9rem; font-weight: 700; }
-  .bar .track { height: 12px; background: var(--soft); border-radius: 99px; overflow: hidden; margin-top: 4px; }
-  .bar .fill { height: 100%; border-radius: 99px; transition: width .5s; }
-  .hearts { font-size: 1.1rem; font-weight: 800; }
-  .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
-  .actions button { border-radius: 16px; padding: 10px 4px; font-size: .9rem; }
-  .actions small { display: block; font-weight: 600; opacity: .85; font-size: .75rem; }
-  .pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
-  .pick button { background: var(--soft); color: var(--text); border-radius: 16px; padding: 6px 2px; font-size: .8rem; }
-  .pick button svg { width: 100%; height: 64px; display: block; }
-  .pick button.on { outline: 3px solid var(--accent); }
-  .swatches { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-  .swatches button { width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 3px solid var(--card); box-shadow: 0 0 0 2px var(--line); }
-  .swatches button.on { box-shadow: 0 0 0 3px var(--accent); }
-  .earn { font-size: .85rem; color: var(--muted); margin: 0; padding-left: 18px; }
-
-  .toast {
-    position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%) translateY(20px);
-    background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 999px;
-    opacity: 0; transition: .3s; pointer-events: none; z-index: 20; font-weight: 700; max-width: 90vw; text-align: center;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .confetti { position: fixed; top: -30px; font-size: 1.6rem; pointer-events: none; z-index: 30;
-    animation: fall 3.2s linear forwards; }
-  @keyframes fall { to { transform: translateY(115vh) rotate(540deg); } }
-  @media (prefers-reduced-motion: reduce) { .confetti { display: none; } }
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main>
   <header>
-    <div>
-      <h1 id="greeting">Cześć ☀️</h1>
-      <p class="sub" id="today"></p>
+    <p class="eyebrow" id="today"></p>
+    <div class="head-actions">
+      <span class="chip" title="Dni z rzędu z zapisanym nastrojem">🔥 <span id="streak">0</span></span>
+      <button class="avatar" id="avatar" aria-label="Pupil">🐾</button>
+      <button class="iconbtn" id="settingsBtn" aria-label="Ustawienia">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
     </div>
-    <div class="streak" title="Dni z rzędu z zapisanym nastrojem">
-      <b id="streak">0</b><small>dni z rzędu 🔥</small>
-    </div>
+    <h1 id="greeting">Cześć ☀️</h1>
   </header>
 
   <!-- DZIŚ -->
   <section class="view" data-view="dzis">
-    <div class="card affirm">
-      <h2>✨ Myśl na dziś</h2>
-      <p id="affirm"></p>
-      <button class="small" id="nextAffirm">Następna</button>
+    <div class="card hero">
+      <p class="eyebrow">✨ Myśl na dziś</p>
+      <p class="quote" id="affirm"></p>
+      <div id="affirmForm" class="hidden">
+        <input type="text" id="affirmInput" placeholder="Twoja myśl, np. „Jestem dla siebie dobra”" maxlength="160">
+        <button class="btn frost small" id="affirmSave">Zapisz</button>
+      </div>
+      <div class="row">
+        <button class="btn frost small" id="nextAffirm">Następna</button>
+        <button class="btn frost small" id="addAffirmBtn">＋ Moja myśl</button>
+      </div>
     </div>
 
     <div class="card">
-      <h2>Jak się dziś czujesz?</h2>
+      <div class="card-head"><h2><span class="ic">🌤️</span>Jak się dziś czujesz?</h2></div>
       <div class="moods" id="moods"></div>
-      <p class="reply muted" id="moodReply"></p>
+      <p class="reply" id="moodReply"></p>
       <textarea id="moodNote" class="hidden" placeholder="Chcesz coś dopisać? Co się dziś wydarzyło?"></textarea>
     </div>
 
     <div class="card">
-      <div class="row between"><h2>🌱 Trzy małe rzeczy</h2><button class="ghost small" id="reroll">🎲 Inne</button></div>
+      <div class="card-head">
+        <h2><span class="ic m">🌱</span>Małe kroki <span class="muted" id="taskCount" style="font-weight:600"></span></h2>
+        <button class="btn soft small" id="reroll">🎲 Inne</button>
+      </div>
       <div id="tasks"></div>
     </div>
 
     <div class="card">
-      <div class="row between"><h2>💧 Woda</h2><span class="muted" id="waterCount"></span></div>
+      <div class="card-head"><h2><span class="ic s">💧</span>Woda</h2><span class="chip" id="waterCount" style="box-shadow:none"></span></div>
       <div class="glasses" id="glasses"></div>
     </div>
   </section>
@@ -279,37 +71,49 @@
   <!-- PUPIL -->
   <section class="view hidden" data-view="pupil">
     <div class="card hidden" id="adopt">
-      <h2>🐾 Przygarnij zwierzaczka</h2>
-      <p class="muted" style="margin-top:-6px">Będzie rósł i cieszył się, gdy Ty dbasz o siebie.</p>
+      <div class="card-head"><h2><span class="ic">🐾</span>Przygarnij zwierzaczka</h2></div>
+      <p class="hint">Będzie rósł i cieszył się, gdy Ty dbasz o siebie.</p>
       <div class="pick" id="pickType"></div>
       <div class="swatches" id="pickColor"></div>
       <input type="text" id="petNameInput" placeholder="Jak ma na imię?" maxlength="20">
-      <div class="row" style="margin-top:10px"><button id="adoptBtn">Przygarniam 💗</button></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="adoptBtn">Przygarniam 💗</button></div>
     </div>
 
     <div id="petCard" class="hidden">
       <div class="card">
-        <div class="bubble" id="petSay"></div>
         <div class="petbox" id="petBox"></div>
-        <p class="petname" id="petName"></p>
-        <p class="petlvl" id="petLvl"></p>
-        <div class="bar"><div class="row between"><span>🍓 Najedzenie</span><span id="foodTxt"></span></div>
-          <div class="track"><div class="fill" id="foodBar" style="background:var(--m4)"></div></div></div>
-        <div class="bar"><div class="row between"><span>🎈 Radość</span><span id="funTxt"></span></div>
-          <div class="track"><div class="fill" id="funBar" style="background:var(--accent3)"></div></div></div>
-        <div class="bar"><div class="row between"><span>⭐ Do następnego poziomu</span><span id="xpTxt"></span></div>
-          <div class="track"><div class="fill" id="xpBar" style="background:var(--m3)"></div></div></div>
-        <div class="row between" style="margin-top:12px">
-          <span class="hearts">💗 <span id="heartCount">0</span> serduszek</span>
+        <div class="row between" style="align-items:flex-end">
+          <div><p class="petname" id="petName"></p><p class="petlvl" id="petLvl"></p></div>
+          <span class="hearts">💗 <span id="heartCount">0</span></span>
+        </div>
+        <div class="bars">
+          <div class="bar"><div class="row between"><span>🍓 Najedzenie</span><span id="foodTxt"></span></div>
+            <div class="track"><div class="fill" id="foodBar" style="background:var(--grad-warm)"></div></div></div>
+          <div class="bar"><div class="row between"><span>🎈 Radość</span><span id="funTxt"></span></div>
+            <div class="track"><div class="fill" id="funBar" style="background:var(--grad)"></div></div></div>
+          <div class="bar"><div class="row between"><span>⭐ Do następnego poziomu</span><span id="xpTxt"></span></div>
+            <div class="track"><div class="fill" id="xpBar" style="background:var(--sun)"></div></div></div>
         </div>
         <div class="actions">
-          <button id="feedBtn">Nakarm<small>2 💗</small></button>
-          <button id="playBtn" style="background:var(--accent3)">Pobaw się<small>1 💗</small></button>
-          <button id="strokeBtn" class="ghost">Pogłaszcz<small>za darmo</small></button>
+          <button class="action" id="feedBtn"><span>🍓</span>Nakarm<small>2 💗</small></button>
+          <button class="action" id="playBtn"><span>🎈</span>Pobaw się<small>1 💗</small></button>
+          <button class="action" id="strokeBtn"><span>🤗</span>Pogłaszcz<small>za darmo</small></button>
         </div>
       </div>
+
+      <button class="card gamecard" id="gameBtn" style="width:100%;text-align:left">
+        <span class="big">🧺</span>
+        <span><b>Łap truskawki!</b><small id="bestScore"></small></span>
+      </button>
+
       <div class="card">
-        <h2>💗 Jak zdobywać serduszka?</h2>
+        <div class="card-head"><h2><span class="ic v">🛍️</span>Sklepik</h2></div>
+        <div class="seg" id="shopSeg"></div>
+        <div class="shop" id="shop"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2><span class="ic">💗</span>Jak zdobywać serduszka?</h2></div>
         <ul class="earn">
           <li>zapisz dzisiejszy nastrój — 3</li>
           <li>odhacz małe zadanie — 2 za każde</li>
@@ -317,8 +121,9 @@
           <li>odhacz dzisiejszy nawyk — 2</li>
           <li>wrzuć chwilę do słoika — 3 (do 3 razy dziennie)</li>
           <li>skończ ćwiczenie oddechowe — 3 (do 2 razy dziennie)</li>
+          <li>zagraj w truskawki — do 8 (2 gry dziennie)</li>
         </ul>
-        <p class="muted" style="margin:10px 0 0;font-size:.85rem">Twój zwierzaczek nigdy nie zachoruje ani nie ucieknie — najwyżej trochę zgłodnieje i zatęskni 🤍</p>
+        <p class="note">Twój zwierzaczek nigdy nie zachoruje ani nie ucieknie — najwyżej trochę zgłodnieje i zatęskni 🤍</p>
       </div>
     </div>
   </section>
@@ -326,18 +131,18 @@
   <!-- SŁOIK -->
   <section class="view hidden" data-view="sloik">
     <div class="card">
-      <h2>🫙 Słoik szczęścia</h2>
-      <p class="muted" style="margin-top:-6px">Wrzucaj tu dobre chwile i to, za co jesteś wdzięczna. W gorszy dzień wylosuj jedną.</p>
+      <div class="card-head"><h2><span class="ic v">🫙</span>Słoik szczęścia</h2></div>
+      <p class="hint">Wrzucaj tu dobre chwile i to, za co jesteś wdzięczna. W gorszy dzień wylosuj jedną.</p>
       <div class="jarwrap"><svg class="jar" id="jar" viewBox="0 0 170 200"></svg></div>
       <input type="text" id="jarInput" placeholder="np. śmiech z przyjaciółką przy kawie" maxlength="200">
-      <div class="row" style="margin-top:10px">
-        <button id="jarAdd">Wrzuć do słoika</button>
-        <button class="ghost" id="jarDraw">🎁 Wylosuj wspomnienie</button>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="jarAdd">Wrzuć do słoika</button>
+        <button class="btn soft" id="jarDraw">🎁 Wylosuj</button>
       </div>
       <div id="memory" class="memory hidden"></div>
     </div>
     <div class="card">
-      <h2>Wszystkie chwile <span class="muted" id="jarCount"></span></h2>
+      <div class="card-head"><h2>Wszystkie chwile</h2><span class="chip" id="jarCount" style="box-shadow:none"></span></div>
       <ul class="list" id="jarList"></ul>
     </div>
   </section>
@@ -345,15 +150,15 @@
   <!-- NAWYKI -->
   <section class="view hidden" data-view="nawyki">
     <div class="card">
-      <h2>🌿 Moje dobre nawyki</h2>
-      <p class="muted" style="margin-top:-6px">Stuknij dzisiejszy dzień, gdy uda Ci się coś zrobić.</p>
+      <div class="card-head"><h2><span class="ic m">🌿</span>Moje dobre nawyki</h2></div>
+      <p class="hint">Stuknij dzisiejszy dzień, gdy uda Ci się coś zrobić.</p>
       <div id="habits"></div>
     </div>
     <div class="card">
-      <h2>Dodaj nawyk</h2>
-      <div class="row">
-        <input type="text" id="habitInput" placeholder="np. 🧘‍♀️ Rozciąganie" maxlength="40" style="flex:1">
-        <button id="habitAdd">Dodaj</button>
+      <div class="card-head"><h2>Dodaj nawyk</h2></div>
+      <div class="row" style="flex-wrap:nowrap">
+        <input type="text" id="habitInput" placeholder="np. 🧘‍♀️ Rozciąganie" maxlength="40">
+        <button class="btn" id="habitAdd">Dodaj</button>
       </div>
     </div>
   </section>
@@ -361,19 +166,15 @@
   <!-- ODDECH -->
   <section class="view hidden" data-view="oddech">
     <div class="card">
-      <h2>🌬️ Oddech</h2>
-      <div class="modes" id="modes"></div>
+      <div class="card-head"><h2><span class="ic v">🌬️</span>Oddech</h2></div>
+      <div class="seg" id="modes"></div>
       <div class="stage">
         <div class="orb" id="orb"></div>
         <div class="orbtext" id="orbText">gotowa?</div>
       </div>
-      <div class="row" style="justify-content:center">
-        <button class="ghost small" data-min="1">1 min</button>
-        <button class="ghost small" data-min="3">3 min</button>
-        <button class="ghost small" data-min="5">5 min</button>
-      </div>
-      <div class="row" style="justify-content:center;margin-top:12px">
-        <button id="breathBtn">Zaczynamy</button>
+      <div class="seg" id="mins" style="max-width:280px;margin:0 auto"></div>
+      <div class="row" style="justify-content:center;margin-top:16px">
+        <button class="btn" id="breathBtn">Zaczynamy</button>
       </div>
     </div>
   </section>
@@ -381,7 +182,7 @@
   <!-- POSTĘPY -->
   <section class="view hidden" data-view="postepy">
     <div class="card">
-      <h2>📈 Nastrój — ostatnie 30 dni</h2>
+      <div class="card-head"><h2><span class="ic p">📈</span>Nastrój — ostatnie 30 dni</h2></div>
       <svg class="chart" id="chart" viewBox="0 0 330 140"></svg>
       <div class="legend" id="legend"></div>
     </div>
@@ -396,607 +197,56 @@
       </div>
     </div>
     <div class="card">
-      <h2>📝 Ostatnie notatki</h2>
+      <div class="card-head"><h2><span class="ic">📝</span>Ostatnie notatki</h2></div>
       <ul class="list" id="notes"></ul>
     </div>
+  </section>
+
+  <!-- USTAWIENIA -->
+  <section class="view hidden" data-view="ustawienia">
+    <button class="back" id="backBtn">‹ Wróć</button>
     <div class="card">
-      <h2>💾 Kopia zapasowa</h2>
-      <p class="muted" style="margin-top:-6px">Dane są tylko w tej przeglądarce. Zapisz kopię, żeby ich nie zgubić lub przenieść na inny telefon.</p>
+      <div class="card-head"><h2><span class="ic p">🔔</span>Przypomnienia</h2><span id="remMaster"></span></div>
+      <div id="remList"></div>
+      <p class="note" id="remStatus"></p>
+      <button class="btn soft" id="icsBtn" style="margin-top:12px">📅 Dodaj do kalendarza telefonu</button>
+      <p class="note">Najpewniejszy sposób: przypomnienia w kalendarzu przychodzą <b>zawsze</b>, nawet gdy aplikacja jest zamknięta. Stuknij przycisk, otwórz pobrany plik i wybierz „Dodaj”.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2><span class="ic">✍️</span>Moje myśli dnia</h2></div>
+      <p class="hint">Dopisz zdania, które dodają Ci otuchy — będą pojawiać się w „Myśli na dziś”.</p>
+      <div class="row" style="flex-wrap:nowrap;margin-bottom:10px">
+        <input type="text" id="myAffirmInput" placeholder="np. Mam w sobie dużo siły" maxlength="160">
+        <button class="btn" id="myAffirmAdd">Dodaj</button>
+      </div>
+      <ul class="list" id="myAffirmList"></ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2><span class="ic s">💾</span>Kopia zapasowa</h2></div>
+      <p class="hint">Nie musisz nic robić — wszystko zapisuje się samo. Kopia przydaje się tylko przy zmianie telefonu albo ponownej instalacji aplikacji.</p>
       <div class="row">
-        <button class="ghost" id="exportBtn">Pobierz kopię</button>
-        <button class="ghost" id="importBtn">Wczytaj kopię</button>
+        <button class="btn soft" id="exportBtn">Pobierz kopię</button>
+        <button class="btn soft" id="importBtn">Wczytaj kopię</button>
         <input type="file" id="importFile" accept="application/json" class="hidden">
       </div>
     </div>
   </section>
 </main>
 
-<nav><div class="inner" id="nav">
-  <button data-go="dzis" class="on"><span>☀️</span>Dziś</button>
-  <button data-go="pupil"><span>🐾</span>Pupil</button>
-  <button data-go="sloik"><span>🫙</span>Słoik</button>
-  <button data-go="nawyki"><span>🌿</span>Nawyki</button>
-  <button data-go="oddech"><span>🌬️</span>Oddech</button>
-  <button data-go="postepy"><span>📈</span>Postępy</button>
-</div></nav>
+<nav id="nav">
+  <button data-go="dzis" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Dziś</button>
+  <button data-go="pupil"><svg viewBox="0 0 24 24" fill="currentColor"><ellipse cx="6" cy="10" rx="2.2" ry="2.8"/><ellipse cx="10" cy="6" rx="2.2" ry="2.8"/><ellipse cx="14" cy="6" rx="2.2" ry="2.8"/><ellipse cx="18" cy="10" rx="2.2" ry="2.8"/><path d="M12 11c-3 0-6 4.5-6 7 0 2 2 2.5 3 2.5 1.5 0 2-.8 3-.8s1.5.8 3 .8c1 0 3-.5 3-2.5 0-2.5-3-7-6-7z"/></svg>Pupil</button>
+  <button data-go="sloik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="8" y="2.5" width="8" height="3" rx="1"/><path d="M8.5 5.5C6 6.5 5 8 5 10v8.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V10c0-2-1-3.5-3.5-4.5"/><path d="M12 11.5c-1.2-1.4-3.5-.6-3.2 1.2.3 1.6 3.2 3.3 3.2 3.3s2.9-1.7 3.2-3.3c.3-1.8-2-2.6-3.2-1.2z" fill="currentColor"/></svg>Słoik</button>
+  <button data-go="nawyki"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9"/><path d="M12 12C12 7 8 4 3 4c0 5 4 8 9 8z"/><path d="M12 14c0-4 3-7 8-7 0 4-3 7-8 7z"/></svg>Nawyki</button>
+  <button data-go="oddech"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 12h16a3 3 0 1 1-3 3"/><path d="M3 16h7"/></svg>Oddech</button>
+  <button data-go="postepy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V11M10 20V5M16 20v-6M22 20H2"/></svg>Postępy</button>
+</nav>
 <div class="toast" id="toast"></div>
 
-<script>
-/* ---------- dane ---------- */
-const KEY = 'szczesliwy-dzien-v2';
-const $ = id => document.getElementById(id);
-const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-const z = n => String(n).padStart(2, '0');
-const dkey = (d = new Date()) => `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
-const daysAgo = n => { const d = new Date(); d.setHours(12); d.setDate(d.getDate() - n); return d; };
-const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
-
-function load() {
-  let d = null;
-  try { d = JSON.parse(localStorage.getItem(KEY)); } catch {}
-  d = d || {};
-  d.days = d.days || {};
-  d.jar = d.jar || [];
-  d.habits = d.habits || [
-    { id: 1, name: '💧 Pić wodę', done: {} },
-    { id: 2, name: '🚶‍♀️ Spacer', done: {} },
-    { id: 3, name: '📖 Czytanie', done: {} }
-  ];
-  // przenieś wpisy z pierwszej wersji programu
-  try {
-    const old = JSON.parse(localStorage.getItem('gratitude'));
-    if (Array.isArray(old) && old.length && !d.migrated) {
-      old.forEach(g => d.jar.push({ text: g.text, date: g.date, c: pick(COLORS) }));
-    }
-  } catch {}
-  d.migrated = true;
-  return d;
-}
-const COLORS = ['#ff7a9c', '#ffb86b', '#ffd166', '#9b8cff', '#7fd1b9', '#8aa4ff', '#f78fb3'];
-const data = load();
-function save() { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch {} }
-const today = () => (data.days[dkey()] ||= {});
-
-/* ---------- drobiazgi ---------- */
-function toast(msg) {
-  const t = $('toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2200);
-}
-function celebrate(n = 30) {
-  const emojis = ['🎉', '💖', '🌸', '✨', '🌈', '☀️', '🦋'];
-  for (let i = 0; i < n; i++) {
-    const s = el('span', { className: 'confetti', textContent: pick(emojis) });
-    s.style.left = Math.random() * 100 + 'vw';
-    s.style.animationDelay = Math.random() * .8 + 's';
-    document.body.appendChild(s);
-    setTimeout(() => s.remove(), 4200);
-  }
-}
-function streakFrom(has) {
-  let n = 0, i = has(dkey(daysAgo(0))) ? 0 : 1;
-  while (has(dkey(daysAgo(i)))) { n++; i++; }
-  return n;
-}
-
-/* ---------- nawigacja ---------- */
-function go(view) {
-  document.querySelectorAll('.view').forEach(v => v.classList.toggle('hidden', v.dataset.view !== view));
-  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.go === view));
-  if (view === 'postepy') renderStats();
-  if (view === 'sloik') renderJar();
-  if (view === 'pupil') renderPet();
-  window.scrollTo({ top: 0 });
-  try { sessionStorage.setItem('view', view); } catch {}
-}
-$('nav').onclick = e => { const b = e.target.closest('button'); if (b) go(b.dataset.go); };
-
-/* ---------- nagłówek ---------- */
-function renderHeader() {
-  const h = new Date().getHours();
-  $('greeting').textContent =
-    h < 5 ? 'Dobranoc 🌙' : h < 12 ? 'Dzień dobry ☀️' : h < 18 ? 'Miłego popołudnia 🌼' : 'Dobry wieczór ✨';
-  const s = new Date().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
-  $('today').textContent = s[0].toUpperCase() + s.slice(1);
-  $('streak').textContent = streakFrom(k => data.days[k]?.mood);
-}
-
-/* ---------- myśl dnia ---------- */
-const AFFIRM = [
-  'Jesteś wystarczająca dokładnie taka, jaka jesteś.',
-  'Radzisz sobie lepiej, niż Ci się wydaje.',
-  'Świat jest odrobinę lepszy, bo w nim jesteś.',
-  'Odpoczynek to też postęp.',
-  'Każdy mały krok się liczy. Twój też.',
-  'Twoja wrażliwość to supermoc, nie słabość.',
-  'Zasługujesz na te same dobre słowa, które dajesz innym.',
-  'Nie musisz być idealna, żeby być wspaniała.',
-  'Dzień nie musi być perfekcyjny, żeby był dobry.',
-  'Masz prawo mówić „nie” i nadal być dobrym człowiekiem.',
-  'To, co dziś czujesz, minie. Ty zostajesz — silniejsza.',
-  'Jesteś bohaterką swojej historii — i to piękna historia.',
-  'Możesz zacząć od nowa w każdej chwili dnia.',
-  'Ktoś dziś pomyślał o Tobie ciepło — na pewno.',
-  'Twój uśmiech naprawdę rozjaśnia pokój.',
-  'Bądź dla siebie tak czuła, jak dla najlepszej przyjaciółki.',
-  'Nie musisz wszystkiego dźwigać sama.',
-  'Wolniej też jest do przodu.',
-  'Dobre rzeczy już są w drodze do Ciebie.',
-  'Jesteś ważna. Po prostu dlatego, że jesteś.'
-];
-let affIdx = [...dkey()].reduce((a, c) => a * 31 + c.charCodeAt(0) >>> 0, 7) % AFFIRM.length;
-function showAffirm() { $('affirm').textContent = AFFIRM[affIdx]; }
-$('nextAffirm').onclick = () => { affIdx = (affIdx + 1 + Math.floor(Math.random() * (AFFIRM.length - 1))) % AFFIRM.length; showAffirm(); };
-
-/* ---------- nastrój ---------- */
-const MOODS = [
-  { e: '😢', l: 'źle', r: 'Smutek też ma prawo być. Napisz do kogoś bliskiego — nie musisz być z tym sama. 💛' },
-  { e: '😔', l: 'słabo', r: 'Przytulam mocno 🤗 Bądź dziś dla siebie łagodna. Może minuta oddechu?' },
-  { e: '😐', l: 'tak sobie', r: 'Takie dni też są w porządku. Jedna mała przyjemność może coś zmienić.' },
-  { e: '🙂', l: 'dobrze', r: 'Dobrze jest! Wrzuć coś miłego do słoika szczęścia.' },
-  { e: '😄', l: 'super', r: 'Cudownie! Zapamiętaj, co sprawiło, że tak się czujesz ✨' }
-];
-function renderMood() {
-  const m = today().mood;
-  $('moods').replaceChildren(...MOODS.map((x, i) => {
-    const b = el('button', { className: m === i + 1 ? 'on' : '' }, x.e, el('small', { textContent: x.l }));
-    b.onclick = () => {
-      const first = !today().mood;
-      today().mood = i + 1; save(); renderMood(); renderHeader(); earn('mood', 3);
-      if (first && i >= 3) celebrate(15);
-    };
-    return b;
-  }));
-  $('moodReply').textContent = m ? MOODS[m - 1].r : 'Wybierz buźkę — zapiszę, jak się czujesz.';
-  $('moodNote').classList.toggle('hidden', !m);
-  if (document.activeElement !== $('moodNote')) $('moodNote').value = today().note || '';
-}
-$('moodNote').oninput = e => { today().note = e.target.value; save(); };
-
-/* ---------- małe zadania ---------- */
-const IDEAS = [
-  'Wypij szklankę wody 💧', 'Wyjdź na 10-minutowy spacer 🚶‍♀️', 'Potańcz do ulubionej piosenki 💃',
-  'Napisz miłą wiadomość do kogoś bliskiego 📱', 'Przeciągnij się porządnie 🧘‍♀️', 'Zjedz coś pysznego, powoli 🍓',
-  'Otwórz okno i weź 5 głębokich oddechów 🌬️', 'Zrób sobie ulubioną herbatę ☕', 'Posprzątaj jedną małą rzecz 🧺',
-  'Obejrzyj zdjęcie z dobrym wspomnieniem 📷', 'Powiedz sobie w lustrze coś miłego 🪞', 'Przeczytaj kilka stron książki 📖',
-  'Pogłaszcz zwierzaka 🐶', 'Idź dziś wcześniej spać 😴', 'Posłuchaj ptaków albo deszczu przez 2 minuty 🐦',
-  'Pochwal kogoś szczerze 🌟', 'Zrób 10 przysiadów 💪', 'Wyłącz telefon na 30 minut 📵',
-  'Narysuj coś — nawet krzywo 🎨', 'Zaplanuj coś miłego na weekend 🗓️', 'Wyjdź na słońce na 5 minut ☀️'
-];
-function ensureTasks(force) {
-  const t = today();
-  if (!t.tasks || force) {
-    t.tasks = [...IDEAS].sort(() => Math.random() - .5).slice(0, 3).map(x => ({ t: x, done: false }));
-    save();
-  }
-}
-function renderTasks() {
-  ensureTasks();
-  $('tasks').replaceChildren(...today().tasks.map(task => {
-    const row = el('div', { className: 'task' + (task.done ? ' done' : '') },
-      el('span', { className: 'check', textContent: task.done ? '✓' : '' }),
-      el('span', { className: 't', textContent: task.t }));
-    row.onclick = () => {
-      task.done = !task.done; save(); renderTasks();
-      if (task.done) earn('task:' + task.t, 2, 3);
-      if (today().tasks.every(x => x.done)) { celebrate(); toast('Wszystkie trzy! Jesteś niesamowita 🎉'); }
-    };
-    return row;
-  }));
-}
-$('reroll').onclick = () => { ensureTasks(true); renderTasks(); };
-
-/* ---------- woda ---------- */
-function renderWater() {
-  const w = today().water || 0;
-  $('glasses').replaceChildren(...Array.from({ length: 8 }, (_, i) => {
-    const g = el('button', { className: 'glass' + (i < w ? ' full' : ''), ariaLabel: `Szklanka ${i + 1}` });
-    g.onclick = () => {
-      today().water = i < w ? i : i + 1; save(); renderWater();
-      if (today().water > w) earn('water:' + today().water, 1);
-      if (today().water === 8) toast('8 szklanek! Twoje ciało dziękuje 💧');
-    };
-    return g;
-  }));
-  $('waterCount').textContent = `${w} / 8`;
-}
-
-/* ---------- słoik ---------- */
-function renderJar() {
-  const svg = $('jar'), n = data.jar.length;
-  let balls = '';
-  const shown = data.jar.slice(-42);
-  shown.forEach((m, i) => {
-    const col = i % 6, row = Math.floor(i / 6);
-    const x = 32 + col * 21 + (row % 2 ? 10 : 0) + ((i * 7) % 5) - 2;
-    const y = 178 - row * 18 - ((i * 3) % 4);
-    balls += `<circle cx="${Math.min(x, 140)}" cy="${y}" r="9" fill="${m.c || COLORS[i % COLORS.length]}" opacity=".9"/>`;
-  });
-  svg.innerHTML = `
-    <rect x="50" y="6" width="70" height="16" rx="5" fill="var(--accent2)"/>
-    <path d="M44 24 h82 v8 q18 8 18 30 v112 q0 20 -20 20 h-78 q-20 0 -20 -20 v-112 q0 -22 18 -30 z"
-      fill="var(--soft)" stroke="var(--line)" stroke-width="3"/>
-    ${balls}
-    <path d="M40 60 q-6 40 0 100" stroke="#fff" stroke-opacity=".5" stroke-width="5" fill="none" stroke-linecap="round"/>`;
-  $('jarCount').textContent = n ? `(${n})` : '';
-  $('jarList').replaceChildren(...(n ? data.jar.slice().reverse().map((m, ri) => {
-    const idx = n - 1 - ri;
-    const x = el('button', { className: 'x', textContent: '×', title: 'Usuń' });
-    x.onclick = () => { if (confirm('Usunąć tę chwilę ze słoika?')) { data.jar.splice(idx, 1); save(); renderJar(); } };
-    return el('li', {}, el('span', { className: 'dot', style: `background:${m.c}` }),
-      el('div', {}, m.text, el('small', { textContent: m.date })), x);
-  }) : [el('li', { className: 'muted', textContent: 'Słoik jest jeszcze pusty — wrzuć pierwszą dobrą chwilę!' })]));
-}
-function addJar() {
-  const text = $('jarInput').value.trim();
-  if (!text) return $('jarInput').focus();
-  data.jar.push({ text, date: new Date().toLocaleDateString('pl-PL'), c: pick(COLORS) });
-  save(); $('jarInput').value = ''; renderJar(); celebrate(18); earn('jar:' + Date.now(), 3, 3);
-  toast(pick(['Wrzucone! 💖', 'Piękna chwila ✨', 'Słoik rośnie 🫙']));
-}
-$('jarAdd').onclick = addJar;
-$('jarInput').addEventListener('keydown', e => { if (e.key === 'Enter') addJar(); });
-$('jarDraw').onclick = () => {
-  const box = $('memory');
-  if (!data.jar.length) { toast('Najpierw wrzuć coś do słoika 🙂'); return; }
-  const m = pick(data.jar);
-  box.classList.remove('hidden');
-  box.replaceChildren(el('div', { textContent: '„' + m.text + '”' }), el('small', { className: 'muted', textContent: m.date }));
-  box.style.animation = 'none'; void box.offsetWidth; box.style.animation = '';
-};
-
-/* ---------- nawyki ---------- */
-const WD = ['nd', 'pn', 'wt', 'śr', 'cz', 'pt', 'sb'];
-function renderHabits() {
-  const box = $('habits');
-  if (!data.habits.length) { box.replaceChildren(el('p', { className: 'muted', textContent: 'Dodaj swój pierwszy nawyk poniżej 🌱' })); return; }
-  box.replaceChildren(...data.habits.map(h => {
-    const s = streakFrom(k => h.done[k]);
-    const del = el('button', { className: 'x', textContent: '×', title: 'Usuń nawyk' });
-    del.onclick = () => { if (confirm(`Usunąć „${h.name}”?`)) { data.habits = data.habits.filter(x => x !== h); save(); renderHabits(); } };
-    const week = el('div', { className: 'week' });
-    for (let i = 6; i >= 0; i--) {
-      const d = daysAgo(i), k = dkey(d);
-      const day = el('div', { className: 'day' + (h.done[k] ? ' on' : '') + (i === 0 ? ' today' : '') },
-        i === 0 ? 'dziś' : WD[d.getDay()], el('i'));
-      day.style.cursor = 'pointer';
-      day.onclick = () => {
-        if (h.done[k]) delete h.done[k]; else h.done[k] = true;
-        save(); renderHabits();
-        if (h.done[k] && i === 0) earn('habit:' + h.id, 2);
-        const ns = streakFrom(x => h.done[x]);
-        if (h.done[k] && [3, 7, 14, 21, 30, 50, 100].includes(ns)) { celebrate(); toast(`${ns} dni z rzędu! 🔥`); }
-      };
-      week.appendChild(day);
-    }
-    return el('div', { className: 'habit' },
-      el('div', { className: 'row' }, el('span', { className: 'name', textContent: h.name }),
-        el('span', { className: 'flame', textContent: s ? `🔥 ${s}` : '' }), del),
-      week);
-  }));
-}
-function addHabit() {
-  const name = $('habitInput').value.trim();
-  if (!name) return $('habitInput').focus();
-  data.habits.push({ id: Date.now(), name, done: {} });
-  save(); $('habitInput').value = ''; renderHabits(); toast('Nowy nawyk dodany 🌿');
-}
-$('habitAdd').onclick = addHabit;
-$('habitInput').addEventListener('keydown', e => { if (e.key === 'Enter') addHabit(); });
-
-/* ---------- oddech ---------- */
-const BREATH = {
-  spokoj: { name: 'Spokój', hint: '4 · 6', phases: [['Wdech', 4, 1], ['Wydech', 6, .45]] },
-  kwadrat: { name: 'Kwadrat', hint: '4 · 4 · 4 · 4', phases: [['Wdech', 4, 1], ['Zatrzymaj', 4, 1], ['Wydech', 4, .45], ['Zatrzymaj', 4, .45]] },
-  sen: { name: 'Na sen', hint: '4 · 7 · 8', phases: [['Wdech', 4, 1], ['Zatrzymaj', 7, 1], ['Wydech', 8, .45]] }
-};
-let bMode = 'spokoj', bMin = 1, bTimer = null;
-function renderModes() {
-  $('modes').replaceChildren(...Object.entries(BREATH).map(([k, m]) => {
-    const b = el('button', { className: k === bMode ? 'on' : '' }, m.name, el('small', { textContent: m.hint }));
-    b.onclick = () => { if (!bTimer) { bMode = k; renderModes(); } };
-    return b;
-  }));
-  document.querySelectorAll('[data-min]').forEach(b => {
-    b.style.background = +b.dataset.min === bMin ? 'var(--accent3)' : '';
-    b.style.color = +b.dataset.min === bMin ? '#fff' : '';
-    b.onclick = () => { if (!bTimer) { bMin = +b.dataset.min; renderModes(); } };
-  });
-}
-function stopBreath(done) {
-  clearInterval(bTimer); bTimer = null;
-  const orb = $('orb'); orb.style.transitionDuration = '1s'; orb.style.transform = 'scale(.45)';
-  $('orbText').innerHTML = done ? 'brawo 💛' : 'gotowa?';
-  $('breathBtn').textContent = 'Zaczynamy';
-  if (done) { toast('Pięknie. Poczuj, jak jest teraz spokojniej 🌿'); earn('breath:' + Date.now(), 3, 2); }
-}
-$('breathBtn').onclick = () => {
-  if (bTimer) return stopBreath(false);
-  const m = BREATH[bMode], orb = $('orb');
-  const end = Date.now() + bMin * 60000;
-  let pi = -1, left = 0;
-  $('breathBtn').textContent = 'Zatrzymaj';
-  const step = () => {
-    if (left <= 0) {
-      if (pi === m.phases.length - 1 && Date.now() >= end) return stopBreath(true);
-      pi = (pi + 1) % m.phases.length;
-      const [, sec, scale] = m.phases[pi];
-      left = sec;
-      orb.style.transitionDuration = sec + 's';
-      orb.style.transform = `scale(${scale})`;
-    }
-    $('orbText').innerHTML = `${m.phases[pi][0]}<b>${left}</b>`;
-    left--;
-  };
-  step();
-  bTimer = setInterval(step, 1000);
-};
-
-/* ---------- pupil ---------- */
-const PET_TYPES = { kot: 'Kotek', krolik: 'Króliczek', mis: 'Miś', piesek: 'Piesek' };
-const PET_COLORS = ['#ffb3c7', '#ffd59e', '#b8e0d2', '#c9b8ff', '#f2c9a0', '#d6d6e0'];
-const INK = '#3b2f35';
-let adoptType = 'kot', adoptColor = PET_COLORS[0];
-
-function petLevel(xp) {
-  let lvl = 1, rest = xp;
-  while (rest >= lvl * 10) { rest -= lvl * 10; lvl++; }
-  return { lvl, rest, need: lvl * 10 };
-}
-const stageName = l => l < 3 ? 'maluszek' : l < 6 ? 'brzdąc' : l < 10 ? 'podrostek' : 'dorosły przyjaciel';
-const isNight = () => { const h = new Date().getHours(); return h >= 22 || h < 7; };
-
-function petSVG(t, c, mood, lvl) {
-  const s = Math.min(.8 + (lvl - 1) * .025, 1);
-  const pink = '#ff9fb8';
-  let ears = '', front = '';
-  if (t === 'kot') ears = `<path d="M50 94 L58 30 L98 70 Z" fill="${c}"/><path d="M150 94 L142 30 L102 70 Z" fill="${c}"/>
-    <path d="M62 78 L65 48 L84 68 Z" fill="${pink}" opacity=".6"/><path d="M138 78 L135 48 L116 68 Z" fill="${pink}" opacity=".6"/>`;
-  if (t === 'krolik') ears = [[76, -10], [124, 10]].map(([x, r]) => `<g transform="rotate(${r} ${x} 70)">
-    <ellipse cx="${x}" cy="38" rx="15" ry="40" fill="${c}"/><ellipse cx="${x}" cy="42" rx="7" ry="28" fill="${pink}" opacity=".6"/></g>`).join('');
-  if (t === 'mis') ears = [56, 144].map(x => `<circle cx="${x}" cy="72" r="22" fill="${c}"/><circle cx="${x}" cy="72" r="11" fill="${pink}" opacity=".5"/>`).join('');
-  if (t === 'piesek') front = [[44, 18], [156, -18]].map(([x, r]) => `<g transform="rotate(${r} ${x} 104)">
-    <ellipse cx="${x}" cy="108" rx="17" ry="34" fill="${c}"/><ellipse cx="${x}" cy="108" rx="17" ry="34" fill="#000" opacity=".12"/></g>`).join('');
-
-  const eye = (x) => ({
-    happy: `<path d="M${x - 10} 112 q10 -12 20 0" stroke="${INK}" stroke-width="5" fill="none" stroke-linecap="round"/>`,
-    sleep: `<path d="M${x - 10} 110 q10 9 20 0" stroke="${INK}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
-    normal: `<circle cx="${x}" cy="110" r="8" fill="${INK}"/><circle cx="${x + 3}" cy="107" r="3" fill="#fff"/>`,
-    sad: `<circle cx="${x}" cy="111" r="8" fill="${INK}"/><circle cx="${x + 3}" cy="108" r="3" fill="#fff"/>`
-  })[mood];
-  const brows = mood === 'sad' ? `<path d="M70 97 L88 92 M112 92 L130 97" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>` : '';
-  const mouth = {
-    happy: `<path d="M89 127 q11 16 22 0 z" fill="${INK}"/><path d="M95 133 q5 4 10 0" fill="#ff7a9c"/>`,
-    normal: `<path d="M93 128 q7 7 14 0" stroke="${INK}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
-    sad: `<path d="M93 133 q7 -6 14 0" stroke="${INK}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
-    sleep: `<ellipse cx="100" cy="130" rx="4" ry="3" fill="${INK}"/>`
-  }[mood];
-  const whisk = t === 'kot' ? `<path d="M52 118 l-22 -4 M52 124 l-22 4 M148 118 l22 -4 M148 124 l22 4" stroke="${INK}" stroke-width="2" opacity=".5" stroke-linecap="round"/>` : '';
-  const acc = lvl >= 10
-    ? `<path d="M74 68 L78 42 L90 56 L100 36 L110 56 L122 42 L126 68 Z" fill="#ffd166" stroke="#f0a500" stroke-width="3" stroke-linejoin="round"/><circle cx="100" cy="58" r="4" fill="#ff7a9c"/>`
-    : lvl >= 6
-    ? `<g transform="translate(62 74)">${[0, 72, 144, 216, 288].map(a => `<circle cx="${Math.cos(a * Math.PI / 180) * 9}" cy="${Math.sin(a * Math.PI / 180) * 9}" r="7" fill="#fff" stroke="#ffc2d4" stroke-width="2"/>`).join('')}<circle r="6" fill="#ffd166"/></g>`
-    : lvl >= 3
-    ? `<g transform="translate(140 72)"><path d="M0 0 L-18 -12 L-18 12 Z" fill="#ff5c8a"/><path d="M0 0 L18 -12 L18 12 Z" fill="#ff5c8a"/><circle r="6" fill="#ff85a7"/></g>` : '';
-  const zzz = mood === 'sleep' ? `<text x="150" y="58" font-size="22" font-weight="800" fill="${INK}" opacity=".45">z</text><text x="166" y="38" font-size="15" font-weight="800" fill="${INK}" opacity=".35">z</text>` : '';
-  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="100" cy="192" rx="${58 * s}" ry="7" fill="#000" opacity=".08"/>
-    <g transform="translate(100 190) scale(${s}) translate(-100 -190)">
-      ${ears}
-      <ellipse cx="100" cy="122" rx="66" ry="60" fill="${c}"/>
-      <ellipse cx="100" cy="150" rx="38" ry="28" fill="#fff" opacity=".45"/>
-      ${front}
-      <ellipse cx="72" cy="180" rx="17" ry="9" fill="${c}"/><ellipse cx="128" cy="180" rx="17" ry="9" fill="${c}"/>
-      <ellipse cx="72" cy="180" rx="17" ry="9" fill="#000" opacity=".06"/><ellipse cx="128" cy="180" rx="17" ry="9" fill="#000" opacity=".06"/>
-      <circle cx="64" cy="126" r="9" fill="#ff7a9c" opacity=".35"/><circle cx="136" cy="126" r="9" fill="#ff7a9c" opacity=".35"/>
-      ${eye(80)}${eye(120)}${brows}
-      <ellipse cx="100" cy="120" rx="5" ry="3.5" fill="${t === 'kot' ? '#ff7a9c' : INK}"/>
-      ${mouth}${whisk}${acc}
-    </g>${zzz}</svg>`;
-}
-
-function petTick() {
-  const p = data.pet; if (!p) return;
-  const now = Date.now(), mins = (now - (p.last || now)) / 60000;
-  const slow = isNight() ? .4 : 1;
-  p.food = Math.max(10, p.food - mins / 36 * slow);
-  p.fun = Math.max(10, p.fun - mins / 30 * slow);
-  p.last = now;
-  const keep = new Set([0, 1, 2].map(i => dkey(daysAgo(i))));
-  Object.keys(p.earned).forEach(k => { if (!keep.has(k)) delete p.earned[k]; });
-}
-function petMood() {
-  const p = data.pet;
-  if (isNight()) return 'sleep';
-  if (p.food < 30 || p.fun < 25) return 'sad';
-  if (p.food > 60 && p.fun > 55) return 'happy';
-  return 'normal';
-}
-function petSay(text) {
-  const p = data.pet;
-  if (!text) {
-    const w = today().water || 0, h = new Date().getHours();
-    text = isNight() ? 'Zzz… 💤 Śpię. Ty też odpocznij, dobranoc!'
-      : p.food < 30 ? 'Burczy mi w brzuszku… Zadbasz dziś o siebie, żeby zdobyć serduszka? 🥺'
-      : p.fun < 25 ? 'Trochę się nudzę… Pobawimy się? 🎈'
-      : !today().mood ? 'Jak się dziś czujesz? Opowiesz mi w zakładce Dziś? ☀️'
-      : w < 4 && h >= 11 ? 'Napijemy się wody? Ja już mam swoją miseczkę! 💧'
-      : pick(['Cieszę się, że jesteś! 💗', 'Jesteś moją ulubioną osobą na świecie 🌍', 'Dziękuję, że dbasz o mnie — i o siebie też!',
-        'Przytulas? 🤗', 'Dziś jest dobry dzień na coś miłego ✨', 'Duma mnie rozpiera, że Cię mam!', 'Pamiętaj: jesteś wspaniała 🌸']);
-  }
-  $('petSay').textContent = text;
-}
-function floatAt(box, emoji, n = 1) {
-  for (let i = 0; i < n; i++) {
-    const s = el('span', { className: 'float', textContent: emoji });
-    s.style.left = 30 + Math.random() * 40 + '%';
-    s.style.top = 30 + Math.random() * 30 + '%';
-    s.style.animationDelay = i * .12 + 's';
-    box.appendChild(s);
-    setTimeout(() => s.remove(), 1800);
-  }
-}
-function heartPop(n) {
-  const nb = document.querySelector('[data-go=pupil]').getBoundingClientRect();
-  const s = el('span', { className: 'float', textContent: `+${n} 💗` });
-  Object.assign(s.style, { position: 'fixed', left: nb.left + nb.width / 2 - 20 + 'px', top: nb.top - 10 + 'px', fontSize: '1rem', fontWeight: 800, zIndex: 40 });
-  document.body.appendChild(s);
-  setTimeout(() => s.remove(), 1600);
-}
-function gainXp(n) {
-  const p = data.pet, before = petLevel(p.xp).lvl;
-  p.xp += n;
-  const after = petLevel(p.xp).lvl;
-  if (after > before) {
-    celebrate();
-    const gift = after === 3 ? ' Nowa ozdoba: kokardka 🎀' : after === 6 ? ' Nowa ozdoba: kwiatek 🌼' : after === 10 ? ' Nowa ozdoba: korona 👑' : '';
-    toast(`${p.name} ma teraz poziom ${after}!${gift}`);
-  }
-}
-// Serduszka za dbanie o siebie. Każda rzecz liczy się raz dziennie (cap = limit na dzień dla danego rodzaju).
-function earn(key, n, cap) {
-  const p = data.pet; if (!p) return;
-  const got = (p.earned[dkey()] ||= []);
-  if (got.includes(key)) return;
-  const kind = key.split(':')[0];
-  if (cap && got.filter(x => x.split(':')[0] === kind).length >= cap) return;
-  got.push(key); p.hearts += n; gainXp(n); save(); heartPop(n);
-}
-function renderPet() {
-  const p = data.pet;
-  $('adopt').classList.toggle('hidden', !!p);
-  $('petCard').classList.toggle('hidden', !p);
-  if (!p) return renderAdopt();
-  petTick(); save();
-  const { lvl, rest, need } = petLevel(p.xp), mood = petMood();
-  const box = $('petBox');
-  box.className = 'petbox' + (mood === 'sleep' ? ' sleep' : '');
-  box.innerHTML = petSVG(p.type, p.color, mood, lvl);
-  box.querySelector('svg').onclick = stroke;
-  $('petName').textContent = p.name;
-  $('petLvl').textContent = `${PET_TYPES[p.type]} · poziom ${lvl} · ${stageName(lvl)}`;
-  $('foodBar').style.width = p.food + '%'; $('foodTxt').textContent = Math.round(p.food) + '%';
-  $('funBar').style.width = p.fun + '%'; $('funTxt').textContent = Math.round(p.fun) + '%';
-  $('xpBar').style.width = rest / need * 100 + '%'; $('xpTxt').textContent = `${rest} / ${need}`;
-  $('heartCount').textContent = p.hearts;
-  if (!$('petSay').dataset.hold) petSay();
-}
-function sayFor(text, ms = 3500) {
-  petSay(text); $('petSay').dataset.hold = 1;
-  clearTimeout(sayFor.t); sayFor.t = setTimeout(() => { delete $('petSay').dataset.hold; petSay(); }, ms);
-}
-function jiggle() { const s = $('petBox').querySelector('svg'); s.classList.remove('jiggle'); void s.offsetWidth; s.classList.add('jiggle'); }
-function care(cost, stat, amount, emoji, line) {
-  const p = data.pet;
-  if (isNight()) return sayFor('Ćśś… śpię 😴 Wróć do mnie rano!');
-  if (p[stat] >= 98) return sayFor(stat === 'food' ? 'Brzuszek pełny! 😋 Może później?' : 'Już mam mnóstwo radości! 🥰');
-  if (p.hearts < cost) return sayFor('Brakuje serduszek 💗 Zadbaj o siebie w zakładce Dziś — wtedy je zdobędziesz!');
-  p.hearts -= cost; p[stat] = Math.min(100, p[stat] + amount);
-  gainXp(1); save(); renderPet(); jiggle();
-  floatAt($('petBox'), pick(emoji), 3); sayFor(pick(line));
-}
-$('feedBtn').onclick = () => care(2, 'food', 30, ['🍓', '🥕', '🍪', '🐟', '🍎', '🧁'], ['Mniam! Dziękuję 😋', 'Pycha! Ty też coś zjedz 🍓', 'Mniam mniam mniam 💗']);
-$('playBtn').onclick = () => care(1, 'fun', 25, ['🎈', '⚽', '🧶', '🪁', '🫧'], ['Hura! Jeszcze raz! 🎈', 'Ale zabawa! 🥳', 'Kocham się z Tobą bawić 💗']);
-function stroke() {
-  const p = data.pet;
-  p.fun = Math.min(100, p.fun + 2); save(); renderPet(); jiggle();
-  floatAt($('petBox'), '💗', 2);
-  sayFor(isNight() ? 'Mrrr… 💤 (mruczy przez sen)' : pick(['Mrrr… jak miło 🥰', 'Hihi, łaskocze! 😆', 'Jeszcze, jeszcze! 💗', 'Kocham Cię! 💕']), 2500);
-}
-$('strokeBtn').onclick = stroke;
-
-function renderAdopt() {
-  $('pickType').replaceChildren(...Object.entries(PET_TYPES).map(([k, name]) => {
-    const b = el('button', { className: k === adoptType ? 'on' : '' });
-    b.innerHTML = petSVG(k, adoptColor, 'happy', 1) + name;
-    b.onclick = () => { adoptType = k; renderAdopt(); };
-    return b;
-  }));
-  $('pickColor').replaceChildren(...PET_COLORS.map(c => {
-    const b = el('button', { className: c === adoptColor ? 'on' : '', ariaLabel: 'Kolor' });
-    b.style.background = c;
-    b.onclick = () => { adoptColor = c; renderAdopt(); };
-    return b;
-  }));
-}
-$('adoptBtn').onclick = () => {
-  const name = $('petNameInput').value.trim();
-  if (!name) { $('petNameInput').focus(); return toast('Nadaj mu imię 🙂'); }
-  data.pet = { name, type: adoptType, color: adoptColor, born: dkey(), xp: 0, hearts: 5, food: 70, fun: 70, last: Date.now(), earned: {} };
-  save(); renderPet(); celebrate();
-  sayFor(`Cześć! Mam na imię ${name}! Na start dostajesz 5 serduszek 💗`, 5000);
-};
-
-/* ---------- postępy ---------- */
-function renderStats() {
-  const W = 330, H = 140, n = 30, bw = W / n;
-  const moodCol = ['var(--m1)', 'var(--m2)', 'var(--m3)', 'var(--m4)', 'var(--m5)'];
-  let s = '';
-  for (let i = 1; i <= 4; i++) s += `<line x1="0" x2="${W}" y1="${120 - i * 22}" y2="${120 - i * 22}" stroke="var(--line)" stroke-dasharray="3 4"/>`;
-  for (let i = n - 1; i >= 0; i--) {
-    const d = daysAgo(i), m = data.days[dkey(d)]?.mood, x = (n - 1 - i) * bw;
-    if (m) s += `<rect x="${x + 2}" y="${120 - m * 22}" width="${bw - 4}" height="${m * 22}" rx="4" fill="${moodCol[m - 1]}"><title>${d.toLocaleDateString('pl-PL')}: ${MOODS[m - 1].l}</title></rect>`;
-    else s += `<circle cx="${x + bw / 2}" cy="116" r="2" fill="var(--line)"/>`;
-    if (i % 7 === 0) s += `<text x="${x + bw / 2}" y="136" font-size="9" text-anchor="middle" fill="var(--muted)">${d.getDate()}.${z(d.getMonth() + 1)}</text>`;
-  }
-  $('chart').innerHTML = s;
-  $('legend').innerHTML = MOODS.map((m, i) => `<span><i class="dot" style="background:${moodCol[i]};margin:0"></i>${m.e} ${m.l}</span>`).join('');
-
-  const days = Object.entries(data.days);
-  const moods = days.map(([, v]) => v.mood).filter(Boolean);
-  $('sDays').textContent = moods.length;
-  $('sJar').textContent = data.jar.length;
-  $('sTasks').textContent = days.reduce((a, [, v]) => a + (v.tasks || []).filter(t => t.done).length, 0);
-  $('sWater').textContent = days.reduce((a, [, v]) => a + (v.water || 0), 0);
-  $('sAvg').textContent = moods.length ? MOODS[Math.round(moods.reduce((a, b) => a + b, 0) / moods.length) - 1].e : '–';
-  // najdłuższa seria
-  const keys = days.filter(([, v]) => v.mood).map(([k]) => k).sort();
-  let best = 0, cur = 0, prev = null;
-  keys.forEach(k => {
-    const t = new Date(k + 'T12:00').getTime();
-    cur = prev && Math.round((t - prev) / 864e5) === 1 ? cur + 1 : 1;
-    best = Math.max(best, cur); prev = t;
-  });
-  $('sBest').textContent = best;
-
-  const notes = days.filter(([, v]) => v.note && v.note.trim()).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 10);
-  $('notes').replaceChildren(...(notes.length ? notes.map(([k, v]) =>
-    el('li', {}, el('span', { textContent: v.mood ? MOODS[v.mood - 1].e : '📝' }),
-      el('div', {}, v.note, el('small', { textContent: new Date(k + 'T12:00').toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }) }))))
-    : [el('li', { className: 'muted', textContent: 'Po wybraniu nastroju możesz dopisać notatkę — pojawi się tutaj.' })]));
-}
-$('exportBtn').onclick = () => {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const a = el('a', { href: URL.createObjectURL(blob), download: `szczesliwy-dzien-${dkey()}.json` });
-  document.body.appendChild(a); a.click(); a.remove();
-  toast('Kopia zapisana 💾');
-};
-$('importBtn').onclick = () => $('importFile').click();
-$('importFile').onchange = async e => {
-  const f = e.target.files[0]; if (!f) return;
-  try {
-    const d = JSON.parse(await f.text());
-    if (!d.days || !Array.isArray(d.jar)) throw 0;
-    if (!confirm('Zastąpić obecne dane danymi z kopii?')) return;
-    Object.assign(data, d); save(); renderAll(); renderStats(); toast('Dane wczytane ✅');
-  } catch { toast('To nie wygląda na kopię z tej aplikacji 🤔'); }
-  e.target.value = '';
-};
-
-/* ---------- start ---------- */
-function renderAll() { renderHeader(); showAffirm(); renderMood(); renderTasks(); renderWater(); renderJar(); renderHabits(); renderModes(); renderPet(); }
-renderAll();
-save();
-try { const v = sessionStorage.getItem('view'); if (v) go(v); } catch {}
-// po północy odśwież widok nowego dnia
-let lastDay = dkey();
-setInterval(() => {
-  if (dkey() !== lastDay) { lastDay = dkey(); renderAll(); }
-  else if (!document.querySelector('[data-view=pupil]').classList.contains('hidden')) renderPet();
-}, 60000);
-
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
-}
-</script>
+<script src="app.js"></script>
+<script src="pet.js"></script>
+<script>start();</script>
 </body>
 </html>
