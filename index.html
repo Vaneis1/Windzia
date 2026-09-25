@@ -187,6 +187,45 @@
   .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); margin-top: 8px; }
   .legend span { display: inline-flex; align-items: center; gap: 4px; }
 
+  /* pupil */
+  .petbox { position: relative; display: flex; justify-content: center; height: 240px; }
+  .petbox svg { width: 230px; height: 230px; cursor: pointer; transform-origin: 50% 90%;
+    animation: bounce 2.6s ease-in-out infinite; }
+  .petbox.sleep svg { animation: breathe 4s ease-in-out infinite; }
+  .petbox svg.jiggle { animation: jiggle .5s ease; }
+  @keyframes bounce { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-8px) scale(.98, 1.02); } }
+  @keyframes breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.02, .98); } }
+  @keyframes jiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-6deg) scale(1.05); } 75% { transform: rotate(6deg) scale(1.05); } }
+  .float { position: absolute; font-size: 1.6rem; pointer-events: none; animation: up 1.4s ease-out forwards; }
+  @keyframes up { to { transform: translateY(-110px); opacity: 0; } }
+  .bubble {
+    background: var(--soft); border-radius: 18px; padding: 10px 14px; text-align: center;
+    font-weight: 700; margin: 0 0 6px; position: relative; min-height: 2.8em;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bubble::after {
+    content: ""; position: absolute; bottom: -8px; left: 50%; margin-left: -8px;
+    border: 8px solid transparent; border-top-color: var(--soft); border-bottom: 0;
+  }
+  .petname { text-align: center; margin: 0; font-size: 1.3rem; font-weight: 800; }
+  .petlvl { text-align: center; color: var(--muted); margin: 0 0 12px; font-size: .9rem; }
+  .bar { margin: 8px 0; }
+  .bar .row { font-size: .9rem; font-weight: 700; }
+  .bar .track { height: 12px; background: var(--soft); border-radius: 99px; overflow: hidden; margin-top: 4px; }
+  .bar .fill { height: 100%; border-radius: 99px; transition: width .5s; }
+  .hearts { font-size: 1.1rem; font-weight: 800; }
+  .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+  .actions button { border-radius: 16px; padding: 10px 4px; font-size: .9rem; }
+  .actions small { display: block; font-weight: 600; opacity: .85; font-size: .75rem; }
+  .pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+  .pick button { background: var(--soft); color: var(--text); border-radius: 16px; padding: 6px 2px; font-size: .8rem; }
+  .pick button svg { width: 100%; height: 64px; display: block; }
+  .pick button.on { outline: 3px solid var(--accent); }
+  .swatches { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .swatches button { width: 38px; height: 38px; padding: 0; border-radius: 50%; border: 3px solid var(--card); box-shadow: 0 0 0 2px var(--line); }
+  .swatches button.on { box-shadow: 0 0 0 3px var(--accent); }
+  .earn { font-size: .85rem; color: var(--muted); margin: 0; padding-left: 18px; }
+
   .toast {
     position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%) translateY(20px);
     background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 999px;
@@ -234,6 +273,53 @@
     <div class="card">
       <div class="row between"><h2>💧 Woda</h2><span class="muted" id="waterCount"></span></div>
       <div class="glasses" id="glasses"></div>
+    </div>
+  </section>
+
+  <!-- PUPIL -->
+  <section class="view hidden" data-view="pupil">
+    <div class="card hidden" id="adopt">
+      <h2>🐾 Przygarnij zwierzaczka</h2>
+      <p class="muted" style="margin-top:-6px">Będzie rósł i cieszył się, gdy Ty dbasz o siebie.</p>
+      <div class="pick" id="pickType"></div>
+      <div class="swatches" id="pickColor"></div>
+      <input type="text" id="petNameInput" placeholder="Jak ma na imię?" maxlength="20">
+      <div class="row" style="margin-top:10px"><button id="adoptBtn">Przygarniam 💗</button></div>
+    </div>
+
+    <div id="petCard" class="hidden">
+      <div class="card">
+        <div class="bubble" id="petSay"></div>
+        <div class="petbox" id="petBox"></div>
+        <p class="petname" id="petName"></p>
+        <p class="petlvl" id="petLvl"></p>
+        <div class="bar"><div class="row between"><span>🍓 Najedzenie</span><span id="foodTxt"></span></div>
+          <div class="track"><div class="fill" id="foodBar" style="background:var(--m4)"></div></div></div>
+        <div class="bar"><div class="row between"><span>🎈 Radość</span><span id="funTxt"></span></div>
+          <div class="track"><div class="fill" id="funBar" style="background:var(--accent3)"></div></div></div>
+        <div class="bar"><div class="row between"><span>⭐ Do następnego poziomu</span><span id="xpTxt"></span></div>
+          <div class="track"><div class="fill" id="xpBar" style="background:var(--m3)"></div></div></div>
+        <div class="row between" style="margin-top:12px">
+          <span class="hearts">💗 <span id="heartCount">0</span> serduszek</span>
+        </div>
+        <div class="actions">
+          <button id="feedBtn">Nakarm<small>2 💗</small></button>
+          <button id="playBtn" style="background:var(--accent3)">Pobaw się<small>1 💗</small></button>
+          <button id="strokeBtn" class="ghost">Pogłaszcz<small>za darmo</small></button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>💗 Jak zdobywać serduszka?</h2>
+        <ul class="earn">
+          <li>zapisz dzisiejszy nastrój — 3</li>
+          <li>odhacz małe zadanie — 2 za każde</li>
+          <li>wypij szklankę wody — 1 za każdą</li>
+          <li>odhacz dzisiejszy nawyk — 2</li>
+          <li>wrzuć chwilę do słoika — 3 (do 3 razy dziennie)</li>
+          <li>skończ ćwiczenie oddechowe — 3 (do 2 razy dziennie)</li>
+        </ul>
+        <p class="muted" style="margin:10px 0 0;font-size:.85rem">Twój zwierzaczek nigdy nie zachoruje ani nie ucieknie — najwyżej trochę zgłodnieje i zatęskni 🤍</p>
+      </div>
     </div>
   </section>
 
@@ -327,6 +413,7 @@
 
 <nav><div class="inner" id="nav">
   <button data-go="dzis" class="on"><span>☀️</span>Dziś</button>
+  <button data-go="pupil"><span>🐾</span>Pupil</button>
   <button data-go="sloik"><span>🫙</span>Słoik</button>
   <button data-go="nawyki"><span>🌿</span>Nawyki</button>
   <button data-go="oddech"><span>🌬️</span>Oddech</button>
@@ -397,6 +484,7 @@ function go(view) {
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.go === view));
   if (view === 'postepy') renderStats();
   if (view === 'sloik') renderJar();
+  if (view === 'pupil') renderPet();
   window.scrollTo({ top: 0 });
   try { sessionStorage.setItem('view', view); } catch {}
 }
@@ -453,7 +541,7 @@ function renderMood() {
     const b = el('button', { className: m === i + 1 ? 'on' : '' }, x.e, el('small', { textContent: x.l }));
     b.onclick = () => {
       const first = !today().mood;
-      today().mood = i + 1; save(); renderMood(); renderHeader();
+      today().mood = i + 1; save(); renderMood(); renderHeader(); earn('mood', 3);
       if (first && i >= 3) celebrate(15);
     };
     return b;
@@ -489,6 +577,7 @@ function renderTasks() {
       el('span', { className: 't', textContent: task.t }));
     row.onclick = () => {
       task.done = !task.done; save(); renderTasks();
+      if (task.done) earn('task:' + task.t, 2, 3);
       if (today().tasks.every(x => x.done)) { celebrate(); toast('Wszystkie trzy! Jesteś niesamowita 🎉'); }
     };
     return row;
@@ -503,6 +592,7 @@ function renderWater() {
     const g = el('button', { className: 'glass' + (i < w ? ' full' : ''), ariaLabel: `Szklanka ${i + 1}` });
     g.onclick = () => {
       today().water = i < w ? i : i + 1; save(); renderWater();
+      if (today().water > w) earn('water:' + today().water, 1);
       if (today().water === 8) toast('8 szklanek! Twoje ciało dziękuje 💧');
     };
     return g;
@@ -540,7 +630,7 @@ function addJar() {
   const text = $('jarInput').value.trim();
   if (!text) return $('jarInput').focus();
   data.jar.push({ text, date: new Date().toLocaleDateString('pl-PL'), c: pick(COLORS) });
-  save(); $('jarInput').value = ''; renderJar(); celebrate(18);
+  save(); $('jarInput').value = ''; renderJar(); celebrate(18); earn('jar:' + Date.now(), 3, 3);
   toast(pick(['Wrzucone! 💖', 'Piękna chwila ✨', 'Słoik rośnie 🫙']));
 }
 $('jarAdd').onclick = addJar;
@@ -572,6 +662,7 @@ function renderHabits() {
       day.onclick = () => {
         if (h.done[k]) delete h.done[k]; else h.done[k] = true;
         save(); renderHabits();
+        if (h.done[k] && i === 0) earn('habit:' + h.id, 2);
         const ns = streakFrom(x => h.done[x]);
         if (h.done[k] && [3, 7, 14, 21, 30, 50, 100].includes(ns)) { celebrate(); toast(`${ns} dni z rzędu! 🔥`); }
       };
@@ -616,7 +707,7 @@ function stopBreath(done) {
   const orb = $('orb'); orb.style.transitionDuration = '1s'; orb.style.transform = 'scale(.45)';
   $('orbText').innerHTML = done ? 'brawo 💛' : 'gotowa?';
   $('breathBtn').textContent = 'Zaczynamy';
-  if (done) toast('Pięknie. Poczuj, jak jest teraz spokojniej 🌿');
+  if (done) { toast('Pięknie. Poczuj, jak jest teraz spokojniej 🌿'); earn('breath:' + Date.now(), 3, 2); }
 }
 $('breathBtn').onclick = () => {
   if (bTimer) return stopBreath(false);
@@ -638,6 +729,201 @@ $('breathBtn').onclick = () => {
   };
   step();
   bTimer = setInterval(step, 1000);
+};
+
+/* ---------- pupil ---------- */
+const PET_TYPES = { kot: 'Kotek', krolik: 'Króliczek', mis: 'Miś', piesek: 'Piesek' };
+const PET_COLORS = ['#ffb3c7', '#ffd59e', '#b8e0d2', '#c9b8ff', '#f2c9a0', '#d6d6e0'];
+const INK = '#3b2f35';
+let adoptType = 'kot', adoptColor = PET_COLORS[0];
+
+function petLevel(xp) {
+  let lvl = 1, rest = xp;
+  while (rest >= lvl * 10) { rest -= lvl * 10; lvl++; }
+  return { lvl, rest, need: lvl * 10 };
+}
+const stageName = l => l < 3 ? 'maluszek' : l < 6 ? 'brzdąc' : l < 10 ? 'podrostek' : 'dorosły przyjaciel';
+const isNight = () => { const h = new Date().getHours(); return h >= 22 || h < 7; };
+
+function petSVG(t, c, mood, lvl) {
+  const s = Math.min(.8 + (lvl - 1) * .025, 1);
+  const pink = '#ff9fb8';
+  let ears = '', front = '';
+  if (t === 'kot') ears = `<path d="M50 94 L58 30 L98 70 Z" fill="${c}"/><path d="M150 94 L142 30 L102 70 Z" fill="${c}"/>
+    <path d="M62 78 L65 48 L84 68 Z" fill="${pink}" opacity=".6"/><path d="M138 78 L135 48 L116 68 Z" fill="${pink}" opacity=".6"/>`;
+  if (t === 'krolik') ears = [[76, -10], [124, 10]].map(([x, r]) => `<g transform="rotate(${r} ${x} 70)">
+    <ellipse cx="${x}" cy="38" rx="15" ry="40" fill="${c}"/><ellipse cx="${x}" cy="42" rx="7" ry="28" fill="${pink}" opacity=".6"/></g>`).join('');
+  if (t === 'mis') ears = [56, 144].map(x => `<circle cx="${x}" cy="72" r="22" fill="${c}"/><circle cx="${x}" cy="72" r="11" fill="${pink}" opacity=".5"/>`).join('');
+  if (t === 'piesek') front = [[44, 18], [156, -18]].map(([x, r]) => `<g transform="rotate(${r} ${x} 104)">
+    <ellipse cx="${x}" cy="108" rx="17" ry="34" fill="${c}"/><ellipse cx="${x}" cy="108" rx="17" ry="34" fill="#000" opacity=".12"/></g>`).join('');
+
+  const eye = (x) => ({
+    happy: `<path d="M${x - 10} 112 q10 -12 20 0" stroke="${INK}" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+    sleep: `<path d="M${x - 10} 110 q10 9 20 0" stroke="${INK}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+    normal: `<circle cx="${x}" cy="110" r="8" fill="${INK}"/><circle cx="${x + 3}" cy="107" r="3" fill="#fff"/>`,
+    sad: `<circle cx="${x}" cy="111" r="8" fill="${INK}"/><circle cx="${x + 3}" cy="108" r="3" fill="#fff"/>`
+  })[mood];
+  const brows = mood === 'sad' ? `<path d="M70 97 L88 92 M112 92 L130 97" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>` : '';
+  const mouth = {
+    happy: `<path d="M89 127 q11 16 22 0 z" fill="${INK}"/><path d="M95 133 q5 4 10 0" fill="#ff7a9c"/>`,
+    normal: `<path d="M93 128 q7 7 14 0" stroke="${INK}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
+    sad: `<path d="M93 133 q7 -6 14 0" stroke="${INK}" stroke-width="3.5" fill="none" stroke-linecap="round"/>`,
+    sleep: `<ellipse cx="100" cy="130" rx="4" ry="3" fill="${INK}"/>`
+  }[mood];
+  const whisk = t === 'kot' ? `<path d="M52 118 l-22 -4 M52 124 l-22 4 M148 118 l22 -4 M148 124 l22 4" stroke="${INK}" stroke-width="2" opacity=".5" stroke-linecap="round"/>` : '';
+  const acc = lvl >= 10
+    ? `<path d="M74 68 L78 42 L90 56 L100 36 L110 56 L122 42 L126 68 Z" fill="#ffd166" stroke="#f0a500" stroke-width="3" stroke-linejoin="round"/><circle cx="100" cy="58" r="4" fill="#ff7a9c"/>`
+    : lvl >= 6
+    ? `<g transform="translate(62 74)">${[0, 72, 144, 216, 288].map(a => `<circle cx="${Math.cos(a * Math.PI / 180) * 9}" cy="${Math.sin(a * Math.PI / 180) * 9}" r="7" fill="#fff" stroke="#ffc2d4" stroke-width="2"/>`).join('')}<circle r="6" fill="#ffd166"/></g>`
+    : lvl >= 3
+    ? `<g transform="translate(140 72)"><path d="M0 0 L-18 -12 L-18 12 Z" fill="#ff5c8a"/><path d="M0 0 L18 -12 L18 12 Z" fill="#ff5c8a"/><circle r="6" fill="#ff85a7"/></g>` : '';
+  const zzz = mood === 'sleep' ? `<text x="150" y="58" font-size="22" font-weight="800" fill="${INK}" opacity=".45">z</text><text x="166" y="38" font-size="15" font-weight="800" fill="${INK}" opacity=".35">z</text>` : '';
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="100" cy="192" rx="${58 * s}" ry="7" fill="#000" opacity=".08"/>
+    <g transform="translate(100 190) scale(${s}) translate(-100 -190)">
+      ${ears}
+      <ellipse cx="100" cy="122" rx="66" ry="60" fill="${c}"/>
+      <ellipse cx="100" cy="150" rx="38" ry="28" fill="#fff" opacity=".45"/>
+      ${front}
+      <ellipse cx="72" cy="180" rx="17" ry="9" fill="${c}"/><ellipse cx="128" cy="180" rx="17" ry="9" fill="${c}"/>
+      <ellipse cx="72" cy="180" rx="17" ry="9" fill="#000" opacity=".06"/><ellipse cx="128" cy="180" rx="17" ry="9" fill="#000" opacity=".06"/>
+      <circle cx="64" cy="126" r="9" fill="#ff7a9c" opacity=".35"/><circle cx="136" cy="126" r="9" fill="#ff7a9c" opacity=".35"/>
+      ${eye(80)}${eye(120)}${brows}
+      <ellipse cx="100" cy="120" rx="5" ry="3.5" fill="${t === 'kot' ? '#ff7a9c' : INK}"/>
+      ${mouth}${whisk}${acc}
+    </g>${zzz}</svg>`;
+}
+
+function petTick() {
+  const p = data.pet; if (!p) return;
+  const now = Date.now(), mins = (now - (p.last || now)) / 60000;
+  const slow = isNight() ? .4 : 1;
+  p.food = Math.max(10, p.food - mins / 36 * slow);
+  p.fun = Math.max(10, p.fun - mins / 30 * slow);
+  p.last = now;
+  const keep = new Set([0, 1, 2].map(i => dkey(daysAgo(i))));
+  Object.keys(p.earned).forEach(k => { if (!keep.has(k)) delete p.earned[k]; });
+}
+function petMood() {
+  const p = data.pet;
+  if (isNight()) return 'sleep';
+  if (p.food < 30 || p.fun < 25) return 'sad';
+  if (p.food > 60 && p.fun > 55) return 'happy';
+  return 'normal';
+}
+function petSay(text) {
+  const p = data.pet;
+  if (!text) {
+    const w = today().water || 0, h = new Date().getHours();
+    text = isNight() ? 'Zzz… 💤 Śpię. Ty też odpocznij, dobranoc!'
+      : p.food < 30 ? 'Burczy mi w brzuszku… Zadbasz dziś o siebie, żeby zdobyć serduszka? 🥺'
+      : p.fun < 25 ? 'Trochę się nudzę… Pobawimy się? 🎈'
+      : !today().mood ? 'Jak się dziś czujesz? Opowiesz mi w zakładce Dziś? ☀️'
+      : w < 4 && h >= 11 ? 'Napijemy się wody? Ja już mam swoją miseczkę! 💧'
+      : pick(['Cieszę się, że jesteś! 💗', 'Jesteś moją ulubioną osobą na świecie 🌍', 'Dziękuję, że dbasz o mnie — i o siebie też!',
+        'Przytulas? 🤗', 'Dziś jest dobry dzień na coś miłego ✨', 'Duma mnie rozpiera, że Cię mam!', 'Pamiętaj: jesteś wspaniała 🌸']);
+  }
+  $('petSay').textContent = text;
+}
+function floatAt(box, emoji, n = 1) {
+  for (let i = 0; i < n; i++) {
+    const s = el('span', { className: 'float', textContent: emoji });
+    s.style.left = 30 + Math.random() * 40 + '%';
+    s.style.top = 30 + Math.random() * 30 + '%';
+    s.style.animationDelay = i * .12 + 's';
+    box.appendChild(s);
+    setTimeout(() => s.remove(), 1800);
+  }
+}
+function heartPop(n) {
+  const nb = document.querySelector('[data-go=pupil]').getBoundingClientRect();
+  const s = el('span', { className: 'float', textContent: `+${n} 💗` });
+  Object.assign(s.style, { position: 'fixed', left: nb.left + nb.width / 2 - 20 + 'px', top: nb.top - 10 + 'px', fontSize: '1rem', fontWeight: 800, zIndex: 40 });
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 1600);
+}
+function gainXp(n) {
+  const p = data.pet, before = petLevel(p.xp).lvl;
+  p.xp += n;
+  const after = petLevel(p.xp).lvl;
+  if (after > before) {
+    celebrate();
+    const gift = after === 3 ? ' Nowa ozdoba: kokardka 🎀' : after === 6 ? ' Nowa ozdoba: kwiatek 🌼' : after === 10 ? ' Nowa ozdoba: korona 👑' : '';
+    toast(`${p.name} ma teraz poziom ${after}!${gift}`);
+  }
+}
+// Serduszka za dbanie o siebie. Każda rzecz liczy się raz dziennie (cap = limit na dzień dla danego rodzaju).
+function earn(key, n, cap) {
+  const p = data.pet; if (!p) return;
+  const got = (p.earned[dkey()] ||= []);
+  if (got.includes(key)) return;
+  const kind = key.split(':')[0];
+  if (cap && got.filter(x => x.split(':')[0] === kind).length >= cap) return;
+  got.push(key); p.hearts += n; gainXp(n); save(); heartPop(n);
+}
+function renderPet() {
+  const p = data.pet;
+  $('adopt').classList.toggle('hidden', !!p);
+  $('petCard').classList.toggle('hidden', !p);
+  if (!p) return renderAdopt();
+  petTick(); save();
+  const { lvl, rest, need } = petLevel(p.xp), mood = petMood();
+  const box = $('petBox');
+  box.className = 'petbox' + (mood === 'sleep' ? ' sleep' : '');
+  box.innerHTML = petSVG(p.type, p.color, mood, lvl);
+  box.querySelector('svg').onclick = stroke;
+  $('petName').textContent = p.name;
+  $('petLvl').textContent = `${PET_TYPES[p.type]} · poziom ${lvl} · ${stageName(lvl)}`;
+  $('foodBar').style.width = p.food + '%'; $('foodTxt').textContent = Math.round(p.food) + '%';
+  $('funBar').style.width = p.fun + '%'; $('funTxt').textContent = Math.round(p.fun) + '%';
+  $('xpBar').style.width = rest / need * 100 + '%'; $('xpTxt').textContent = `${rest} / ${need}`;
+  $('heartCount').textContent = p.hearts;
+  if (!$('petSay').dataset.hold) petSay();
+}
+function sayFor(text, ms = 3500) {
+  petSay(text); $('petSay').dataset.hold = 1;
+  clearTimeout(sayFor.t); sayFor.t = setTimeout(() => { delete $('petSay').dataset.hold; petSay(); }, ms);
+}
+function jiggle() { const s = $('petBox').querySelector('svg'); s.classList.remove('jiggle'); void s.offsetWidth; s.classList.add('jiggle'); }
+function care(cost, stat, amount, emoji, line) {
+  const p = data.pet;
+  if (isNight()) return sayFor('Ćśś… śpię 😴 Wróć do mnie rano!');
+  if (p[stat] >= 98) return sayFor(stat === 'food' ? 'Brzuszek pełny! 😋 Może później?' : 'Już mam mnóstwo radości! 🥰');
+  if (p.hearts < cost) return sayFor('Brakuje serduszek 💗 Zadbaj o siebie w zakładce Dziś — wtedy je zdobędziesz!');
+  p.hearts -= cost; p[stat] = Math.min(100, p[stat] + amount);
+  gainXp(1); save(); renderPet(); jiggle();
+  floatAt($('petBox'), pick(emoji), 3); sayFor(pick(line));
+}
+$('feedBtn').onclick = () => care(2, 'food', 30, ['🍓', '🥕', '🍪', '🐟', '🍎', '🧁'], ['Mniam! Dziękuję 😋', 'Pycha! Ty też coś zjedz 🍓', 'Mniam mniam mniam 💗']);
+$('playBtn').onclick = () => care(1, 'fun', 25, ['🎈', '⚽', '🧶', '🪁', '🫧'], ['Hura! Jeszcze raz! 🎈', 'Ale zabawa! 🥳', 'Kocham się z Tobą bawić 💗']);
+function stroke() {
+  const p = data.pet;
+  p.fun = Math.min(100, p.fun + 2); save(); renderPet(); jiggle();
+  floatAt($('petBox'), '💗', 2);
+  sayFor(isNight() ? 'Mrrr… 💤 (mruczy przez sen)' : pick(['Mrrr… jak miło 🥰', 'Hihi, łaskocze! 😆', 'Jeszcze, jeszcze! 💗', 'Kocham Cię! 💕']), 2500);
+}
+$('strokeBtn').onclick = stroke;
+
+function renderAdopt() {
+  $('pickType').replaceChildren(...Object.entries(PET_TYPES).map(([k, name]) => {
+    const b = el('button', { className: k === adoptType ? 'on' : '' });
+    b.innerHTML = petSVG(k, adoptColor, 'happy', 1) + name;
+    b.onclick = () => { adoptType = k; renderAdopt(); };
+    return b;
+  }));
+  $('pickColor').replaceChildren(...PET_COLORS.map(c => {
+    const b = el('button', { className: c === adoptColor ? 'on' : '', ariaLabel: 'Kolor' });
+    b.style.background = c;
+    b.onclick = () => { adoptColor = c; renderAdopt(); };
+    return b;
+  }));
+}
+$('adoptBtn').onclick = () => {
+  const name = $('petNameInput').value.trim();
+  if (!name) { $('petNameInput').focus(); return toast('Nadaj mu imię 🙂'); }
+  data.pet = { name, type: adoptType, color: adoptColor, born: dkey(), xp: 0, hearts: 5, food: 70, fun: 70, last: Date.now(), earned: {} };
+  save(); renderPet(); celebrate();
+  sayFor(`Cześć! Mam na imię ${name}! Na start dostajesz 5 serduszek 💗`, 5000);
 };
 
 /* ---------- postępy ---------- */
@@ -697,13 +983,16 @@ $('importFile').onchange = async e => {
 };
 
 /* ---------- start ---------- */
-function renderAll() { renderHeader(); showAffirm(); renderMood(); renderTasks(); renderWater(); renderJar(); renderHabits(); renderModes(); }
+function renderAll() { renderHeader(); showAffirm(); renderMood(); renderTasks(); renderWater(); renderJar(); renderHabits(); renderModes(); renderPet(); }
 renderAll();
 save();
 try { const v = sessionStorage.getItem('view'); if (v) go(v); } catch {}
 // po północy odśwież widok nowego dnia
 let lastDay = dkey();
-setInterval(() => { if (dkey() !== lastDay) { lastDay = dkey(); renderAll(); } }, 60000);
+setInterval(() => {
+  if (dkey() !== lastDay) { lastDay = dkey(); renderAll(); }
+  else if (!document.querySelector('[data-view=pupil]').classList.contains('hidden')) renderPet();
+}, 60000);
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
