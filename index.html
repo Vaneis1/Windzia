@@ -2,248 +2,708 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ff7a9c">
 <title>Szczęśliwy Dzień</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #fff7f2; --card: #ffffff; --text: #3b2f35; --muted: #8a7a80;
-    --accent: #ff7a9c; --accent2: #ffc36b; --soft: #ffe3ea;
+    --bg: #fff6f1; --bg2: #ffeef3; --card: #ffffff; --text: #3b2f35; --muted: #8f7d85;
+    --accent: #ff7a9c; --accent2: #ffb86b; --accent3: #9b8cff; --soft: #ffe4eb; --line: #f3dde4;
+    --m1: #8aa4ff; --m2: #a9b8d6; --m3: #ffd166; --m4: #ffae6b; --m5: #ff7a9c;
+    --shadow: 0 6px 24px rgba(180, 90, 120, .10);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1f1a1d; --card: #2a2327; --text: #f5e9ee; --muted: #b8a6ad;
-      --accent: #ff8fab; --accent2: #ffcf85; --soft: #3a2c32;
+      --bg: #1c171b; --bg2: #251d23; --card: #2a2228; --text: #f6ebf0; --muted: #b9a7b0;
+      --soft: #3b2c35; --line: #3a2e36; --shadow: 0 6px 24px rgba(0, 0, 0, .35);
     }
   }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
   body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.5;
+    background: linear-gradient(180deg, var(--bg2), var(--bg) 320px);
+    background-color: var(--bg); color: var(--text); min-height: 100vh;
+    font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.5;
   }
-  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { font-size: 2rem; margin: 8px 0 4px; }
-  h2 { font-size: 1.15rem; margin: 0 0 12px; }
-  .sub { color: var(--muted); margin: 0 0 24px; }
+  main { max-width: 680px; margin: 0 auto; padding: 20px 16px 110px; }
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+  h1 { font-size: 1.7rem; margin: 0; font-weight: 800; }
+  h2 { font-size: 1.1rem; margin: 0 0 12px; font-weight: 800; }
+  .sub { color: var(--muted); margin: 2px 0 0; }
+  .streak {
+    background: var(--card); box-shadow: var(--shadow); border-radius: 16px;
+    padding: 8px 12px; text-align: center; min-width: 76px;
+  }
+  .streak b { font-size: 1.4rem; display: block; line-height: 1.1; }
+  .streak small { color: var(--muted); font-size: .72rem; }
   .card {
-    background: var(--card); border-radius: 18px; padding: 20px;
-    margin-bottom: 16px; box-shadow: 0 4px 18px rgba(0,0,0,.06);
+    background: var(--card); border-radius: 22px; padding: 18px;
+    margin-bottom: 14px; box-shadow: var(--shadow);
   }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .between { justify-content: space-between; }
   button {
-    background: var(--accent); color: #fff; border: 0; border-radius: 999px;
-    padding: 10px 18px; font-size: 1rem; cursor: pointer;
+    font: inherit; font-weight: 700; background: var(--accent); color: #fff; border: 0;
+    border-radius: 999px; padding: 10px 18px; cursor: pointer; transition: transform .1s;
   }
+  button:active { transform: scale(.96); }
   button.ghost { background: var(--soft); color: var(--text); }
-  .big { font-size: 1.2rem; min-height: 3em; margin: 0 0 12px; }
-  .moods { display: flex; gap: 8px; flex-wrap: wrap; }
-  .moods button { font-size: 1.6rem; background: var(--soft); padding: 8px 12px; }
-  .moods button.on { outline: 3px solid var(--accent); }
-  input[type=text] {
-    width: 100%; padding: 10px 12px; border-radius: 12px; font-size: 1rem;
-    border: 1px solid var(--soft); background: var(--bg); color: var(--text); margin-bottom: 8px;
+  button.small { padding: 6px 12px; font-size: .9rem; }
+  button:disabled { opacity: .5; }
+  input[type=text], textarea {
+    font: inherit; width: 100%; padding: 11px 14px; border-radius: 14px;
+    border: 1.5px solid var(--line); background: var(--bg); color: var(--text); outline: none;
   }
-  ul { padding-left: 0; list-style: none; margin: 12px 0 0; }
-  li { padding: 6px 0; border-bottom: 1px dashed var(--soft); }
-  li small { color: var(--muted); }
-  .task { display: flex; align-items: center; gap: 10px; }
-  .task input { width: 22px; height: 22px; accent-color: var(--accent); }
-  .circle {
-    width: 140px; height: 140px; border-radius: 50%; margin: 8px auto 16px;
-    background: radial-gradient(circle, var(--accent2), var(--accent));
-    transform: scale(.6); transition: transform 4s ease-in-out;
-    display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600;
+  input[type=text]:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 70px; }
+  .muted { color: var(--muted); }
+  .hidden { display: none !important; }
+
+  /* nawigacja */
+  nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    background: var(--card); box-shadow: 0 -4px 20px rgba(0,0,0,.08);
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
   }
-  .center { text-align: center; }
-  .confetti { position: fixed; top: -20px; font-size: 1.5rem; pointer-events: none;
-    animation: fall 3s linear forwards; }
-  @keyframes fall { to { transform: translateY(110vh) rotate(360deg); opacity: .7; } }
+  nav .inner { max-width: 680px; margin: 0 auto; display: flex; }
+  nav button {
+    flex: 1; background: none; color: var(--muted); border-radius: 14px;
+    padding: 6px 2px; font-size: .72rem; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  nav button span { font-size: 1.35rem; filter: grayscale(.7); transition: filter .2s, transform .2s; }
+  nav button.on { color: var(--accent); background: var(--soft); }
+  nav button.on span { filter: none; transform: translateY(-2px); }
+  .view { animation: fade .3s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
+
+  /* nastrój */
+  .moods { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .moods button {
+    background: var(--soft); font-size: 1.8rem; padding: 10px 0; border-radius: 16px;
+    display: flex; flex-direction: column; align-items: center; color: var(--text);
+  }
+  .moods button small { font-size: .65rem; font-weight: 600; color: var(--muted); }
+  .moods button.on { background: var(--accent); }
+  .moods button.on small { color: #fff; }
+  .reply { margin: 12px 0 0; min-height: 1.5em; }
+
+  /* afirmacja */
+  .affirm {
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+  }
+  .affirm p { font-size: 1.25rem; font-weight: 800; margin: 4px 0 14px; min-height: 2.6em; }
+  .affirm button { background: rgba(255,255,255,.25); }
+
+  /* zadania */
+  .task {
+    display: flex; align-items: center; gap: 12px; padding: 10px 4px;
+    border-bottom: 1px dashed var(--line); cursor: pointer;
+  }
+  .task:last-child { border-bottom: 0; }
+  .check {
+    width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; font-size: .9rem;
+  }
+  .task.done .check { background: var(--accent); }
+  .task.done .t { text-decoration: line-through; color: var(--muted); }
+
+  /* woda */
+  .glasses { display: flex; gap: 6px; flex-wrap: wrap; }
+  .glass {
+    width: 32px; height: 40px; border: 2px solid var(--m1); border-radius: 4px 4px 10px 10px;
+    background: transparent; padding: 0; position: relative; overflow: hidden;
+  }
+  .glass::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 0;
+    background: var(--m1); transition: height .3s;
+  }
+  .glass.full::after { height: 80%; }
+
+  /* słoik */
+  .jarwrap { display: flex; justify-content: center; margin: 4px 0 12px; }
+  .jar { width: 170px; height: 200px; }
+  .memory {
+    background: var(--soft); border-radius: 16px; padding: 14px; margin-top: 12px;
+    font-size: 1.05rem; animation: pop .4s ease;
+  }
+  @keyframes pop { from { transform: scale(.9); opacity: 0; } }
+  .list { list-style: none; padding: 0; margin: 10px 0 0; }
+  .list li { padding: 10px 0; border-bottom: 1px dashed var(--line); display: flex; gap: 10px; }
+  .list li:last-child { border-bottom: 0; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+  .list small { color: var(--muted); display: block; }
+  .x { background: none; color: var(--muted); padding: 0 6px; margin-left: auto; font-size: 1.1rem; }
+
+  /* nawyki */
+  .habit { padding: 12px 0; border-bottom: 1px dashed var(--line); }
+  .habit:last-child { border-bottom: 0; }
+  .habit .name { font-weight: 800; }
+  .week { display: flex; gap: 6px; margin-top: 8px; }
+  .day {
+    flex: 1; text-align: center; font-size: .7rem; color: var(--muted);
+  }
+  .day i {
+    display: block; height: 28px; border-radius: 9px; background: var(--soft); margin-top: 3px;
+  }
+  .day.on i { background: var(--accent3); }
+  .day.today i { outline: 2px solid var(--accent3); outline-offset: 1px; }
+  .flame { color: var(--accent2); font-weight: 800; font-size: .9rem; }
+
+  /* oddech */
+  .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .modes button { background: var(--soft); color: var(--text); border-radius: 16px; padding: 10px 4px; font-size: .85rem; }
+  .modes button.on { background: var(--accent3); color: #fff; }
+  .modes small { display: block; font-weight: 600; opacity: .8; }
+  .stage { height: 260px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .orb {
+    width: 220px; height: 220px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff8, transparent 40%),
+                radial-gradient(circle, var(--accent3), var(--accent));
+    transform: scale(.45); transition-property: transform; transition-timing-function: ease-in-out;
+    box-shadow: 0 0 60px color-mix(in srgb, var(--accent3) 50%, transparent);
+  }
+  .orbtext {
+    position: absolute; text-align: center; color: #fff; font-weight: 800; font-size: 1.2rem;
+    text-shadow: 0 1px 6px rgba(0,0,0,.25);
+  }
+  .orbtext b { display: block; font-size: 2rem; }
+
+  /* postępy */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat { background: var(--soft); border-radius: 16px; padding: 12px 8px; text-align: center; }
+  .stat b { font-size: 1.5rem; display: block; }
+  .stat small { color: var(--muted); font-size: .75rem; }
+  .chart { width: 100%; height: auto; display: block; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: .8rem; color: var(--muted); margin-top: 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 999px;
+    opacity: 0; transition: .3s; pointer-events: none; z-index: 20; font-weight: 700; max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .confetti { position: fixed; top: -30px; font-size: 1.6rem; pointer-events: none; z-index: 30;
+    animation: fall 3.2s linear forwards; }
+  @keyframes fall { to { transform: translateY(115vh) rotate(540deg); } }
+  @media (prefers-reduced-motion: reduce) { .confetti { display: none; } }
 </style>
 </head>
 <body>
 <main>
-  <h1>Szczęśliwy Dzień ☀️</h1>
-  <p class="sub" id="greeting"></p>
+  <header>
+    <div>
+      <h1 id="greeting">Cześć ☀️</h1>
+      <p class="sub" id="today"></p>
+    </div>
+    <div class="streak" title="Dni z rzędu z zapisanym nastrojem">
+      <b id="streak">0</b><small>dni z rzędu 🔥</small>
+    </div>
+  </header>
 
-  <section class="card">
-    <h2>Jak się dziś czujesz?</h2>
-    <div class="moods" id="moods"></div>
-    <p id="moodReply" class="sub" style="margin:12px 0 0"></p>
+  <!-- DZIŚ -->
+  <section class="view" data-view="dzis">
+    <div class="card affirm">
+      <h2>✨ Myśl na dziś</h2>
+      <p id="affirm"></p>
+      <button class="small" id="nextAffirm">Następna</button>
+    </div>
+
+    <div class="card">
+      <h2>Jak się dziś czujesz?</h2>
+      <div class="moods" id="moods"></div>
+      <p class="reply muted" id="moodReply"></p>
+      <textarea id="moodNote" class="hidden" placeholder="Chcesz coś dopisać? Co się dziś wydarzyło?"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h2>🌱 Trzy małe rzeczy</h2><button class="ghost small" id="reroll">🎲 Inne</button></div>
+      <div id="tasks"></div>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h2>💧 Woda</h2><span class="muted" id="waterCount"></span></div>
+      <div class="glasses" id="glasses"></div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>💌 Wiadomość dla Ciebie</h2>
-    <p class="big" id="compliment"></p>
-    <button id="nextCompliment">Jeszcze jedna</button>
+  <!-- SŁOIK -->
+  <section class="view hidden" data-view="sloik">
+    <div class="card">
+      <h2>🫙 Słoik szczęścia</h2>
+      <p class="muted" style="margin-top:-6px">Wrzucaj tu dobre chwile i to, za co jesteś wdzięczna. W gorszy dzień wylosuj jedną.</p>
+      <div class="jarwrap"><svg class="jar" id="jar" viewBox="0 0 170 200"></svg></div>
+      <input type="text" id="jarInput" placeholder="np. śmiech z przyjaciółką przy kawie" maxlength="200">
+      <div class="row" style="margin-top:10px">
+        <button id="jarAdd">Wrzuć do słoika</button>
+        <button class="ghost" id="jarDraw">🎁 Wylosuj wspomnienie</button>
+      </div>
+      <div id="memory" class="memory hidden"></div>
+    </div>
+    <div class="card">
+      <h2>Wszystkie chwile <span class="muted" id="jarCount"></span></h2>
+      <ul class="list" id="jarList"></ul>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>🌱 Trzy małe rzeczy na dziś</h2>
-    <div id="tasks"></div>
-    <button class="ghost" id="newTasks" style="margin-top:12px">Wylosuj inne</button>
+  <!-- NAWYKI -->
+  <section class="view hidden" data-view="nawyki">
+    <div class="card">
+      <h2>🌿 Moje dobre nawyki</h2>
+      <p class="muted" style="margin-top:-6px">Stuknij dzisiejszy dzień, gdy uda Ci się coś zrobić.</p>
+      <div id="habits"></div>
+    </div>
+    <div class="card">
+      <h2>Dodaj nawyk</h2>
+      <div class="row">
+        <input type="text" id="habitInput" placeholder="np. 🧘‍♀️ Rozciąganie" maxlength="40" style="flex:1">
+        <button id="habitAdd">Dodaj</button>
+      </div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>🙏 Za co jesteś dziś wdzięczna?</h2>
-    <input type="text" id="gratitudeInput" placeholder="np. za ciepłą herbatę rano">
-    <button id="addGratitude">Zapisz</button>
-    <ul id="gratitudeList"></ul>
+  <!-- ODDECH -->
+  <section class="view hidden" data-view="oddech">
+    <div class="card">
+      <h2>🌬️ Oddech</h2>
+      <div class="modes" id="modes"></div>
+      <div class="stage">
+        <div class="orb" id="orb"></div>
+        <div class="orbtext" id="orbText">gotowa?</div>
+      </div>
+      <div class="row" style="justify-content:center">
+        <button class="ghost small" data-min="1">1 min</button>
+        <button class="ghost small" data-min="3">3 min</button>
+        <button class="ghost small" data-min="5">5 min</button>
+      </div>
+      <div class="row" style="justify-content:center;margin-top:12px">
+        <button id="breathBtn">Zaczynamy</button>
+      </div>
+    </div>
   </section>
 
-  <section class="card center">
-    <h2>🌬️ Minuta oddechu</h2>
-    <div class="circle" id="circle">gotowa?</div>
-    <button id="breathe">Zaczynamy</button>
+  <!-- POSTĘPY -->
+  <section class="view hidden" data-view="postepy">
+    <div class="card">
+      <h2>📈 Nastrój — ostatnie 30 dni</h2>
+      <svg class="chart" id="chart" viewBox="0 0 330 140"></svg>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="card">
+      <div class="stats">
+        <div class="stat"><b id="sDays">0</b><small>dni z wpisem</small></div>
+        <div class="stat"><b id="sJar">0</b><small>chwil w słoiku</small></div>
+        <div class="stat"><b id="sBest">0</b><small>najdłuższa seria</small></div>
+        <div class="stat"><b id="sTasks">0</b><small>małych zadań</small></div>
+        <div class="stat"><b id="sWater">0</b><small>szklanek wody</small></div>
+        <div class="stat"><b id="sAvg">–</b><small>średni nastrój</small></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>📝 Ostatnie notatki</h2>
+      <ul class="list" id="notes"></ul>
+    </div>
+    <div class="card">
+      <h2>💾 Kopia zapasowa</h2>
+      <p class="muted" style="margin-top:-6px">Dane są tylko w tej przeglądarce. Zapisz kopię, żeby ich nie zgubić lub przenieść na inny telefon.</p>
+      <div class="row">
+        <button class="ghost" id="exportBtn">Pobierz kopię</button>
+        <button class="ghost" id="importBtn">Wczytaj kopię</button>
+        <input type="file" id="importFile" accept="application/json" class="hidden">
+      </div>
+    </div>
   </section>
 </main>
 
+<nav><div class="inner" id="nav">
+  <button data-go="dzis" class="on"><span>☀️</span>Dziś</button>
+  <button data-go="sloik"><span>🫙</span>Słoik</button>
+  <button data-go="nawyki"><span>🌿</span>Nawyki</button>
+  <button data-go="oddech"><span>🌬️</span>Oddech</button>
+  <button data-go="postepy"><span>📈</span>Postępy</button>
+</div></nav>
+<div class="toast" id="toast"></div>
+
 <script>
-  const store = {
-    get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
-  };
-  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+/* ---------- dane ---------- */
+const KEY = 'szczesliwy-dzien-v2';
+const $ = id => document.getElementById(id);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const z = n => String(n).padStart(2, '0');
+const dkey = (d = new Date()) => `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+const daysAgo = n => { const d = new Date(); d.setHours(12); d.setDate(d.getDate() - n); return d; };
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
 
-  // Powitanie
-  const h = new Date().getHours();
-  document.getElementById('greeting').textContent =
-    h < 5 ? 'Późno już — zadbaj o sen, jutro też jest dzień 🌙' :
-    h < 12 ? 'Dzień dobry! Dzisiejszy dzień zaczyna się od Ciebie.' :
-    h < 18 ? 'Miłego popołudnia! Zrób sobie chwilę przerwy.' :
-    'Dobry wieczór! Czas zwolnić i docenić dzisiejszy dzień.';
-
-  // Nastrój
-  const moods = {
-    '😄': 'Cudownie! Zapamiętaj, co sprawiło, że tak się czujesz.',
-    '🙂': 'Dobrze jest! Może jedna mała przyjemność na deser?',
-    '😐': 'Takie dni też są w porządku. Spróbuj minuty oddechu poniżej.',
-    '😔': 'Przytulam mocno 🤗 Bądź dziś dla siebie łagodna.',
-    '😢': 'Smutek też ma prawo być. Napisz do kogoś bliskiego — nie musisz być z tym sama.'
-  };
-  const moodsEl = document.getElementById('moods');
-  Object.keys(moods).forEach(m => {
-    const b = document.createElement('button');
-    b.textContent = m;
-    b.onclick = () => {
-      moodsEl.querySelectorAll('button').forEach(x => x.classList.remove('on'));
-      b.classList.add('on');
-      document.getElementById('moodReply').textContent = moods[m];
-    };
-    moodsEl.appendChild(b);
-  });
-
-  // Komplementy
-  const compliments = [
-    'Jesteś wystarczająca dokładnie taka, jaka jesteś.',
-    'Twój uśmiech naprawdę rozjaśnia pokój.',
-    'Radzisz sobie lepiej, niż Ci się wydaje.',
-    'Świat jest odrobinę lepszy, bo w nim jesteś.',
-    'Masz prawo odpocząć. Odpoczynek to też postęp.',
-    'Ktoś dziś pomyślał o Tobie ciepło — na pewno.',
-    'Każdy mały krok się liczy. Twój też.',
-    'Twoja wrażliwość to supermoc, nie słabość.',
-    'Zasługujesz na te same dobre słowa, które dajesz innym.',
-    'Nie musisz być idealna, żeby być wspaniała.',
-    'Dzisiejszy dzień nie musi być perfekcyjny, żeby był dobry.',
-    'Jesteś bohaterką swojej historii — i to piękna historia.'
+function load() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem(KEY)); } catch {}
+  d = d || {};
+  d.days = d.days || {};
+  d.jar = d.jar || [];
+  d.habits = d.habits || [
+    { id: 1, name: '💧 Pić wodę', done: {} },
+    { id: 2, name: '🚶‍♀️ Spacer', done: {} },
+    { id: 3, name: '📖 Czytanie', done: {} }
   ];
-  const compEl = document.getElementById('compliment');
-  const showCompliment = () => {
-    let c; do { c = pick(compliments); } while (c === compEl.textContent);
-    compEl.textContent = c;
-  };
-  document.getElementById('nextCompliment').onclick = showCompliment;
-  showCompliment();
-
-  // Małe zadania
-  const ideas = [
-    'Wypij szklankę wody 💧', 'Wyjdź na 10-minutowy spacer 🚶‍♀️',
-    'Włącz ulubioną piosenkę i potańcz 💃', 'Napisz miłą wiadomość do przyjaciółki 📱',
-    'Przeciągnij się porządnie 🧘‍♀️', 'Zjedz coś pysznego, powoli 🍓',
-    'Otwórz okno i weź 5 głębokich oddechów 🌬️', 'Zrób sobie ulubioną herbatę ☕',
-    'Posprzątaj jedną małą rzecz 🧺', 'Obejrzyj zdjęcie, które przywołuje dobre wspomnienie 📷',
-    'Powiedz sobie w lustrze coś miłego 🪞', 'Przeczytaj kilka stron książki 📖',
-    'Pogłaszcz zwierzaka (swojego lub cudzego) 🐶', 'Idź dziś wcześniej spać 😴'
-  ];
-  const tasksEl = document.getElementById('tasks');
-  const drawTasks = () => {
-    const shuffled = [...ideas].sort(() => Math.random() - .5).slice(0, 3);
-    tasksEl.innerHTML = '';
-    shuffled.forEach(t => {
-      const label = document.createElement('label');
-      label.className = 'task';
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.onchange = () => {
-        if ([...tasksEl.querySelectorAll('input')].every(x => x.checked)) celebrate();
-      };
-      label.append(cb, document.createTextNode(t));
-      tasksEl.appendChild(label);
-    });
-  };
-  document.getElementById('newTasks').onclick = drawTasks;
-  drawTasks();
-
-  // Wdzięczność
-  const gInput = document.getElementById('gratitudeInput');
-  const gList = document.getElementById('gratitudeList');
-  const renderGratitude = () => {
-    gList.innerHTML = '';
-    store.get('gratitude', []).slice().reverse().forEach(g => {
-      const li = document.createElement('li');
-      const small = document.createElement('small');
-      small.textContent = ' — ' + g.date;
-      li.append(document.createTextNode(g.text), small);
-      gList.appendChild(li);
-    });
-  };
-  const addGratitude = () => {
-    const text = gInput.value.trim();
-    if (!text) return;
-    const list = store.get('gratitude', []);
-    list.push({ text, date: new Date().toLocaleDateString('pl-PL') });
-    store.set('gratitude', list);
-    gInput.value = '';
-    renderGratitude();
-    celebrate();
-  };
-  document.getElementById('addGratitude').onclick = addGratitude;
-  gInput.addEventListener('keydown', e => { if (e.key === 'Enter') addGratitude(); });
-  renderGratitude();
-
-  // Oddech: 4 s wdech, 4 s wydech, przez minutę
-  const circle = document.getElementById('circle');
-  const breatheBtn = document.getElementById('breathe');
-  breatheBtn.onclick = () => {
-    breatheBtn.disabled = true;
-    let step = 0;
-    const tick = () => {
-      if (step >= 15) {
-        circle.style.transform = 'scale(.6)';
-        circle.textContent = 'brawo 💛';
-        breatheBtn.disabled = false;
-        return;
-      }
-      const inhale = step % 2 === 0;
-      circle.style.transform = inhale ? 'scale(1)' : 'scale(.6)';
-      circle.textContent = inhale ? 'wdech' : 'wydech';
-      step++;
-      setTimeout(tick, 4000);
-    };
-    tick();
-  };
-
-  // Konfetti
-  function celebrate() {
-    const emojis = ['🎉', '💖', '🌸', '✨', '🌈', '☀️'];
-    for (let i = 0; i < 30; i++) {
-      const s = document.createElement('span');
-      s.className = 'confetti';
-      s.textContent = pick(emojis);
-      s.style.left = Math.random() * 100 + 'vw';
-      s.style.animationDelay = Math.random() * .8 + 's';
-      document.body.appendChild(s);
-      setTimeout(() => s.remove(), 4000);
+  // przenieś wpisy z pierwszej wersji programu
+  try {
+    const old = JSON.parse(localStorage.getItem('gratitude'));
+    if (Array.isArray(old) && old.length && !d.migrated) {
+      old.forEach(g => d.jar.push({ text: g.text, date: g.date, c: pick(COLORS) }));
     }
+  } catch {}
+  d.migrated = true;
+  return d;
+}
+const COLORS = ['#ff7a9c', '#ffb86b', '#ffd166', '#9b8cff', '#7fd1b9', '#8aa4ff', '#f78fb3'];
+const data = load();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch {} }
+const today = () => (data.days[dkey()] ||= {});
+
+/* ---------- drobiazgi ---------- */
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function celebrate(n = 30) {
+  const emojis = ['🎉', '💖', '🌸', '✨', '🌈', '☀️', '🦋'];
+  for (let i = 0; i < n; i++) {
+    const s = el('span', { className: 'confetti', textContent: pick(emojis) });
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.animationDelay = Math.random() * .8 + 's';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 4200);
   }
+}
+function streakFrom(has) {
+  let n = 0, i = has(dkey(daysAgo(0))) ? 0 : 1;
+  while (has(dkey(daysAgo(i)))) { n++; i++; }
+  return n;
+}
+
+/* ---------- nawigacja ---------- */
+function go(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('hidden', v.dataset.view !== view));
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.go === view));
+  if (view === 'postepy') renderStats();
+  if (view === 'sloik') renderJar();
+  window.scrollTo({ top: 0 });
+  try { sessionStorage.setItem('view', view); } catch {}
+}
+$('nav').onclick = e => { const b = e.target.closest('button'); if (b) go(b.dataset.go); };
+
+/* ---------- nagłówek ---------- */
+function renderHeader() {
+  const h = new Date().getHours();
+  $('greeting').textContent =
+    h < 5 ? 'Dobranoc 🌙' : h < 12 ? 'Dzień dobry ☀️' : h < 18 ? 'Miłego popołudnia 🌼' : 'Dobry wieczór ✨';
+  const s = new Date().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
+  $('today').textContent = s[0].toUpperCase() + s.slice(1);
+  $('streak').textContent = streakFrom(k => data.days[k]?.mood);
+}
+
+/* ---------- myśl dnia ---------- */
+const AFFIRM = [
+  'Jesteś wystarczająca dokładnie taka, jaka jesteś.',
+  'Radzisz sobie lepiej, niż Ci się wydaje.',
+  'Świat jest odrobinę lepszy, bo w nim jesteś.',
+  'Odpoczynek to też postęp.',
+  'Każdy mały krok się liczy. Twój też.',
+  'Twoja wrażliwość to supermoc, nie słabość.',
+  'Zasługujesz na te same dobre słowa, które dajesz innym.',
+  'Nie musisz być idealna, żeby być wspaniała.',
+  'Dzień nie musi być perfekcyjny, żeby był dobry.',
+  'Masz prawo mówić „nie” i nadal być dobrym człowiekiem.',
+  'To, co dziś czujesz, minie. Ty zostajesz — silniejsza.',
+  'Jesteś bohaterką swojej historii — i to piękna historia.',
+  'Możesz zacząć od nowa w każdej chwili dnia.',
+  'Ktoś dziś pomyślał o Tobie ciepło — na pewno.',
+  'Twój uśmiech naprawdę rozjaśnia pokój.',
+  'Bądź dla siebie tak czuła, jak dla najlepszej przyjaciółki.',
+  'Nie musisz wszystkiego dźwigać sama.',
+  'Wolniej też jest do przodu.',
+  'Dobre rzeczy już są w drodze do Ciebie.',
+  'Jesteś ważna. Po prostu dlatego, że jesteś.'
+];
+let affIdx = [...dkey()].reduce((a, c) => a * 31 + c.charCodeAt(0) >>> 0, 7) % AFFIRM.length;
+function showAffirm() { $('affirm').textContent = AFFIRM[affIdx]; }
+$('nextAffirm').onclick = () => { affIdx = (affIdx + 1 + Math.floor(Math.random() * (AFFIRM.length - 1))) % AFFIRM.length; showAffirm(); };
+
+/* ---------- nastrój ---------- */
+const MOODS = [
+  { e: '😢', l: 'źle', r: 'Smutek też ma prawo być. Napisz do kogoś bliskiego — nie musisz być z tym sama. 💛' },
+  { e: '😔', l: 'słabo', r: 'Przytulam mocno 🤗 Bądź dziś dla siebie łagodna. Może minuta oddechu?' },
+  { e: '😐', l: 'tak sobie', r: 'Takie dni też są w porządku. Jedna mała przyjemność może coś zmienić.' },
+  { e: '🙂', l: 'dobrze', r: 'Dobrze jest! Wrzuć coś miłego do słoika szczęścia.' },
+  { e: '😄', l: 'super', r: 'Cudownie! Zapamiętaj, co sprawiło, że tak się czujesz ✨' }
+];
+function renderMood() {
+  const m = today().mood;
+  $('moods').replaceChildren(...MOODS.map((x, i) => {
+    const b = el('button', { className: m === i + 1 ? 'on' : '' }, x.e, el('small', { textContent: x.l }));
+    b.onclick = () => {
+      const first = !today().mood;
+      today().mood = i + 1; save(); renderMood(); renderHeader();
+      if (first && i >= 3) celebrate(15);
+    };
+    return b;
+  }));
+  $('moodReply').textContent = m ? MOODS[m - 1].r : 'Wybierz buźkę — zapiszę, jak się czujesz.';
+  $('moodNote').classList.toggle('hidden', !m);
+  if (document.activeElement !== $('moodNote')) $('moodNote').value = today().note || '';
+}
+$('moodNote').oninput = e => { today().note = e.target.value; save(); };
+
+/* ---------- małe zadania ---------- */
+const IDEAS = [
+  'Wypij szklankę wody 💧', 'Wyjdź na 10-minutowy spacer 🚶‍♀️', 'Potańcz do ulubionej piosenki 💃',
+  'Napisz miłą wiadomość do kogoś bliskiego 📱', 'Przeciągnij się porządnie 🧘‍♀️', 'Zjedz coś pysznego, powoli 🍓',
+  'Otwórz okno i weź 5 głębokich oddechów 🌬️', 'Zrób sobie ulubioną herbatę ☕', 'Posprzątaj jedną małą rzecz 🧺',
+  'Obejrzyj zdjęcie z dobrym wspomnieniem 📷', 'Powiedz sobie w lustrze coś miłego 🪞', 'Przeczytaj kilka stron książki 📖',
+  'Pogłaszcz zwierzaka 🐶', 'Idź dziś wcześniej spać 😴', 'Posłuchaj ptaków albo deszczu przez 2 minuty 🐦',
+  'Pochwal kogoś szczerze 🌟', 'Zrób 10 przysiadów 💪', 'Wyłącz telefon na 30 minut 📵',
+  'Narysuj coś — nawet krzywo 🎨', 'Zaplanuj coś miłego na weekend 🗓️', 'Wyjdź na słońce na 5 minut ☀️'
+];
+function ensureTasks(force) {
+  const t = today();
+  if (!t.tasks || force) {
+    t.tasks = [...IDEAS].sort(() => Math.random() - .5).slice(0, 3).map(x => ({ t: x, done: false }));
+    save();
+  }
+}
+function renderTasks() {
+  ensureTasks();
+  $('tasks').replaceChildren(...today().tasks.map(task => {
+    const row = el('div', { className: 'task' + (task.done ? ' done' : '') },
+      el('span', { className: 'check', textContent: task.done ? '✓' : '' }),
+      el('span', { className: 't', textContent: task.t }));
+    row.onclick = () => {
+      task.done = !task.done; save(); renderTasks();
+      if (today().tasks.every(x => x.done)) { celebrate(); toast('Wszystkie trzy! Jesteś niesamowita 🎉'); }
+    };
+    return row;
+  }));
+}
+$('reroll').onclick = () => { ensureTasks(true); renderTasks(); };
+
+/* ---------- woda ---------- */
+function renderWater() {
+  const w = today().water || 0;
+  $('glasses').replaceChildren(...Array.from({ length: 8 }, (_, i) => {
+    const g = el('button', { className: 'glass' + (i < w ? ' full' : ''), ariaLabel: `Szklanka ${i + 1}` });
+    g.onclick = () => {
+      today().water = i < w ? i : i + 1; save(); renderWater();
+      if (today().water === 8) toast('8 szklanek! Twoje ciało dziękuje 💧');
+    };
+    return g;
+  }));
+  $('waterCount').textContent = `${w} / 8`;
+}
+
+/* ---------- słoik ---------- */
+function renderJar() {
+  const svg = $('jar'), n = data.jar.length;
+  let balls = '';
+  const shown = data.jar.slice(-42);
+  shown.forEach((m, i) => {
+    const col = i % 6, row = Math.floor(i / 6);
+    const x = 32 + col * 21 + (row % 2 ? 10 : 0) + ((i * 7) % 5) - 2;
+    const y = 178 - row * 18 - ((i * 3) % 4);
+    balls += `<circle cx="${Math.min(x, 140)}" cy="${y}" r="9" fill="${m.c || COLORS[i % COLORS.length]}" opacity=".9"/>`;
+  });
+  svg.innerHTML = `
+    <rect x="50" y="6" width="70" height="16" rx="5" fill="var(--accent2)"/>
+    <path d="M44 24 h82 v8 q18 8 18 30 v112 q0 20 -20 20 h-78 q-20 0 -20 -20 v-112 q0 -22 18 -30 z"
+      fill="var(--soft)" stroke="var(--line)" stroke-width="3"/>
+    ${balls}
+    <path d="M40 60 q-6 40 0 100" stroke="#fff" stroke-opacity=".5" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  $('jarCount').textContent = n ? `(${n})` : '';
+  $('jarList').replaceChildren(...(n ? data.jar.slice().reverse().map((m, ri) => {
+    const idx = n - 1 - ri;
+    const x = el('button', { className: 'x', textContent: '×', title: 'Usuń' });
+    x.onclick = () => { if (confirm('Usunąć tę chwilę ze słoika?')) { data.jar.splice(idx, 1); save(); renderJar(); } };
+    return el('li', {}, el('span', { className: 'dot', style: `background:${m.c}` }),
+      el('div', {}, m.text, el('small', { textContent: m.date })), x);
+  }) : [el('li', { className: 'muted', textContent: 'Słoik jest jeszcze pusty — wrzuć pierwszą dobrą chwilę!' })]));
+}
+function addJar() {
+  const text = $('jarInput').value.trim();
+  if (!text) return $('jarInput').focus();
+  data.jar.push({ text, date: new Date().toLocaleDateString('pl-PL'), c: pick(COLORS) });
+  save(); $('jarInput').value = ''; renderJar(); celebrate(18);
+  toast(pick(['Wrzucone! 💖', 'Piękna chwila ✨', 'Słoik rośnie 🫙']));
+}
+$('jarAdd').onclick = addJar;
+$('jarInput').addEventListener('keydown', e => { if (e.key === 'Enter') addJar(); });
+$('jarDraw').onclick = () => {
+  const box = $('memory');
+  if (!data.jar.length) { toast('Najpierw wrzuć coś do słoika 🙂'); return; }
+  const m = pick(data.jar);
+  box.classList.remove('hidden');
+  box.replaceChildren(el('div', { textContent: '„' + m.text + '”' }), el('small', { className: 'muted', textContent: m.date }));
+  box.style.animation = 'none'; void box.offsetWidth; box.style.animation = '';
+};
+
+/* ---------- nawyki ---------- */
+const WD = ['nd', 'pn', 'wt', 'śr', 'cz', 'pt', 'sb'];
+function renderHabits() {
+  const box = $('habits');
+  if (!data.habits.length) { box.replaceChildren(el('p', { className: 'muted', textContent: 'Dodaj swój pierwszy nawyk poniżej 🌱' })); return; }
+  box.replaceChildren(...data.habits.map(h => {
+    const s = streakFrom(k => h.done[k]);
+    const del = el('button', { className: 'x', textContent: '×', title: 'Usuń nawyk' });
+    del.onclick = () => { if (confirm(`Usunąć „${h.name}”?`)) { data.habits = data.habits.filter(x => x !== h); save(); renderHabits(); } };
+    const week = el('div', { className: 'week' });
+    for (let i = 6; i >= 0; i--) {
+      const d = daysAgo(i), k = dkey(d);
+      const day = el('div', { className: 'day' + (h.done[k] ? ' on' : '') + (i === 0 ? ' today' : '') },
+        i === 0 ? 'dziś' : WD[d.getDay()], el('i'));
+      day.style.cursor = 'pointer';
+      day.onclick = () => {
+        if (h.done[k]) delete h.done[k]; else h.done[k] = true;
+        save(); renderHabits();
+        const ns = streakFrom(x => h.done[x]);
+        if (h.done[k] && [3, 7, 14, 21, 30, 50, 100].includes(ns)) { celebrate(); toast(`${ns} dni z rzędu! 🔥`); }
+      };
+      week.appendChild(day);
+    }
+    return el('div', { className: 'habit' },
+      el('div', { className: 'row' }, el('span', { className: 'name', textContent: h.name }),
+        el('span', { className: 'flame', textContent: s ? `🔥 ${s}` : '' }), del),
+      week);
+  }));
+}
+function addHabit() {
+  const name = $('habitInput').value.trim();
+  if (!name) return $('habitInput').focus();
+  data.habits.push({ id: Date.now(), name, done: {} });
+  save(); $('habitInput').value = ''; renderHabits(); toast('Nowy nawyk dodany 🌿');
+}
+$('habitAdd').onclick = addHabit;
+$('habitInput').addEventListener('keydown', e => { if (e.key === 'Enter') addHabit(); });
+
+/* ---------- oddech ---------- */
+const BREATH = {
+  spokoj: { name: 'Spokój', hint: '4 · 6', phases: [['Wdech', 4, 1], ['Wydech', 6, .45]] },
+  kwadrat: { name: 'Kwadrat', hint: '4 · 4 · 4 · 4', phases: [['Wdech', 4, 1], ['Zatrzymaj', 4, 1], ['Wydech', 4, .45], ['Zatrzymaj', 4, .45]] },
+  sen: { name: 'Na sen', hint: '4 · 7 · 8', phases: [['Wdech', 4, 1], ['Zatrzymaj', 7, 1], ['Wydech', 8, .45]] }
+};
+let bMode = 'spokoj', bMin = 1, bTimer = null;
+function renderModes() {
+  $('modes').replaceChildren(...Object.entries(BREATH).map(([k, m]) => {
+    const b = el('button', { className: k === bMode ? 'on' : '' }, m.name, el('small', { textContent: m.hint }));
+    b.onclick = () => { if (!bTimer) { bMode = k; renderModes(); } };
+    return b;
+  }));
+  document.querySelectorAll('[data-min]').forEach(b => {
+    b.style.background = +b.dataset.min === bMin ? 'var(--accent3)' : '';
+    b.style.color = +b.dataset.min === bMin ? '#fff' : '';
+    b.onclick = () => { if (!bTimer) { bMin = +b.dataset.min; renderModes(); } };
+  });
+}
+function stopBreath(done) {
+  clearInterval(bTimer); bTimer = null;
+  const orb = $('orb'); orb.style.transitionDuration = '1s'; orb.style.transform = 'scale(.45)';
+  $('orbText').innerHTML = done ? 'brawo 💛' : 'gotowa?';
+  $('breathBtn').textContent = 'Zaczynamy';
+  if (done) toast('Pięknie. Poczuj, jak jest teraz spokojniej 🌿');
+}
+$('breathBtn').onclick = () => {
+  if (bTimer) return stopBreath(false);
+  const m = BREATH[bMode], orb = $('orb');
+  const end = Date.now() + bMin * 60000;
+  let pi = -1, left = 0;
+  $('breathBtn').textContent = 'Zatrzymaj';
+  const step = () => {
+    if (left <= 0) {
+      if (pi === m.phases.length - 1 && Date.now() >= end) return stopBreath(true);
+      pi = (pi + 1) % m.phases.length;
+      const [, sec, scale] = m.phases[pi];
+      left = sec;
+      orb.style.transitionDuration = sec + 's';
+      orb.style.transform = `scale(${scale})`;
+    }
+    $('orbText').innerHTML = `${m.phases[pi][0]}<b>${left}</b>`;
+    left--;
+  };
+  step();
+  bTimer = setInterval(step, 1000);
+};
+
+/* ---------- postępy ---------- */
+function renderStats() {
+  const W = 330, H = 140, n = 30, bw = W / n;
+  const moodCol = ['var(--m1)', 'var(--m2)', 'var(--m3)', 'var(--m4)', 'var(--m5)'];
+  let s = '';
+  for (let i = 1; i <= 4; i++) s += `<line x1="0" x2="${W}" y1="${120 - i * 22}" y2="${120 - i * 22}" stroke="var(--line)" stroke-dasharray="3 4"/>`;
+  for (let i = n - 1; i >= 0; i--) {
+    const d = daysAgo(i), m = data.days[dkey(d)]?.mood, x = (n - 1 - i) * bw;
+    if (m) s += `<rect x="${x + 2}" y="${120 - m * 22}" width="${bw - 4}" height="${m * 22}" rx="4" fill="${moodCol[m - 1]}"><title>${d.toLocaleDateString('pl-PL')}: ${MOODS[m - 1].l}</title></rect>`;
+    else s += `<circle cx="${x + bw / 2}" cy="116" r="2" fill="var(--line)"/>`;
+    if (i % 7 === 0) s += `<text x="${x + bw / 2}" y="136" font-size="9" text-anchor="middle" fill="var(--muted)">${d.getDate()}.${z(d.getMonth() + 1)}</text>`;
+  }
+  $('chart').innerHTML = s;
+  $('legend').innerHTML = MOODS.map((m, i) => `<span><i class="dot" style="background:${moodCol[i]};margin:0"></i>${m.e} ${m.l}</span>`).join('');
+
+  const days = Object.entries(data.days);
+  const moods = days.map(([, v]) => v.mood).filter(Boolean);
+  $('sDays').textContent = moods.length;
+  $('sJar').textContent = data.jar.length;
+  $('sTasks').textContent = days.reduce((a, [, v]) => a + (v.tasks || []).filter(t => t.done).length, 0);
+  $('sWater').textContent = days.reduce((a, [, v]) => a + (v.water || 0), 0);
+  $('sAvg').textContent = moods.length ? MOODS[Math.round(moods.reduce((a, b) => a + b, 0) / moods.length) - 1].e : '–';
+  // najdłuższa seria
+  const keys = days.filter(([, v]) => v.mood).map(([k]) => k).sort();
+  let best = 0, cur = 0, prev = null;
+  keys.forEach(k => {
+    const t = new Date(k + 'T12:00').getTime();
+    cur = prev && Math.round((t - prev) / 864e5) === 1 ? cur + 1 : 1;
+    best = Math.max(best, cur); prev = t;
+  });
+  $('sBest').textContent = best;
+
+  const notes = days.filter(([, v]) => v.note && v.note.trim()).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 10);
+  $('notes').replaceChildren(...(notes.length ? notes.map(([k, v]) =>
+    el('li', {}, el('span', { textContent: v.mood ? MOODS[v.mood - 1].e : '📝' }),
+      el('div', {}, v.note, el('small', { textContent: new Date(k + 'T12:00').toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }) }))))
+    : [el('li', { className: 'muted', textContent: 'Po wybraniu nastroju możesz dopisać notatkę — pojawi się tutaj.' })]));
+}
+$('exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = el('a', { href: URL.createObjectURL(blob), download: `szczesliwy-dzien-${dkey()}.json` });
+  document.body.appendChild(a); a.click(); a.remove();
+  toast('Kopia zapisana 💾');
+};
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!d.days || !Array.isArray(d.jar)) throw 0;
+    if (!confirm('Zastąpić obecne dane danymi z kopii?')) return;
+    Object.assign(data, d); save(); renderAll(); renderStats(); toast('Dane wczytane ✅');
+  } catch { toast('To nie wygląda na kopię z tej aplikacji 🤔'); }
+  e.target.value = '';
+};
+
+/* ---------- start ---------- */
+function renderAll() { renderHeader(); showAffirm(); renderMood(); renderTasks(); renderWater(); renderJar(); renderHabits(); renderModes(); }
+renderAll();
+save();
+try { const v = sessionStorage.getItem('view'); if (v) go(v); } catch {}
+// po północy odśwież widok nowego dnia
+let lastDay = dkey();
+setInterval(() => { if (dkey() !== lastDay) { lastDay = dkey(); renderAll(); } }, 60000);
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>

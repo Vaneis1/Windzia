@@ -1,0 +1,14 @@
+{
+  "name": "Szczęśliwy Dzień",
+  "short_name": "Szczęście",
+  "description": "Nastrój, słoik szczęścia, nawyki i oddech — codzienna dawka dobra.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff6f1",
+  "theme_color": "#ff7a9c",
+  "lang": "pl",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
